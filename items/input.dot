@@ -1,0 +1,2 @@
+{{# def.partials.label }}
+<input type="text" ml-bind="MLInput:{{= it.compName }}">

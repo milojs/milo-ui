@@ -1,0 +1,3 @@
+<button ml-bind="MLButton:{{= it.compName }}">
+	{{= it.item.label || '' }}
+</button>
