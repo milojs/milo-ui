@@ -1,4 +1,4 @@
 <div ml-bind="MLGroup:{{= it.compName }}">
 	{{# def.partials.label }}
-	{{= it.formGenerator(it.item.items) }}
+	{{= it.formGenerator(it.item) }}
 </div>

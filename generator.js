@@ -15,14 +15,14 @@ var dotDef = {
 	partials: partials
 };
 
-var itemTemplatesStr = {
+var itemTemplatesText = {
 	group: fs.readFileSync(__dirname + '/items/group.dot'),
 	select: fs.readFileSync(__dirname + '/items/select.dot'),
 	input: fs.readFileSync(__dirname + '/items/input.dot'),
 	button: fs.readFileSync(__dirname + '/items/button.dot'),
 }
 
-var itemTemplates = _.mapKeys(itemTemplatesStr, function(templateStr) {
+var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {
 	return doT.compile(templateStr, dotDef);
 });
 
@@ -35,13 +35,13 @@ var itemTemplates = _.mapKeys(itemTemplatesStr, function(templateStr) {
  * @return {String}
  */
 function formGenerator(schema) {
-	var renderedItems = schema.map(renderItem);
+	var renderedItems = schema.items.map(renderItem);
 	return renderedItems.join('');
 
 	function renderItem(item) {
 		return itemTemplates[item.type]({
 			item: item,
-			compName: milo.util.componentName(),
+			compName: item.compName, // milo.util.componentName(),
 			formGenerator: formGenerator
 		});
 	}
