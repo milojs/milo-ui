@@ -1,6 +1,8 @@
-{{# def.partials.label }}
-<select ml-bind="MLSelect:{{= it.compName }}">
-	{{~ it.item.selectOptions :option }}
-		<option value="{{= option.value }}">{{= option.label }}</option>
-	{{~}}
-</select>
+<div class="form-group">
+	{{# def.partials.label }}
+	<select ml-bind="MLSelect:{{= it.compName }}">
+		{{~ it.item.selectOptions :option }}
+			<option value="{{= option.value }}">{{= option.label }}</option>
+		{{~}}
+	</select>
+</div>

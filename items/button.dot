@@ -1,3 +1,5 @@
-<button ml-bind="MLButton:{{= it.compName }}">
-	{{= it.item.label || '' }}
-</button>
+<div class="form-group">
+	<button ml-bind="MLButton:{{= it.compName }}">
+		{{= it.item.label || '' }}
+	</button>
+</div>

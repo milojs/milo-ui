@@ -1,2 +1,4 @@
-{{# def.partials.label }}
-<input type="text" ml-bind="MLInput:{{= it.compName }}">
+<div class="form-group">
+	{{# def.partials.label }}
+	<input type="text" ml-bind="MLInput:{{= it.compName }}">
+</div>
