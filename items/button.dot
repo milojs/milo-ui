@@ -1,5 +1,5 @@
 <div class="btn-toolbar">
-	<button ml-bind="MLButton:{{= it.compName }}" class="btn btn-default">
+	<button ml-bind="MLButton:{{= it.compName }}" {{? it.disabled }}disabled{{?}} class="btn btn-default">
 		{{= it.item.label || '' }}
 	</button>
 </div>

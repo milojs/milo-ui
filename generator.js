@@ -19,6 +19,7 @@ var itemTemplatesText = {
 	group: fs.readFileSync(__dirname + '/items/group.dot'),
 	select: fs.readFileSync(__dirname + '/items/select.dot'),
 	input: fs.readFileSync(__dirname + '/items/input.dot'),
+	textarea: fs.readFileSync(__dirname + '/items/textarea.dot'),
 	button: fs.readFileSync(__dirname + '/items/button.dot'),
 }
 
