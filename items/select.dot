@@ -1,5 +1,5 @@
 <div class="form-group">
 	{{# def.partials.label }}
-	<select ml-bind="MLSelect:{{= it.compName }}">
+	<select ml-bind="MLSelect:{{= it.compName }}" {{? it.disabled }}disabled{{?}}>
 	</select>
 </div>

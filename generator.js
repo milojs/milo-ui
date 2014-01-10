@@ -42,7 +42,8 @@ function formGenerator(schema) {
 		return itemTemplates[item.type]({
 			item: item,
 			compName: item.compName, // milo.util.componentName(),
-			formGenerator: formGenerator
+			formGenerator: formGenerator,
+			disabled: item.disabled
 		});
 	}
 }
