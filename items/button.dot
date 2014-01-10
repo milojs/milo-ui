@@ -1,5 +1,5 @@
-<div class="form-group">
-	<button ml-bind="MLButton:{{= it.compName }}">
+<div class="btn-toolbar">
+	<button ml-bind="MLButton:{{= it.compName }}" class="btn btn-default">
 		{{= it.item.label || '' }}
 	</button>
 </div>
