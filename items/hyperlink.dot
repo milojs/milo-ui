@@ -1,0 +1,12 @@
+<div class="hyperlink-toolbar">
+
+	<a  {{? it.item.href}}
+	href="{{= it.item.href }}" 
+	{{?}}	
+	ml-bind="MLHyperlink:{{= it.compName }}" 
+	class="hyperlink hyperlink-default">
+	{{= it.item.label || '' }}
+	
+	</a>
+
+</div>
