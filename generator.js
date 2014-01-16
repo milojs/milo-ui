@@ -21,7 +21,8 @@ var itemTemplatesText = {
 	input: fs.readFileSync(__dirname + '/items/input.dot'),
 	textarea: fs.readFileSync(__dirname + '/items/textarea.dot'),
 	button: fs.readFileSync(__dirname + '/items/button.dot'),
-	radio: fs.readFileSync(__dirname + '/items/radio.dot')
+	radio: fs.readFileSync(__dirname + '/items/radio.dot'),
+	hyperlink: fs.readFileSync(__dirname + '/items/hyperlink.dot')
 }
 
 var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {
