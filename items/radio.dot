@@ -1,8 +1,4 @@
-<span class="form-group">
-	<input type="radio"
-			ml-bind="MLRadio:{{= it.compName }}"
-			name="{{= it.item.name }}"
-			{{? it.disabled }}disabled {{?}}
-			class="form-control">
-	<span>{{= it.item.label }}</span>
-</span>
+<div class="form-group">
+	{{# def.partials.label }}
+	<div ml-bind="MLRadioGroup:{{= it.compName }}"></div>
+</div>
