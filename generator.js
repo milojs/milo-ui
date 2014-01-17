@@ -22,7 +22,11 @@ var itemTemplatesText = {
 	textarea: fs.readFileSync(__dirname + '/items/textarea.dot'),
 	button: fs.readFileSync(__dirname + '/items/button.dot'),
 	radio: fs.readFileSync(__dirname + '/items/radio.dot'),
-	hyperlink: fs.readFileSync(__dirname + '/items/hyperlink.dot')
+	hyperlink: fs.readFileSync(__dirname + '/items/hyperlink.dot'),
+	checkbox: fs.readFileSync(__dirname + '/items/checkbox.dot'),
+	list: fs.readFileSync(__dirname + '/items/list.dot'),
+	time: fs.readFileSync(__dirname + '/items/time.dot'),
+	date: fs.readFileSync(__dirname + '/items/date.dot')
 }
 
 var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {

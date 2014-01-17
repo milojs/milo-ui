@@ -1,0 +1,7 @@
+<div class="form-group">
+	{{# def.partials.label }}
+	<list ml-bind="MLList:{{= it.compName }}"
+			{{? it.disabled }}disabled {{?}}
+			class="form-control">
+	</list>
+</div>
