@@ -1,5 +1,6 @@
 'use strict';
 
 module.exports = {
-	generator: require('./generator')
+	generator: require('./generator'),
+	Form: require('./Form')
 };
