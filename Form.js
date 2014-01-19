@@ -2,10 +2,62 @@
 
 var formGenerator = require('./generator')
 	, componentsRegistry = milo.registry.components
-	, check = milo.util.check;
+	, check = milo.util.check
+	, FormError = milo.util.error.createClass('Form')
+	, logger = milo.util.logger;
+
 
 /**
- * A component class for generating forms
+ * A component class for generating forms from schema
+ * To create form class method [createForm](#CCForm$$createForm) should be used.
+ * Form schema has the following format:
+ * ```
+ * var schema = {
+ *     items: [
+ *         {
+ *	           type: '<type of ui control>',
+ *                             // can be group, select, input, button, radio,
+ *                             // hyperlink, checkbox, list, time, date
+ *             compName: '<component name>',
+ *                             // name of component, should be unique within the form
+ *                             // (or form group)
+ *             label: '<ui control label>',
+ *                             // optional label, will not be added if not defined
+ *                             // or empty string
+ *             modelPath: '<model mapping>',
+ *                             // path in model where the value will be stored.
+ *                             // Most types of items require this property,
+ *                             // some items may have this property (button, e.g.),
+ *                             // "group" must NOT have this property.
+ *                             // Warning will be logged if these rules are not followed.
+ *                             // Items without this property will not be in model
+ *                             // (apart from "group which subitems will be in model
+ *                             // if they have this property)
+ *                             // This property allows to have fixed form model structure
+ *                             // while changing view structure of the form
+ *                             // See Model.
+ *             messages: {                      // to subscribe to messages on item's component facets
+ *                 events: {                    // facet to subscribe to
+ *	                   '<message1>': onMessage1 // message and subscriber function
+ *                     '<msg2> <msg3>': {       // subscribe to 2 messages
+ *                         subscriber: onMessage2,
+ *                         context: context     // context can be an object or a string:
+ *                                              //    "facet": facet instance will be used as context
+ *                                              //    "owner": item component instance will be used as context
+ *                                              //    "host": host object passed to createForm method will be used as context
+ *                     }
+ *                 }
+ *             },
+ *             <item specific>: {<item configuration>}
+ *                             // "select" supports "selectOptions" - array of objects
+ *                             // with properties "value" and "label"
+ *                             // "radio" supports "radioOptions" with the same format
+ *             items: [
+ *                 { ... } //, ... - items inside "group" item
+ *             ]
+ *         } // , ... more items
+ *     ]	
+ * }
  */
 var CCForm = milo.Component.createComponentClass('CCForm', {
 	dom: {
@@ -29,7 +81,14 @@ _.extend(CCForm, {
 
 /**
  * CCForm class method
- * Creates form from schema and optional template 
+ * Creates form from schema.
+ * Form data can be obtained from its Model (`form.model`), reactive connection to form's model can also be used.
+ *
+ * @param {Object} schema form schema, as described above
+ * @param {Object} hostObject form host object, used to define as message subscriber context in schema - by convention the context should be defined as "host"
+ * @param {Object} formData data to initialize the form with
+ * @param {String} template optional form template, will be used instead of automatically generated from schema. Not recommended to use, as it will have to be maintained to be consistent with schema for bindings.
+ * @return {CCForm}
  */
 function CCForm$$createForm(schema, hostObject, formData, template) {
 	// get form HTML
@@ -38,11 +97,20 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 	// create form component
 	var form = CCForm.createOnElement(undefined, template);
 
-	// process form schema
-	processSchema.call(hostObject, form, schema);
+	// model paths translation rules
+	var modelPathTranslations = {};
 
-	// connect form view to form model
-	form._connector = milo.minder(form.data, '<<<->>>', form.model.m);
+	// process form schema
+	try {
+		processSchema.call(hostObject, form, schema, '', modelPathTranslations);
+	} catch (e) {
+		logger.debug('modelPathTranslations before error: ', modelPathTranslations);
+		throw (e);
+	}
+
+	// connect form view to form model using translation rules from modelPath properties of form items
+	form._connector = milo.minder(form.data, '<<<->>>', form.model.m,
+		{ pathTranslation: modelPathTranslations });
 
 	// set original form data
 	if (formData)
@@ -52,89 +120,160 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 }
 
 
-var _processItemSchemaFuncs = {
-	group: {
-		CompClass: componentsRegistry.get('MLGroup'),
-		func: doNothing
-	},
-	select: {
-		CompClass: componentsRegistry.get('MLSelect'),
-		func: _processSelectSchema
-	},
-	input: {
-		CompClass: componentsRegistry.get('MLInput'),
-		func: doNothing
-	},
-	button: {
-		CompClass: componentsRegistry.get('MLButton'),
-		func: doNothing
-	},
-	radio: {
-		CompClass: componentsRegistry.get('MLRadioGroup'),
-		func: _processRadioSchema
-	},
-	hyperlink: {
-		CompClass: componentsRegistry.get('MLHyperlink'),
-		func: doNothing
-	},
-	checkbox: {
-		CompClass: componentsRegistry.get('MLCheckbox'),
-		func: doNothing
-	},
-	list: {
-		CompClass: componentsRegistry.get('MLList'),
-		func: doNothing
-	},
-	time: {
-		CompClass: componentsRegistry.get('MLTime'),
-		func: doNothing
-	},
-	date: {
-		CompClass: componentsRegistry.get('MLDate'),
-		func: doNothing
-	}
+/**
+ * Map of items types to items components classes
+ * UI components are defined in `milo`
+ */
+var itemsClasses = {
+	group: 'MLGroup',
+	select: 'MLSelect',
+	input: 'MLInput',
+	button: 'MLButton',
+	radio: 'MLRadioGroup',
+	hyperlink: 'MLHyperlink',
+	checkbox: 'MLCheckbox',
+	list: 'MLList',
+	time: 'MLTime',
+	date: 'MLDate'
+};
+
+/**
+ * modelPath translation rules for item types.
+ * Default is "required"
+ */
+var modelPathRules = {
+	group: 'prohibited',
+	button: 'optional',
+	hyperlink: 'optional'
 }
+
+/**
+ * Special processing functions for some types of items
+ */
+var itemsFunctions = {
+	select: _processSelectSchema,
+	radio: _processRadioSchema
+};
+
+var _itemsSchemaRules = _.mapKeys(itemsClasses, function(className, itemType) {
+	return {
+		CompClass: componentsRegistry.get(className),
+		func: itemsFunctions[itemType] || doNothing,
+		modelPathRule: modelPathRules[itemType] || 'required'
+	};
+});
 
 function doNothing() {}
 
 
-function processSchema(comp, schema) {
-	if (schema.items)
-		_processSchemaItems.call(this, comp, schema.items);
+/**
+ * Processes form schema to subscribe for messages as defined in schema. Performs special processing for some types of items.
+ * Returns translation rules for Connector object. 
+ * This function is called recursively for groups (and subgroups)
+ *
+ * @private
+ * @param {Component} comp form or group component
+ * @param {Object} schema form or group schema
+ * @param {String} viewPath current view path, used to generate Connector translation rules
+ * @param {Object} modelPathTranslations model path translation rules accumulated so far
+ * @return {Object}
+ */
+function processSchema(comp, schema, viewPath, modelPathTranslations) {
+	viewPath = viewPath || '';
+
+	modelPathTranslations = modelPathTranslations || {};
+
+	if (schema.items) 
+		_processSchemaItems.call(this, comp, schema.items, viewPath, modelPathTranslations);
 
 	if (schema.messages)
 		_processSchemaMessages.call(this, comp, schema.messages);
 
-	var processItem = _processItemSchemaFuncs[schema.type];
-	if (processItem) {
-		check(comp, processItem.CompClass);
-		processItem.func.call(this, comp, schema);
+	var itemRules = _itemsSchemaRules[schema.type];
+
+	if (viewPath) {
+		if (itemRules) {
+			check(comp, itemRules.CompClass);
+			itemRules.func.call(this, comp, schema);
+			_processItemModelPath(viewPath, schema.modelPath)
+		} else
+			throw new FormError('unknown item type ' + schema.type);
+	}
+
+	return modelPathTranslations;
+
+
+	function _addModelPathTranslation(viewPath, modelPath) {
+		if (viewPath in modelPathTranslations)
+			throw new FormError('duplicate view path ' + viewPath);
+		else if (_.keyOf(modelPathTranslations, modelPath))
+			throw new FormError('duplicate model path ' + modelPath + ' for view path ' + viewPath);
+		else
+			modelPathTranslations[viewPath] = modelPath;
+	}
+
+	function _processItemModelPath(viewPath, modelPath) {
+		if (viewPath) {
+			switch (itemRules.modelPathRule) {
+				case 'prohibited':
+					if (modelPath)
+						throw new FormError('modelPath is prohibited for item type ' + schema.type);
+					break;
+				case 'required':
+					if (! modelPath)
+						throw new FormError('modelPath is required for item type ' + schema.type);
+					// falling through to 'optional'
+				case 'optional':
+					if (modelPath)
+						_addModelPathTranslation(viewPath, modelPath);
+					break;
+				default:
+					throw new FormError('unknown modelPath rule for item type ' + schema.type);
+			}
+		}
 	}
 }
 
-function _processSchemaItems(comp, items) {
+
+/**
+ * Processes items of the form (or group).
+ * Component that has items should have Container facet.
+ * Returns translation rules for Connector.
+ * 
+ * @private
+ * @param {Component} comp form or group component
+ * @param {Array} items list of items in schema
+ * @param {String} viewPath current view path, used to generate Connector translation rules
+ * @return {Object}
+ */
+function _processSchemaItems(comp, items, viewPath, modelPathTranslations) {
 	if (! comp.container)
-		throw new InspectorError('schema has items but inspector component has no container facet');
+		throw new FormError('schema has items but component has no container facet');
 
 	items.forEach(function(item) {
-		var itemComp = comp.container.scope[item.compName];
+		var itemComp = comp.container.scope[item.compName]
+			, compViewPath = viewPath + '.' + item.compName;
 		if (! itemComp)
-			throw new InspectorError('component "' + item.compName + '" is not in scope (or subscope) of inspector');
-		processSchema.call(this, itemComp, item);
+			throw new FormError('component "' + item.compName + '" is not in scope (or subscope) of form');
+		processSchema.call(this, itemComp, item, compViewPath, modelPathTranslations);
 	}, this);
 }
 
+
+/**
+ * Subscribes to messages on facets of items' component as defiend in schema
+ */
 function _processSchemaMessages(comp, messages) {
-	var component = this.owner;
+	var hostObject = this;
 	_.eachKey(messages, function(facetMessages, facetName) {
 		var facet = comp[facetName];
 		if (! facet)
-			throw new InspectorError('schema has subscriptions for facet "' + facetName + '" of inspector component "' + comp.name + '", but component has no facet');
+			throw new FormError('schema has subscriptions for facet "' + facetName + '" of form component "' + comp.name + '", but component has no facet');
 		facetMessages = _.clone(facetMessages);
 		_.eachKey(facetMessages, function(subscriber, messageType) {
-			if (typeof subscriber == 'object' && subscriber.context == 'component') {
+			if (typeof subscriber == 'object' && subscriber.context == 'host') {
 				subscriber = _.clone(subscriber);
-				subscriber.context = component;
+				subscriber.context = hostObject;
 				facetMessages[messageType] = subscriber;
 			}
 		});
