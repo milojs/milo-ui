@@ -1,6 +1,6 @@
 <div class="form-group">
 	{{# def.partials.label }}
-	<textarea ml-bind="MLInput:{{= it.compName }}"
+	<textarea ml-bind="MLTextarea:{{= it.compName }}"
 				{{? it.disabled }}disabled {{?}}
 				class="form-control"></textarea>
 </div>

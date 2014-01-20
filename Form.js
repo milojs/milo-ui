@@ -128,6 +128,7 @@ var itemsClasses = {
 	group: 'MLGroup',
 	select: 'MLSelect',
 	input: 'MLInput',
+	textarea: 'MLTextarea',
 	button: 'MLButton',
 	radio: 'MLRadioGroup',
 	hyperlink: 'MLHyperlink',
