@@ -98,19 +98,26 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 	var form = CCForm.createOnElement(undefined, template);
 
 	// model paths translation rules
-	var modelPathTranslations = {};
+	var modelPathTranslations = {}
+		, dataTranslations = { fromModel: {}, toModel: {} };
 
 	// process form schema
 	try {
-		processSchema.call(hostObject, form, schema, '', modelPathTranslations);
+		processSchema.call(hostObject, form, schema, '', modelPathTranslations, dataTranslations);
 	} catch (e) {
 		logger.debug('modelPathTranslations before error: ', modelPathTranslations);
+		logger.debug('dataTranslations before error: ', dataTranslations);
 		throw (e);
 	}
 
 	// connect form view to form model using translation rules from modelPath properties of form items
-	form._connector = milo.minder(form.data, '<<<->>>', form.model,
-		{ pathTranslation: modelPathTranslations });
+	form._connector = milo.minder(form.data, '<<<->>>', form.model, {
+		pathTranslation: modelPathTranslations,
+		dataTranslation: {
+			'<-': dataTranslations.fromModel,
+			'->': dataTranslations.toModel
+		}
+	});
 
 	// set original form data
 	if (formData)
@@ -177,15 +184,18 @@ function doNothing() {}
  * @param {Object} schema form or group schema
  * @param {String} viewPath current view path, used to generate Connector translation rules
  * @param {Object} modelPathTranslations model path translation rules accumulated so far
+ * @param {Object} dataTranslations data translation functions so far
  * @return {Object}
  */
-function processSchema(comp, schema, viewPath, modelPathTranslations) {
+function processSchema(comp, schema, viewPath, modelPathTranslations, dataTranslations) {
 	viewPath = viewPath || '';
-
 	modelPathTranslations = modelPathTranslations || {};
+	dataTranslations = dataTranslations || {};
+	dataTranslations.fromModel = dataTranslations.fromModel || {};
+	dataTranslations.toModel = dataTranslations.toModel || {};
 
 	if (schema.items) 
-		_processSchemaItems.call(this, comp, schema.items, viewPath, modelPathTranslations);
+		_processSchemaItems.call(this, comp, schema.items, viewPath, modelPathTranslations, dataTranslations);
 
 	if (schema.messages)
 		_processSchemaMessages.call(this, comp, schema.messages);
@@ -196,7 +206,7 @@ function processSchema(comp, schema, viewPath, modelPathTranslations) {
 		if (itemRules) {
 			check(comp, itemRules.CompClass);
 			itemRules.func.call(this, comp, schema);
-			_processItemModelPath(viewPath, schema.modelPath)
+			_processItemTranslations(viewPath, schema.modelPath, schema.translate)
 		} else
 			throw new FormError('unknown item type ' + schema.type);
 	}
@@ -213,8 +223,19 @@ function processSchema(comp, schema, viewPath, modelPathTranslations) {
 			modelPathTranslations[viewPath] = modelPath;
 	}
 
-	function _processItemModelPath(viewPath, modelPath) {
+	function _addDataTranslation(translate, direction, path) {
+		var translateFunc = translate && translate[direction];
+		if (! translateFunc) return;
+		if (typeof translateFunc == 'function')
+			dataTranslations[direction][path] = translateFunc;
+		else
+			throw new FormError(direction + ' translator for ' + path + ' should be function');
+	}
+
+	function _processItemTranslations(viewPath, modelPath, translate) {
 		if (viewPath) {
+			_addDataTranslation(translate, 'toModel', viewPath);
+
 			switch (itemRules.modelPathRule) {
 				case 'prohibited':
 					if (modelPath)
@@ -225,8 +246,10 @@ function processSchema(comp, schema, viewPath, modelPathTranslations) {
 						throw new FormError('modelPath is required for item type ' + schema.type);
 					// falling through to 'optional'
 				case 'optional':
-					if (modelPath)
+					if (modelPath) {
 						_addModelPathTranslation(viewPath, modelPath);
+						_addDataTranslation(translate, 'fromModel', modelPath);
+					}
 					break;
 				default:
 					throw new FormError('unknown modelPath rule for item type ' + schema.type);
@@ -245,9 +268,11 @@ function processSchema(comp, schema, viewPath, modelPathTranslations) {
  * @param {Component} comp form or group component
  * @param {Array} items list of items in schema
  * @param {String} viewPath current view path, used to generate Connector translation rules
+ * @param {Object} modelPathTranslations model path translation rules accumulated so far
+ * @param {Object} dataTranslations data translation functions so far
  * @return {Object}
  */
-function _processSchemaItems(comp, items, viewPath, modelPathTranslations) {
+function _processSchemaItems(comp, items, viewPath, modelPathTranslations, dataTranslations) {
 	if (! comp.container)
 		throw new FormError('schema has items but component has no container facet');
 
@@ -256,7 +281,7 @@ function _processSchemaItems(comp, items, viewPath, modelPathTranslations) {
 			, compViewPath = viewPath + '.' + item.compName;
 		if (! itemComp)
 			throw new FormError('component "' + item.compName + '" is not in scope (or subscope) of form');
-		processSchema.call(this, itemComp, item, compViewPath, modelPathTranslations);
+		processSchema.call(this, itemComp, item, compViewPath, modelPathTranslations, dataTranslations);
 	}, this);
 }
 
