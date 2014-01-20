@@ -26,7 +26,8 @@ var itemTemplatesText = {
 	checkbox: fs.readFileSync(__dirname + '/items/checkbox.dot'),
 	list: fs.readFileSync(__dirname + '/items/list.dot'),
 	time: fs.readFileSync(__dirname + '/items/time.dot'),
-	date: fs.readFileSync(__dirname + '/items/date.dot')
+	date: fs.readFileSync(__dirname + '/items/date.dot'),
+	datalist: fs.readFileSync(__dirname + '/items/datalist.dot')
 }
 
 var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {

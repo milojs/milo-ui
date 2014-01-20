@@ -142,7 +142,8 @@ var itemsClasses = {
 	checkbox: 'MLCheckbox',
 	list: 'MLList',
 	time: 'MLTime',
-	date: 'MLDate'
+	date: 'MLDate',
+	datalist: 'MLDatalist'
 };
 
 /**
