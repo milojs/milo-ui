@@ -1,7 +1,5 @@
-<div class="checkbox-toolbar">
-
-	{{= it.item.label || '' }}
-	<input type="checkbox" ml-bind="MLCheckbox:{{= it.compName }}"
-		class="checkbox checkbox-default">
-	</input>
+<div class="checkbox">
+	<label>
+    	<input type="checkbox" ml-bind="MLInput:{{= it.compName }}"> {{= it.item.label }}
+	</label>
 </div>

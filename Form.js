@@ -139,7 +139,7 @@ var itemsClasses = {
 	button: 'MLButton',
 	radio: 'MLRadioGroup',
 	hyperlink: 'MLHyperlink',
-	checkbox: 'MLCheckbox',
+	checkbox: 'MLInput',
 	list: 'MLList',
 	time: 'MLTime',
 	date: 'MLDate',
