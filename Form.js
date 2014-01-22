@@ -48,6 +48,10 @@ var formGenerator = require('./generator')
  *                     }
  *                 }
  *             },
+ *             translate: {          // optional data translation functions
+ *	               toModel: func1,   // translates item data from view to model
+ *                 fromModel: func2  // translates item data from model to view
+ *             }
  *             <item specific>: {<item configuration>}
  *                             // "select" supports "selectOptions" - array of objects
  *                             // with properties "value" and "label"
