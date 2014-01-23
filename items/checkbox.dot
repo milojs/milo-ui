@@ -1,5 +1,6 @@
-<div class="checkbox">
-	<label>
-    	<input type="checkbox" ml-bind="MLInput:{{= it.compName }}"> {{= it.item.label }}
-	</label>
+<div class="form-group">
+	{{# def.partials.label }}
+    <input type="checkbox" 
+    	ml-bind="MLInput:{{= it.compName }}"
+    	{{? it.disabled }}disabled {{?}}>
 </div>
