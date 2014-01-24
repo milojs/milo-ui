@@ -4,7 +4,8 @@ var formGenerator = require('./generator')
 	, componentsRegistry = milo.registry.components
 	, check = milo.util.check
 	, FormError = milo.util.error.createClass('Form')
-	, logger = milo.util.logger;
+	, logger = milo.util.logger
+	, Promise = milo.util.promise;
 
 
 /**
@@ -313,11 +314,24 @@ function _processSchemaMessages(comp, messages) {
 }
 
 function _processSelectSchema(comp, schema) {
-	if (schema.selectOptions)
-		comp.model.set(schema.selectOptions);
+	var options = schema.selectOptions;
+	setComponentModel(comp, options)
 }
 
 function _processRadioSchema(comp, schema) {
-	if (schema.radioOptions)
-		comp.model.set(schema.radioOptions);
+	var options = schema.radioOptions;
+	setComponentModel(comp, options);
+}
+
+function setComponentModel(comp, options) {
+	if (options) {
+		if (options instanceof Promise)
+			options.then(setModel)
+		else 
+			setModel(null, options);
+	}
+
+	function setModel(err, data) {
+		comp.model.set(data);
+	}
 }
