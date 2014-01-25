@@ -148,7 +148,7 @@ var itemsClasses = {
 	list: 'MLList',
 	time: 'MLTime',
 	date: 'MLDate',
-	datalist: 'MLDatalist'
+	combo: 'MLCombo'
 };
 
 /**
@@ -166,7 +166,8 @@ var modelPathRules = {
  */
 var itemsFunctions = {
 	select: _processSelectSchema,
-	radio: _processRadioSchema
+	radio: _processRadioSchema,
+	combo: _processComboSchema
 };
 
 var _itemsSchemaRules = _.mapKeys(itemsClasses, function(className, itemType) {
@@ -323,11 +324,21 @@ function _processRadioSchema(comp, schema) {
 	setComponentModel(comp, options);
 }
 
+function _processComboSchema(comp, schema) {
+	var options = schema.comboOptions;
+	setComponentModel(comp, options);
+}
+
 function setComponentModel(comp, options) {
 	if (options) {
-		if (options instanceof Promise)
-			options.then(setModel)
-		else 
+		if (options instanceof Promise){
+			setModel(null, [{ value: 0, label: 'loading...' }]);
+			options
+				.then(setModel)
+				.error(function() {
+					setModel(null, [{ value: 0, label: 'loading error' }]);
+				});
+		} else 
 			setModel(null, options);
 	}
 

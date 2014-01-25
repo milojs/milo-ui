@@ -1,7 +1,8 @@
 'use strict';
 
 var doT = require('dot')
-	, fs =require('fs');
+	, fs =require('fs')
+	, miloCount = milo.util.count;
 
 
 module.exports = formGenerator;
@@ -27,7 +28,7 @@ var itemTemplatesText = {
 	list: fs.readFileSync(__dirname + '/items/list.dot'),
 	time: fs.readFileSync(__dirname + '/items/time.dot'),
 	date: fs.readFileSync(__dirname + '/items/date.dot'),
-	datalist: fs.readFileSync(__dirname + '/items/datalist.dot')
+	combo: fs.readFileSync(__dirname + '/items/combo.dot')
 }
 
 var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {
@@ -51,6 +52,7 @@ function formGenerator(schema) {
 			item: item,
 			compName: item.compName, // milo.util.componentName(),
 			formGenerator: formGenerator,
+			miloCount: miloCount,
 			disabled: item.disabled
 		});
 	}
