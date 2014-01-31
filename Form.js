@@ -305,8 +305,10 @@ function _processSchemaMessages(comp, messages) {
 		facetMessages = _.clone(facetMessages);
 		_.eachKey(facetMessages, function(subscriber, messageType) {
 			if (typeof subscriber == 'object' && subscriber.context == 'host') {
-				subscriber = _.clone(subscriber);
-				subscriber.context = hostObject;
+				subscriber = {
+					subscriber: subscriber.subscriber,
+					context: hostObject
+				},
 				facetMessages[messageType] = subscriber;
 			}
 		});
