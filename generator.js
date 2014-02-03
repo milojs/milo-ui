@@ -28,7 +28,8 @@ var itemTemplatesText = {
 	list: fs.readFileSync(__dirname + '/items/list.dot'),
 	time: fs.readFileSync(__dirname + '/items/time.dot'),
 	date: fs.readFileSync(__dirname + '/items/date.dot'),
-	combo: fs.readFileSync(__dirname + '/items/combo.dot')
+	combo: fs.readFileSync(__dirname + '/items/combo.dot'),
+	combolist: fs.readFileSync(__dirname + '/items/combolist.dot')
 }
 
 var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {

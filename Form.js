@@ -148,7 +148,8 @@ var itemsClasses = {
 	list: 'MLList',
 	time: 'MLTime',
 	date: 'MLDate',
-	combo: 'MLCombo'
+	combo: 'MLCombo',
+	combolist: 'MLComboList'
 };
 
 /**
@@ -167,7 +168,8 @@ var modelPathRules = {
 var itemsFunctions = {
 	select: _processSelectSchema,
 	radio: _processRadioSchema,
-	combo: _processComboSchema
+	combo: _processComboSchema,
+	combolist: _processComboListSchema
 };
 
 var _itemsSchemaRules = _.mapKeys(itemsClasses, function(className, itemType) {
@@ -318,33 +320,45 @@ function _processSchemaMessages(comp, messages) {
 
 function _processSelectSchema(comp, schema) {
 	var options = schema.selectOptions;
-	setComponentModel(comp, options)
+	setComponentOptions(comp, options, setComponentModel)
 }
 
 function _processRadioSchema(comp, schema) {
 	var options = schema.radioOptions;
-	setComponentModel(comp, options);
+	setComponentOptions(comp, options, setComponentModel);
 }
 
 function _processComboSchema(comp, schema) {
 	var options = schema.comboOptions;
-	setComponentModel(comp, options);
+	setComponentOptions(comp, options, setComponentModel);
 }
 
-function setComponentModel(comp, options) {
+function _processComboListSchema(comp, schema) {
+	var options = schema.comboOptions;
+	setComponentOptions(comp, options, setComboListOptions);
+}
+
+function setComponentOptions(comp, options, setModelFunc) {
 	if (options) {
 		if (options instanceof Promise){
-			setModel(null, [{ value: 0, label: 'loading...' }]);
+			setModelFunc(comp, [{ value: 0, label: 'loading...' }]);
 			options
-				.then(setModel)
+				.then(function(err, data) {
+					setModelFunc(comp, data);
+				})
 				.error(function() {
-					setModel(null, [{ value: 0, label: 'loading error' }]);
+					setModelFunc(comp, [{ value: 0, label: 'loading error' }]);
 				});
 		} else 
-			setModel(null, options);
-	}
-
-	function setModel(err, data) {
-		comp.model.set(data);
+			setModelFunc(comp, options);
 	}
 }
+
+function setComponentModel(comp, data) {
+	comp.model.set(data);
+}
+
+function setComboListOptions(comp, data) {
+	comp.setOptions(data);
+}
+
