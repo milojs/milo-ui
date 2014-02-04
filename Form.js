@@ -8,6 +8,8 @@ var formGenerator = require('./generator')
 	, Promise = milo.util.promise;
 
 
+var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
+
 /**
  * A component class for generating forms from schema
  * To create form class method [createForm](#CCForm$$createForm) should be used.
@@ -104,14 +106,16 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
 	// model paths translation rules
 	var modelPathTranslations = {}
-		, dataTranslations = { fromModel: {}, toModel: {} };
+		, dataTranslations = { fromModel: {}, toModel: {} }
+		, dataValidations = { fromModel: {}, toModel: {} } ;
 
 	// process form schema
 	try {
-		processSchema.call(hostObject, form, schema, '', modelPathTranslations, dataTranslations);
+		processSchema.call(hostObject, form, schema, '', modelPathTranslations, dataTranslations, dataValidations);
 	} catch (e) {
 		logger.debug('modelPathTranslations before error: ', modelPathTranslations);
 		logger.debug('dataTranslations before error: ', dataTranslations);
+		logger.debug('dataValidations before error: ', dataValidations);
 		throw (e);
 	}
 
@@ -121,7 +125,22 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 		dataTranslation: {
 			'<-': dataTranslations.fromModel,
 			'->': dataTranslations.toModel
+		},
+		dataValidation: {
+			'<-': dataValidations.fromModel,
+			'->': dataValidations.toModel
 		}
+	});
+
+	form.data.on('validated', function(msg, response) {
+		var dataFacet = form.data.path(response.path);
+		if (dataFacet) {
+			var component = dataFacet.owner
+				, parentEl = component.el.parentNode;
+			parentEl.classList.toggle(FORM_VALIDATION_FAILED_CSS_CLASS, ! response.valid);
+			parentEl.title = response.valid ? '' : response.reason;
+		} else
+			logger.error('Form: component for path ' + response.path + ' not found');
 	});
 
 	// set original form data
@@ -174,6 +193,15 @@ var itemsFunctions = {
 	combolist: _processComboListSchema
 };
 
+/**
+ * Predefined for validation functions
+ */
+var validationFunctions = {
+	'required': validateRequired,
+	'validurl': validateValidUrl
+}
+
+
 var _itemsSchemaRules = _.mapKeys(itemsClasses, function(className, itemType) {
 	return {
 		CompClass: componentsRegistry.get(className),
@@ -196,17 +224,22 @@ function doNothing() {}
  * @param {String} viewPath current view path, used to generate Connector translation rules
  * @param {Object} modelPathTranslations model path translation rules accumulated so far
  * @param {Object} dataTranslations data translation functions so far
+ * @param {Object} dataValidations data validation functions so far
  * @return {Object}
  */
-function processSchema(comp, schema, viewPath, modelPathTranslations, dataTranslations) {
+function processSchema(comp, schema, viewPath, modelPathTranslations, dataTranslations, dataValidations) {
 	viewPath = viewPath || '';
 	modelPathTranslations = modelPathTranslations || {};
 	dataTranslations = dataTranslations || {};
 	dataTranslations.fromModel = dataTranslations.fromModel || {};
 	dataTranslations.toModel = dataTranslations.toModel || {};
 
+	dataValidations = dataValidations || {};
+	dataValidations.fromModel = dataValidations.fromModel || {};
+	dataValidations.toModel = dataValidations.toModel || {};
+
 	if (schema.items) 
-		_processSchemaItems.call(this, comp, schema.items, viewPath, modelPathTranslations, dataTranslations);
+		_processSchemaItems.call(this, comp, schema.items, viewPath, modelPathTranslations, dataTranslations, dataValidations);
 
 	if (schema.messages)
 		_processSchemaMessages.call(this, comp, schema.messages);
@@ -217,13 +250,40 @@ function processSchema(comp, schema, viewPath, modelPathTranslations, dataTransl
 		if (itemRules) {
 			check(comp, itemRules.CompClass);
 			itemRules.func.call(this, comp, schema);
-			_processItemTranslations(viewPath, schema.modelPath, schema.translate)
+			_processItemTranslations(viewPath, schema.modelPath, schema.translate, schema.validate)
 		} else
 			throw new FormError('unknown item type ' + schema.type);
 	}
 
 	return modelPathTranslations;
 
+
+	function _processItemTranslations(viewPath, modelPath, translate, validate) {
+		if (viewPath) {
+			_addDataTranslation(translate, 'toModel', viewPath);
+			_addDataValidation(validate, 'toModel', viewPath);
+
+			switch (itemRules.modelPathRule) {
+				case 'prohibited':
+					if (modelPath)
+						throw new FormError('modelPath is prohibited for item type ' + schema.type);
+					break;
+				case 'required':
+					if (! modelPath)
+						throw new FormError('modelPath is required for item type ' + schema.type);
+					// falling through to 'optional'
+				case 'optional':
+					if (modelPath) {
+						_addModelPathTranslation(viewPath, modelPath);
+						_addDataTranslation(translate, 'fromModel', modelPath);
+						_addDataValidation(validate, 'fromModel', modelPath);
+					}
+					break;
+				default:
+					throw new FormError('unknown modelPath rule for item type ' + schema.type);
+			}
+		}
+	}
 
 	function _addModelPathTranslation(viewPath, modelPath) {
 		if (viewPath in modelPathTranslations)
@@ -243,30 +303,44 @@ function processSchema(comp, schema, viewPath, modelPathTranslations, dataTransl
 			throw new FormError(direction + ' translator for ' + path + ' should be function');
 	}
 
-	function _processItemTranslations(viewPath, modelPath, translate) {
-		if (viewPath) {
-			_addDataTranslation(translate, 'toModel', viewPath);
+	function _addDataValidation(validate, direction, path) {
+		var validators = validate && validate[direction];
+		if (! validators) return;
 
-			switch (itemRules.modelPathRule) {
-				case 'prohibited':
-					if (modelPath)
-						throw new FormError('modelPath is prohibited for item type ' + schema.type);
-					break;
-				case 'required':
-					if (! modelPath)
-						throw new FormError('modelPath is required for item type ' + schema.type);
-					// falling through to 'optional'
-				case 'optional':
-					if (modelPath) {
-						_addModelPathTranslation(viewPath, modelPath);
-						_addDataTranslation(translate, 'fromModel', modelPath);
-					}
-					break;
-				default:
-					throw new FormError('unknown modelPath rule for item type ' + schema.type);
-			}
+		var formValidators = dataValidations[direction][path] = [];
+		if (Array.isArray(validators))
+			validators.forEach(_addValidatorFunc);
+		else
+			_addValidatorFunc(validators);
+
+		function _addValidatorFunc(validator) {
+			if (typeof validator == 'string')
+				var valFunc = getValidatorFunction(validator);
+			else if (validator instanceof RegExp)
+				valFunc = makeRegexValidator(validator);
+			else if (typeof validator == 'function')
+				valFunc = validator;
+			else 
+				throw new FormError(direction + ' validator for ' + path + ' should be function or string');
+			formValidators.push(valFunc);
 		}
 	}
+}
+
+
+function getValidatorFunction(validatorName) {
+	var valFunc = validationFunctions[validatorName];
+	if (! valFunc)
+		throw new FormError('Form: unknown validator function name ' + validatorName);
+	return valFunc;
+}
+
+function makeRegexValidator(validatorRegExp) {
+	return function (data, callback) {
+		var valid = validatorRegExp.test(data)
+			, response = _validatorResponse(valid, 'should match pattern');
+		callback(null, response);
+	};
 }
 
 
@@ -281,9 +355,10 @@ function processSchema(comp, schema, viewPath, modelPathTranslations, dataTransl
  * @param {String} viewPath current view path, used to generate Connector translation rules
  * @param {Object} modelPathTranslations model path translation rules accumulated so far
  * @param {Object} dataTranslations data translation functions so far
+ * @param {Object} dataValidations data validation functions so far 
  * @return {Object}
  */
-function _processSchemaItems(comp, items, viewPath, modelPathTranslations, dataTranslations) {
+function _processSchemaItems(comp, items, viewPath, modelPathTranslations, dataTranslations, dataValidations) {
 	if (! comp.container)
 		throw new FormError('schema has items but component has no container facet');
 
@@ -292,7 +367,7 @@ function _processSchemaItems(comp, items, viewPath, modelPathTranslations, dataT
 			, compViewPath = viewPath + '.' + item.compName;
 		if (! itemComp)
 			throw new FormError('component "' + item.compName + '" is not in scope (or subscope) of form');
-		processSchema.call(this, itemComp, item, compViewPath, modelPathTranslations, dataTranslations);
+		processSchema.call(this, itemComp, item, compViewPath, modelPathTranslations, dataTranslations, dataValidations);
 	}, this);
 }
 
@@ -362,5 +437,23 @@ function setComponentModel(comp, data) {
 
 function setComboListOptions(comp, data) {
 	comp.setOptions(data);
+}
+
+function validateRequired(data, callback) {
+	var valid = typeof data != 'undefined' && data != ''
+		, response = _validatorResponse(valid, 'value is required');
+	callback(null, response);
+}
+
+function validateValidUrl(data, callback) {
+	var valid = typeof data == 'string' && /^http\:\/\//.test(data)
+		, response = _validatorResponse(valid, 'should be valid URL');
+	callback(null, response);
+}
+
+function _validatorResponse(valid, reason) {
+	return valid
+			? { valid: true }
+			: { valid: false, reason: reason };
 }
 
