@@ -314,7 +314,7 @@ function _processSchemaMessages(comp, messages) {
 				facetMessages[messageType] = subscriber;
 			}
 		});
-		facet.onMessages(facetMessages);
+		facet.onConfigMessages(facetMessages);
 	});
 }
 
