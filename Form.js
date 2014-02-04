@@ -138,6 +138,7 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
  */
 var itemsClasses = {
 	group: 'MLGroup',
+	wrapper: 'MLWrapper',
 	select: 'MLSelect',
 	input: 'MLInput',
 	textarea: 'MLTextarea',
@@ -158,6 +159,7 @@ var itemsClasses = {
  */
 var modelPathRules = {
 	group: 'prohibited',
+	wrapper: 'prohibited',
 	button: 'optional',
 	hyperlink: 'optional'
 }

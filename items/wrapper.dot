@@ -1,0 +1,3 @@
+<span ml-bind="MLWrapper:{{= it.compName }}">
+	{{= it.formGenerator(it.item) }}
+</span>
