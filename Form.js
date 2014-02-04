@@ -54,7 +54,15 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *             translate: {          // optional data translation functions
  *	               toModel: func1,   // translates item data from view to model
  *                 fromModel: func2  // translates item data from model to view
- *             }
+ *             },
+ *             validate: {           // optional data validation functions
+ *	               toModel:   func1 | [func1, func2, ...],// validates item data when it is changed in form
+ *                 fromModel: func2 | [func3, func4, ...] // opposite, but not really used and does not make form invalid if it fails.
+ *                                                        // Can be used to prevent data being shown in the form.
+ *             },                    // data validation functions should accept two parameters: data and callback (they are asynchronous).
+ *                                   // when validation is finished, callback should be called with (error, response) parameters.
+ *                                   // response should have properties valid (Boolean) and optional reason (String - reason of validation failure).
+ *                                   // Note!: at the moment, if callback is called with error parameter which is not falsy, validation will be passed. 
  *             <item specific>: {<item configuration>}
  *                             // "select" supports "selectOptions" - array of objects
  *                             // with properties "value" and "label"
@@ -85,6 +93,14 @@ _.extend(CCForm, {
 	createForm: CCForm$$createForm
 });
 
+_.extendProto(CCForm, {
+	isValid: CCForm$isValid,
+	modelPathComponent: CCForm$modelPathComponent,
+	modelPathSchema: CCForm$modelPathSchema,
+	viewPathComponent: CCForm$viewPathComponent,
+	viewPathSchema: CCForm$viewPathSchema
+});
+
 
 /**
  * CCForm class method
@@ -98,56 +114,137 @@ _.extend(CCForm, {
  * @return {CCForm}
  */
 function CCForm$$createForm(schema, hostObject, formData, template) {
-	// get form HTML
-	template = template || formGenerator(schema);
-
-	// create form component
-	var form = CCForm.createOnElement(undefined, template);
-
-	// model paths translation rules
-	var modelPathTranslations = {}
-		, dataTranslations = { fromModel: {}, toModel: {} }
-		, dataValidations = { fromModel: {}, toModel: {} } ;
-
-	// process form schema
-	try {
-		processSchema.call(hostObject, form, schema, '', modelPathTranslations, dataTranslations, dataValidations);
-	} catch (e) {
-		logger.debug('modelPathTranslations before error: ', modelPathTranslations);
-		logger.debug('dataTranslations before error: ', dataTranslations);
-		logger.debug('dataValidations before error: ', dataValidations);
-		throw (e);
-	}
-
-	// connect form view to form model using translation rules from modelPath properties of form items
-	form._connector = milo.minder(form.data, '<<<->>>', form.model, {
-		pathTranslation: modelPathTranslations,
-		dataTranslation: {
-			'<-': dataTranslations.fromModel,
-			'->': dataTranslations.toModel
-		},
-		dataValidation: {
-			'<-': dataValidations.fromModel,
-			'->': dataValidations.toModel
-		}
-	});
-
-	form.data.on('validated', function(msg, response) {
-		var dataFacet = form.data.path(response.path);
-		if (dataFacet) {
-			var component = dataFacet.owner
-				, parentEl = component.el.parentNode;
-			parentEl.classList.toggle(FORM_VALIDATION_FAILED_CSS_CLASS, ! response.valid);
-			parentEl.title = response.valid ? '' : response.reason;
-		} else
-			logger.error('Form: component for path ' + response.path + ' not found');
-	});
+	var form = _createFormComponent();
+	var formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations;
+	_processFormSchema();
+	_connectFormDataToModel();
+	_manageFormValidation();
 
 	// set original form data
 	if (formData)
 		form.model.m.set(formData);
 
 	return form;
+
+
+	function _createFormComponent() {
+		template = template || formGenerator(schema);
+		return CCForm.createOnElement(undefined, template);		
+	}
+
+	function _processFormSchema() {
+		// model paths translation rules
+		formViewPaths = {};
+		formModelPaths = {};
+		modelPathTranslations = {};
+		dataTranslations = { fromModel: {}, toModel: {} };
+		dataValidations = { fromModel: {}, toModel: {} };
+
+		// process form schema
+		try {
+			processSchema.call(hostObject, form, schema, '', formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations);
+		} catch (e) {
+			logger.debug('formViewPaths before error: ', formViewPaths);
+			logger.debug('formModelPaths before error: ', formModelPaths);
+			logger.debug('modelPathTranslations before error: ', modelPathTranslations);
+			logger.debug('dataTranslations before error: ', dataTranslations);
+			logger.debug('dataValidations before error: ', dataValidations);
+			throw (e);
+		}
+
+		form._formViewPaths = formViewPaths;
+		form._formModelPaths = formModelPaths;
+	}
+
+	function _connectFormDataToModel() {
+		// connect form view to form model using translation rules from modelPath properties of form items
+		form._connector = milo.minder(form.data, '<<<->>>', form.model, {
+			pathTranslation: modelPathTranslations,
+			dataTranslation: {
+				'<-': dataTranslations.fromModel,
+				'->': dataTranslations.toModel
+			},
+			dataValidation: {
+				'<-': dataValidations.fromModel,
+				'->': dataValidations.toModel
+			}
+		});
+	}
+
+	function _manageFormValidation() {
+		form._invalidFormControls = {};
+
+		form.data.on('validated', function(msg, response) {
+			var component = form.viewPathComponent(response.path)
+				, schema = form.viewPathSchema(response.path)
+				, label = schema && schema.label;
+			if (component) {
+				var parentEl = component.el.parentNode;
+				parentEl.classList.toggle(FORM_VALIDATION_FAILED_CSS_CLASS, ! response.valid);
+				parentEl.title = response.valid
+									? ''
+									: (label ? label + ': ' : '') + response.reason;
+				if (response.valid)
+					delete form._invalidFormControls[response.path];
+				else
+					form._invalidFormControls[response.path] = component;
+			} else
+				logger.error('Form: component for path ' + response.path + ' not found');
+		});
+	}
+}
+
+
+function CCForm$isValid() {
+	return Object.keys(this._invalidFormControls).length == 0;
+}
+
+
+/**
+ * Returns component for a given modelPath
+ *
+ * @param {String} modelPath
+ * @return {Component}
+ */
+function CCForm$modelPathComponent(modelPath) {
+	var modelPathObj = this._formModelPaths[modelPath];
+	return modelPathObj && modelPathObj.component;
+}
+
+
+/**
+ * Returns form schema for a given modelPath
+ *
+ * @param {String} modelPath
+ * @return {Object}
+ */
+function CCForm$modelPathSchema(modelPath) {
+	var modelPathObj = this._formModelPaths[modelPath];
+	return modelPathObj && modelPathObj.schema;
+}
+
+
+/**
+ * Returns component for a given view path (path as defined in Data facet)
+ *
+ * @param {String} viewPath
+ * @return {Component}
+ */
+function CCForm$viewPathComponent(viewPath) {
+	var viewPathObj = this._formViewPaths[viewPath];
+	return viewPathObj && viewPathObj.component;
+}
+
+
+/**
+ * Returns form schema for a given view path item (path as defined in Data facet)
+ *
+ * @param {String} viewPath
+ * @return {Object}
+ */
+function CCForm$viewPathSchema(viewPath) {
+	var viewPathObj = this._formViewPaths[viewPath];
+	return viewPathObj && viewPathObj.schema;
 }
 
 
@@ -222,13 +319,17 @@ function doNothing() {}
  * @param {Component} comp form or group component
  * @param {Object} schema form or group schema
  * @param {String} viewPath current view path, used to generate Connector translation rules
+ * @param {Object} formViewPaths view paths accumulated so far (have component and schema properties)
+ * @param {Object} formModelPaths view paths accumulated so far (have component and schema properties)
  * @param {Object} modelPathTranslations model path translation rules accumulated so far
  * @param {Object} dataTranslations data translation functions so far
  * @param {Object} dataValidations data validation functions so far
  * @return {Object}
  */
-function processSchema(comp, schema, viewPath, modelPathTranslations, dataTranslations, dataValidations) {
+function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations) {
 	viewPath = viewPath || '';
+	formViewPaths = formViewPaths || {};
+	formModelPaths = formModelPaths || {};
 	modelPathTranslations = modelPathTranslations || {};
 	dataTranslations = dataTranslations || {};
 	dataTranslations.fromModel = dataTranslations.fromModel || {};
@@ -239,7 +340,7 @@ function processSchema(comp, schema, viewPath, modelPathTranslations, dataTransl
 	dataValidations.toModel = dataValidations.toModel || {};
 
 	if (schema.items) 
-		_processSchemaItems.call(this, comp, schema.items, viewPath, modelPathTranslations, dataTranslations, dataValidations);
+		_processSchemaItems.call(this, comp, schema.items, viewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations);
 
 	if (schema.messages)
 		_processSchemaMessages.call(this, comp, schema.messages);
@@ -247,6 +348,11 @@ function processSchema(comp, schema, viewPath, modelPathTranslations, dataTransl
 	var itemRules = _itemsSchemaRules[schema.type];
 
 	if (viewPath) {
+		formViewPaths[viewPath] = {
+			schema: schema,
+			component: comp
+		};
+
 		if (itemRules) {
 			check(comp, itemRules.CompClass);
 			itemRules.func.call(this, comp, schema);
@@ -274,6 +380,11 @@ function processSchema(comp, schema, viewPath, modelPathTranslations, dataTransl
 					// falling through to 'optional'
 				case 'optional':
 					if (modelPath) {
+						formModelPaths[modelPath] = {
+							schema: schema,
+							component: comp
+						}
+
 						_addModelPathTranslation(viewPath, modelPath);
 						_addDataTranslation(translate, 'fromModel', modelPath);
 						_addDataValidation(validate, 'fromModel', modelPath);
@@ -353,12 +464,14 @@ function makeRegexValidator(validatorRegExp) {
  * @param {Component} comp form or group component
  * @param {Array} items list of items in schema
  * @param {String} viewPath current view path, used to generate Connector translation rules
+ * @param {Object} formViewPaths view paths accumulated so far (have component and schema properties)
+ * @param {Object} formModelPaths view paths accumulated so far (have component and schema properties)
  * @param {Object} modelPathTranslations model path translation rules accumulated so far
  * @param {Object} dataTranslations data translation functions so far
  * @param {Object} dataValidations data validation functions so far 
  * @return {Object}
  */
-function _processSchemaItems(comp, items, viewPath, modelPathTranslations, dataTranslations, dataValidations) {
+function _processSchemaItems(comp, items, viewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations) {
 	if (! comp.container)
 		throw new FormError('schema has items but component has no container facet');
 
@@ -367,7 +480,7 @@ function _processSchemaItems(comp, items, viewPath, modelPathTranslations, dataT
 			, compViewPath = viewPath + '.' + item.compName;
 		if (! itemComp)
 			throw new FormError('component "' + item.compName + '" is not in scope (or subscope) of form');
-		processSchema.call(this, itemComp, item, compViewPath, modelPathTranslations, dataTranslations, dataValidations);
+		processSchema.call(this, itemComp, item, compViewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations);
 	}, this);
 }
 
@@ -456,4 +569,3 @@ function _validatorResponse(valid, reason) {
 			? { valid: true }
 			: { valid: false, reason: reason };
 }
-
