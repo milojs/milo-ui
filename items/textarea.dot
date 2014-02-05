@@ -1,4 +1,4 @@
-<div class="form-group">
+{{# def.partials.formGroup }}
 	{{# def.partials.label }}
 	<textarea ml-bind="MLTextarea:{{= it.compName }}"
 				{{? it.disabled }}disabled {{?}}

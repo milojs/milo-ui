@@ -9,7 +9,8 @@ module.exports = formGenerator;
 
 
 var partials = {
-	label: fs.readFileSync(__dirname + '/items/partials/label.dot')
+	label: fs.readFileSync(__dirname + '/items/partials/label.dot'),
+	formGroup: fs.readFileSync(__dirname + '/items/partials/form_group.dot')
 };
 
 var dotDef = {

@@ -1,4 +1,4 @@
-<div ml-bind="MLCombo:{{= it.compName }}" class="form-group">
+<div ml-bind="MLCombo:{{= it.compName }}" class="form-group{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}">
 	{{# def.partials.label }}
 	{{ var listID = 'ml-combo-datalist-' + it.miloCount(); }}
 	<input ml-bind="[data, events]:input"

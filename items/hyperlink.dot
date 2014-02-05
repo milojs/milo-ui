@@ -1,4 +1,4 @@
-<div class="form-group">
+{{# def.partials.formGroup }}
 	<a {{? it.item.href}}href="{{= it.item.href }}"{{?}}	
 		ml-bind="MLHyperlink:{{= it.compName }}" 
 		class="hyperlink hyperlink-default">
