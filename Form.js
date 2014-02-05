@@ -295,7 +295,7 @@ var itemsFunctions = {
  */
 var validationFunctions = {
 	'required': validateRequired,
-	'validurl': validateValidUrl
+	'url': validateUrl
 }
 
 
@@ -558,7 +558,7 @@ function validateRequired(data, callback) {
 	callback(null, response);
 }
 
-function validateValidUrl(data, callback) {
+function validateUrl(data, callback) {
 	var valid = typeof data == 'string' && /^http\:\/\//.test(data)
 		, response = _validatorResponse(valid, 'should be valid URL');
 	callback(null, response);
