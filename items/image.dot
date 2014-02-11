@@ -1,0 +1,7 @@
+{{# def.partials.formGroup }}
+    {{# def.partials.label }}
+    <img {{? it.item.src }}src="{{= it.item.src }}"{{?}}
+        ml-bind="MLImage:{{= it.compName }}"
+        {{? it.item.width }}width="{{= it.item.width }}"{{?}}
+        {{? it.item.height }}height="{{= it.item.height }}"{{?}}>
+</div>

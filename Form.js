@@ -266,7 +266,8 @@ var itemsClasses = {
 	time: 'MLTime',
 	date: 'MLDate',
 	combo: 'MLCombo',
-	combolist: 'MLComboList'
+	combolist: 'MLComboList',
+    image: 'MLImage'
 };
 
 /**
