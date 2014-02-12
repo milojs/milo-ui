@@ -95,6 +95,7 @@ _.extend(CCForm, {
 
 _.extendProto(CCForm, {
 	isValid: CCForm$isValid,
+	getInvalidControls: CCForm$getInvalidControls,
 	modelPathComponent: CCForm$modelPathComponent,
 	modelPathSchema: CCForm$modelPathSchema,
 	viewPathComponent: CCForm$viewPathComponent,
@@ -181,13 +182,18 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 			if (component) {
 				var parentEl = component.el.parentNode;
 				parentEl.classList.toggle(FORM_VALIDATION_FAILED_CSS_CLASS, ! response.valid);
-				parentEl.title = response.valid
-									? ''
-									: (label ? label + ': ' : '') + response.reason;
-				if (response.valid)
+
+				if (response.valid) {
+					parentEl.title = '';
 					delete form._invalidFormControls[response.path];
-				else
-					form._invalidFormControls[response.path] = component;
+				} else {
+					var reason = (label ? label + ': ' : '') + response.reason;
+					parentEl.title = reason;
+					form._invalidFormControls[response.path] = {
+						component: component,
+						reason: reason
+					};
+				}
 			} else
 				logger.error('Form: component for path ' + response.path + ' not found');
 		});
@@ -197,6 +203,11 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
 function CCForm$isValid() {
 	return Object.keys(this._invalidFormControls).length == 0;
+}
+
+
+function CCForm$getInvalidControls() {
+	return this._invalidFormControls;
 }
 
 
