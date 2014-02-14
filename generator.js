@@ -33,7 +33,8 @@ var itemTemplatesText = {
 	combo: fs.readFileSync(__dirname + '/items/combo.dot'),
 	combolist: fs.readFileSync(__dirname + '/items/combolist.dot'),
     image: fs.readFileSync(__dirname + '/items/image.dot'),
-    previewimage: fs.readFileSync(__dirname + '/items/previewimage.dot')
+    previewimage: fs.readFileSync(__dirname + '/items/previewimage.dot'),
+    droptarget: fs.readFileSync(__dirname + '/items/droptarget.dot')
 }
 
 var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {

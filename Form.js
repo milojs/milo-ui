@@ -279,7 +279,8 @@ var itemsClasses = {
 	combo: 'MLCombo',
 	combolist: 'MLComboList',
     image: 'MLImage',
-    previewimage: 'CCPreviewImage'
+    previewimage: 'CCPreviewImage',
+    droptarget: 'MLDropTarget'
 };
 
 /**
@@ -290,7 +291,8 @@ var modelPathRules = {
 	group: 'prohibited',
 	wrapper: 'prohibited',
 	button: 'optional',
-	hyperlink: 'optional'
+	hyperlink: 'optional',
+    droptarget: 'prohibited'
 }
 
 /**
