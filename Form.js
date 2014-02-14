@@ -278,7 +278,8 @@ var itemsClasses = {
 	date: 'MLDate',
 	combo: 'MLCombo',
 	combolist: 'MLComboList',
-    image: 'MLImage'
+    image: 'MLImage',
+    imagedrop: 'CCImageDrop'
 };
 
 /**
