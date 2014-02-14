@@ -13,7 +13,9 @@ var CCImageDrop = MLImage.createComponentClass('CCImageDrop', {
 			'drop': {context: 'owner', subscriber: CCImageDrop_onDrop}
 		}
 	},
-	croppable: undefined
+	croppable: {
+        modelRootPath: '.croppable'
+    }
 });
 
 
