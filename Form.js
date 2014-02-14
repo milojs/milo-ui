@@ -279,7 +279,7 @@ var itemsClasses = {
 	combo: 'MLCombo',
 	combolist: 'MLComboList',
     image: 'MLImage',
-    imagedrop: 'CCImageDrop'
+    previewimage: 'CCPreviewImage'
 };
 
 /**
