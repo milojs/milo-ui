@@ -1,6 +1,7 @@
 'use strict';
 
 var componentRegistry = milo.registry.components
+    , Component = milo.Component
 	, MLImage = componentRegistry.get('MLImage');
 
 
@@ -24,21 +25,38 @@ module.exports = CCImageDrop;
 componentRegistry.add(CCImageDrop);
 
 
-function CCImageDrop_onDragEnter() {
+_.extendProto(CCImageDrop, {
+    setImageData: CCImageDrop$setImageData,
+    setImageSrc: CCImageDrop$setImageSrc
+});
 
+
+function CCImageDrop$setImageData(data) {
+    var modelRootPath = this.croppable.config.modelRootPath;
+    this.model.m(modelRootPath).set(data);
 }
 
 
-function CCImageDrop_onDragOver() {
+function CCImageDrop$setImageSrc(url) {
+    this.model.m('.src').set(url);
+}
+
+
+function CCImageDrop_onDragEnter(eventType, event) {
+    event.preventDefault();
+}
+
+
+function CCImageDrop_onDragOver(eventType, event) {
+    event.preventDefault();
+}
+
+
+function CCImageDrop_leaveImage(eventType, event) {
 	
 }
 
 
-function CCImageDrop_leaveImage() {
-	
-}
-
-
-function CCImageDrop_onDrop() {
+function CCImageDrop_onDrop(eventType, event) {
 
 }
