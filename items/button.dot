@@ -1,4 +1,4 @@
-<div class="btn-toolbar">
+<div class="btn-toolbar{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}">
 	<button ml-bind="MLButton:{{= it.compName }}"
 		{{? it.disabled }}disabled {{?}}
 		class="btn btn-default">
