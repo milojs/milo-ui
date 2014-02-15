@@ -2,7 +2,8 @@
 
 var doT = require('dot')
 	, fs =require('fs')
-	, miloCount = milo.util.count;
+	, miloCount = milo.util.count
+	, componentName = milo.util.componentName;
 
 
 module.exports = formGenerator;
@@ -54,9 +55,10 @@ function formGenerator(schema) {
 	return renderedItems.join('');
 
 	function renderItem(item) {
+		item.compName = item.compName || componentName();
 		return itemTemplates[item.type]({
 			item: item,
-			compName: item.compName, // milo.util.componentName(),
+			compName: item.compName,
 			formGenerator: formGenerator,
 			miloCount: miloCount,
 			disabled: item.disabled
