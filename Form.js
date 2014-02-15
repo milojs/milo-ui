@@ -5,7 +5,8 @@ var formGenerator = require('./generator')
 	, check = milo.util.check
 	, FormError = milo.util.error.createClass('Form')
 	, logger = milo.util.logger
-	, Promise = milo.util.promise;
+	, Promise = milo.util.promise
+	, async = require('async');
 
 
 var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
@@ -22,8 +23,11 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *                             // can be group, select, input, button, radio,
  *                             // hyperlink, checkbox, list, time, date
  *             compName: '<component name>',
- *                             // name of component, should be unique within the form
- *                             // (or form group)
+ *                             // optional name of component, should be unique within the form
+ *                             // (or form group), only needs tobe used when component needs to be
+ *                             // manipilated in some event handler and it cannot be accessed via modelPath
+ *                             // using `modelPathComponent` method
+ *                             // (which is a preferred way to access conponents in form)
  *             label: '<ui control label>',
  *                             // optional label, will not be added if not defined
  *                             // or empty string
@@ -68,7 +72,7 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *                             // with properties "value" and "label"
  *                             // "radio" supports "radioOptions" with the same format
  *             items: [
- *                 { ... } //, ... - items inside "group" item
+ *                 { ... } //, ... - items inside "group" or "wrapper" item
  *             ]
  *         } // , ... more items
  *     ]	
@@ -95,6 +99,7 @@ _.extend(CCForm, {
 
 _.extendProto(CCForm, {
 	isValid: CCForm$isValid,
+	validateModel: CCForm$validateModel,
 	getInvalidControls: CCForm$getInvalidControls,
 	modelPathComponent: CCForm$modelPathComponent,
 	modelPathSchema: CCForm$modelPathSchema,
@@ -155,6 +160,9 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
 		form._formViewPaths = formViewPaths;
 		form._formModelPaths = formModelPaths;
+		form._modelPathTranslations = modelPathTranslations;
+		form._dataTranslations = dataTranslations;
+		form._dataValidations = dataValidations;
 	}
 
 	function _connectFormDataToModel() {
@@ -201,8 +209,65 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 }
 
 
+/**
+ * Returns current validation status of the form
+ * Will not validate fields that were never changed in view
+ * To run all validators, validateModel should be used.
+ *
+ * @return {Boolean}
+ */
 function CCForm$isValid() {
 	return Object.keys(this._invalidFormControls).length == 0;
+}
+
+
+/**
+ * Runs 'toModel' validators defined in schema on the current model of the form
+ * can be used to mark as invaid all required fields or to explicitely validate
+ * form when it is saved. Returns validation state of the form via callback
+ *
+ * @return {Boolean}
+ */
+function CCForm$validateModel(callback) {
+	var validations = []
+		, self = this;
+	_.eachKey(this._dataValidations.toModel, function(validators, viewPath) {
+		var modelPath = this._modelPathTranslations[viewPath]
+			, data = this.model.m(modelPath).get();
+		validations.push({
+			viewPath: viewPath,
+			data: data,
+			validators: validators
+		});
+	}, this);
+
+
+	var allValid = true;
+	async.each(validations,
+		function(validation, nextValidation) {
+			var lastResponse;
+			async.every(validation.validators,
+				// call validator
+				function(validator, next) {
+					validator(validation.data, function(err, response) {
+						lastResponse = response || {};
+						next(lastResponse.valid || err);
+					});
+				},
+			// post validation result of item to form
+			function(valid) {
+				lastResponse.path = validation.viewPath;
+				lastResponse.valid = valid;
+				self.data.postMessage('validated', lastResponse);
+				if (! valid) allValid = false;
+				nextValidation(null);
+			});
+		},
+	// post form validation result
+	function(err) {
+		self.postMessage('validationcompleted', { valid: allValid });
+		callback && callback(allValid);
+	});
 }
 
 
@@ -310,6 +375,7 @@ var itemsFunctions = {
  */
 var validationFunctions = {
 	'required': validateRequired,
+
 	'url': validateUrl
 }
 
@@ -568,8 +634,9 @@ function setComboListOptions(comp, data) {
 }
 
 function validateRequired(data, callback) {
-	var valid = typeof data != 'undefined' && data != ''
-		, response = _validatorResponse(valid, 'value is required');
+	var valid = typeof data != 'undefined'
+				&& (typeof data != 'string' || data.trim() != '');
+	var response = _validatorResponse(valid, 'value is required');
 	callback(null, response);
 }
 
