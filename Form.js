@@ -101,6 +101,7 @@ _.extendProto(CCForm, {
 	isValid: CCForm$isValid,
 	validateModel: CCForm$validateModel,
 	getInvalidControls: CCForm$getInvalidControls,
+	getInvalidReason: CCForm$getInvalidReason,
 	modelPathComponent: CCForm$modelPathComponent,
 	modelPathSchema: CCForm$modelPathSchema,
 	viewPathComponent: CCForm$viewPathComponent,
@@ -271,8 +272,29 @@ function CCForm$validateModel(callback) {
 }
 
 
+/**
+ * Returns map of invalid controls and reasons (view paths are keys)
+ *
+ * @return {Object}
+ */
 function CCForm$getInvalidControls() {
 	return this._invalidFormControls;
+}
+
+
+/**
+ * Returns single string with all reasons for the form being invalid
+ *
+ * @return {String}
+ */
+function CCForm$getInvalidReason() {
+	var invalidControls = this.getInvalidControls()
+	var reason = _.reduceKeys(invalidControls,
+		function(memo, invalidControl) {
+			return memo + '\n' + invalidControl.reason;
+		},
+	'');
+	return reason;
 }
 
 
