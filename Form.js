@@ -355,6 +355,7 @@ var itemsClasses = {
 	wrapper: 'MLWrapper',
 	select: 'MLSelect',
 	input: 'MLInput',
+	inputlist: 'MLInputList',
 	textarea: 'MLTextarea',
 	button: 'MLButton',
 	radio: 'MLRadioGroup',
@@ -365,9 +366,9 @@ var itemsClasses = {
 	date: 'MLDate',
 	combo: 'MLCombo',
 	combolist: 'MLComboList',
-    image: 'MLImage',
-    previewimage: 'CCPreviewImage',
-    droptarget: 'MLDropTarget'
+	image: 'MLImage',
+	previewimage: 'CCPreviewImage',
+	droptarget: 'MLDropTarget'
 };
 
 /**
@@ -380,7 +381,7 @@ var modelPathRules = {
 	button: 'optional',
 	hyperlink: 'optional',
     droptarget: 'prohibited'
-}
+};
 
 /**
  * Special processing functions for some types of items
@@ -399,7 +400,7 @@ var validationFunctions = {
 	'required': validateRequired,
 
 	'url': validateUrl
-}
+};
 
 
 var _itemsSchemaRules = _.mapKeys(itemsClasses, function(className, itemType) {
@@ -459,7 +460,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 		if (itemRules) {
 			check(comp, itemRules.CompClass);
 			itemRules.func.call(this, comp, schema);
-			_processItemTranslations(viewPath, schema.modelPath, schema.translate, schema.validate)
+			_processItemTranslations(viewPath, schema.modelPath, schema.translate, schema.validate);
 		} else
 			throw new FormError('unknown item type ' + schema.type);
 	}
@@ -486,7 +487,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 						formModelPaths[modelPath] = {
 							schema: schema,
 							component: comp
-						}
+						};
 
 						_addModelPathTranslation(viewPath, modelPath);
 						_addDataTranslation(translate, 'fromModel', modelPath);
@@ -613,7 +614,7 @@ function _processSchemaMessages(comp, messages) {
 
 function _processSelectSchema(comp, schema) {
 	var options = schema.selectOptions;
-	setComponentOptions(comp, options, setComponentModel)
+	setComponentOptions(comp, options, setComponentModel);
 }
 
 function _processRadioSchema(comp, schema) {

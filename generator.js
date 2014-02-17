@@ -23,6 +23,7 @@ var itemTemplatesText = {
 	wrapper: fs.readFileSync(__dirname + '/items/wrapper.dot'),
 	select: fs.readFileSync(__dirname + '/items/select.dot'),
 	input: fs.readFileSync(__dirname + '/items/input.dot'),
+	inputlist: fs.readFileSync(__dirname + '/items/inputlist.dot'),
 	textarea: fs.readFileSync(__dirname + '/items/textarea.dot'),
 	button: fs.readFileSync(__dirname + '/items/button.dot'),
 	radio: fs.readFileSync(__dirname + '/items/radio.dot'),
@@ -36,7 +37,7 @@ var itemTemplatesText = {
     image: fs.readFileSync(__dirname + '/items/image.dot'),
     previewimage: fs.readFileSync(__dirname + '/items/previewimage.dot'),
     droptarget: fs.readFileSync(__dirname + '/items/droptarget.dot')
-}
+};
 
 var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {
 	return doT.compile(templateStr, dotDef);
