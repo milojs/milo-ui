@@ -391,6 +391,7 @@ var itemsFunctions = {
 	radio: _processRadioSchema,
 	combo: _processComboSchema,
 	combolist: _processComboListSchema
+	/*, inputlist: _processInputListSchema,*/
 };
 
 /**
@@ -631,6 +632,12 @@ function _processComboListSchema(comp, schema) {
 	var options = schema.comboOptions;
 	setComponentOptions(comp, options, setComboListOptions);
 }
+
+/*
+function _processInputListSchema(comp, schema) {
+	comp.setAsync(schema.asyncHandler);
+}
+*/
 
 function setComponentOptions(comp, options, setModelFunc) {
 	if (options) {
