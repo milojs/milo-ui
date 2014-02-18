@@ -390,8 +390,8 @@ var itemsFunctions = {
     select: _processSelectSchema,
     radio: _processRadioSchema,
     combo: _processComboSchema,
-    combolist: _processComboListSchema
-    /*, inputlist: _processInputListSchema,*/
+    combolist: _processComboListSchema,
+    inputlist: _processInputListSchema
 };
 
 /**
@@ -633,15 +633,13 @@ function _processComboListSchema(comp, schema) {
     setComponentOptions(comp, options, setComboListOptions);
 }
 
-/*
 function _processInputListSchema(comp, schema) {
     comp.setAsync(schema.asyncHandler);
 }
-*/
 
 function setComponentOptions(comp, options, setModelFunc) {
     if (options) {
-        if (options instanceof Promise){
+        if (options instanceof Promise) {
             setModelFunc(comp, [{ value: 0, label: 'loading...' }]);
             options
                 .then(function(err, data) {
