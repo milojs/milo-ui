@@ -1,10 +1,10 @@
 {{# def.partials.formGroup }}
-	{{# def.partials.label }}
-	<ul ml-bind="MLList:{{= it.compName }}"
-			{{? it.disabled }}disabled {{?}}>
-		<li ml-bind="[item]:itemSample">
-			<span ml-bind="[data]:label"></span>
-			<button ml-bind="[events]:deleteBtn">x</button>
-		</li>
-	</ul>
+    {{# def.partials.label }}
+    <ul ml-bind="MLList:{{= it.compName }}"
+            {{? it.disabled }}disabled {{?}}>
+        <li ml-bind="[item]:itemSample">
+            <span ml-bind="[data]:label"></span>
+            <button ml-bind="[events]:deleteBtn">x</button>
+        </li>
+    </ul>
 </div>

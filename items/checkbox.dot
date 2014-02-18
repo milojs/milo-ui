@@ -1,7 +1,7 @@
 {{# def.partials.formGroup }}
   <input type="checkbox" 
-  	id="{{= it.compName }}"
-  	ml-bind="MLInput:{{= it.compName }}"
-  	{{? it.disabled }}disabled {{?}}>
+    id="{{= it.compName }}"
+    ml-bind="MLInput:{{= it.compName }}"
+    {{? it.disabled }}disabled {{?}}>
   <label for="{{= it.compName }}">{{= it.item.label}}</label>
 </div>

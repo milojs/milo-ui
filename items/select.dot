@@ -1,7 +1,7 @@
 {{# def.partials.formGroup }}
-	{{# def.partials.label }}
-	<select ml-bind="MLSelect:{{= it.compName }}"
-			{{? it.disabled }}disabled {{?}}
-			class="form-control">
-	</select>
+    {{# def.partials.label }}
+    <select ml-bind="MLSelect:{{= it.compName }}"
+            {{? it.disabled }}disabled {{?}}
+            class="form-control">
+    </select>
 </div>

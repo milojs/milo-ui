@@ -1,4 +1,4 @@
 {{# def.partials.formGroup }}
-	{{# def.partials.label }}
-	<div ml-bind="MLComboList:{{= it.compName }}"></div>
+    {{# def.partials.label }}
+    <div ml-bind="MLComboList:{{= it.compName }}"></div>
 </div>

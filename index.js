@@ -2,7 +2,7 @@
 
 
 module.exports = {
-	generator: require('./generator'),
-	Form: require('./Form'),
-	translate: require('./translate')
+    generator: require('./generator'),
+    Form: require('./Form'),
+    translate: require('./translate')
 };

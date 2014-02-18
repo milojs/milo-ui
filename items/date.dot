@@ -1,6 +1,6 @@
 {{# def.partials.formGroup }}
-	{{# def.partials.label }}
-	<input type="date"
-			ml-bind="MLDate:{{= it.compName }}"
-			class="form-control">
+    {{# def.partials.label }}
+    <input type="date"
+            ml-bind="MLDate:{{= it.compName }}"
+            class="form-control">
 </div>

@@ -1,7 +1,7 @@
 {{# def.partials.formGroup }}
-	<a {{? it.item.href}}href="{{= it.item.href }}"{{?}}	
-		ml-bind="MLHyperlink:{{= it.compName }}" 
-		class="hyperlink hyperlink-default">
-		{{= it.item.label || '' }}
-	</a>
+    <a {{? it.item.href}}href="{{= it.item.href }}"{{?}}    
+        ml-bind="MLHyperlink:{{= it.compName }}" 
+        class="hyperlink hyperlink-default">
+        {{= it.item.label || '' }}
+    </a>
 </div>

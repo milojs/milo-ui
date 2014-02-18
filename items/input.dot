@@ -1,7 +1,7 @@
 {{# def.partials.formGroup }}
-	{{# def.partials.label }}
-	<input type="text"
-			ml-bind="MLInput:{{= it.compName }}"
-			{{? it.disabled }}disabled {{?}}
-			class="form-control">
+    {{# def.partials.label }}
+    <input type="text"
+            ml-bind="MLInput:{{= it.compName }}"
+            {{? it.disabled }}disabled {{?}}
+            class="form-control">
 </div>

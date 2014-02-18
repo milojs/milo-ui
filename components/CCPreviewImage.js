@@ -2,19 +2,19 @@
 
 var componentRegistry = milo.registry.components
     , Component = milo.Component
-	, MLImage = componentRegistry.get('MLImage');
+    , MLImage = componentRegistry.get('MLImage');
 
 
 var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
-	drop: {
-		messages: {
-			'dragenter': {context: 'owner', subscriber: CCPreviewImage_onDragEnter},
-			'dragover': {context: 'owner', subscriber: CCPreviewImage_onDragOver},
-			'dragleave': CCPreviewImage_leaveImage,
-			'drop': {context: 'owner', subscriber: CCPreviewImage_onDrop}
-		}
-	},
-	croppable: {
+    drop: {
+        messages: {
+            'dragenter': {context: 'owner', subscriber: CCPreviewImage_onDragEnter},
+            'dragover': {context: 'owner', subscriber: CCPreviewImage_onDragOver},
+            'dragleave': CCPreviewImage_leaveImage,
+            'drop': {context: 'owner', subscriber: CCPreviewImage_onDrop}
+        }
+    },
+    croppable: {
         modelRootPath: '.croppable'
     }
 });
@@ -53,7 +53,7 @@ function CCPreviewImage_onDragOver(eventType, event) {
 
 
 function CCPreviewImage_leaveImage(eventType, event) {
-	
+    
 }
 
 
