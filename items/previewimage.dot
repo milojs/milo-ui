@@ -3,5 +3,7 @@
     <img {{? it.item.src }}src="{{= it.item.src }}"{{?}}
         ml-bind="CCPreviewImage:{{= it.compName }}"
         {{? it.item.width }}width="{{= it.item.width }}"{{?}}
-        {{? it.item.height }}height="{{= it.item.height }}"{{?}}>
+        {{? it.item.height }}height="{{= it.item.height }}"{{?}}
+        {{? it.item.height }}style="max-width:30px; max-height:{{= 300 / it.item.width * it.item.height }}px"{{?}}
+    >
 </div>
