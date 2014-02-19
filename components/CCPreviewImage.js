@@ -27,8 +27,19 @@ componentRegistry.add(CCPreviewImage);
 
 _.extendProto(CCPreviewImage, {
     setImageData: CCPreviewImage$setImageData,
-    setImageSrc: CCPreviewImage$setImageSrc
+    setImageSrc: CCPreviewImage$setImageSrc,
+    setSize: CCPreviewImage$setSize,
+    getSize: CCPreviewImage$getSize
 });
+
+function CCPreviewImage$setSize() {
+    //noop - just to satisfy Croppable interface
+}
+
+function CCPreviewImage$getSize() {
+    //noop - just to satisfy Croppable interface
+}
+
 
 
 function CCPreviewImage$setImageData(data) {
