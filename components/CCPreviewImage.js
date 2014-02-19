@@ -41,7 +41,6 @@ function CCPreviewImage$getSize() {
 }
 
 
-
 function CCPreviewImage$setImageData(data) {
     var modelRootPath = this.croppable.config.modelRootPath;
     this.model.m(modelRootPath).set(data);
