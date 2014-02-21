@@ -7,6 +7,11 @@ var componentRegistry = milo.registry.components
 
 var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
     drop: {
+        allow: {
+            components: {
+                'CMImageGroup': true
+            }
+        },
         messages: {
             'dragenter': {context: 'owner', subscriber: CCPreviewImage_onDragEnter},
             'dragover': {context: 'owner', subscriber: CCPreviewImage_onDragOver},

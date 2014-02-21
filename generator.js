@@ -36,6 +36,7 @@ var itemTemplatesText = {
     combolist: fs.readFileSync(__dirname + '/items/combolist.dot'),
     image: fs.readFileSync(__dirname + '/items/image.dot'),
     previewimage: fs.readFileSync(__dirname + '/items/previewimage.dot'),
+    previewcropall: fs.readFileSync(__dirname + '/items/previewcropall.dot'),
     droptarget: fs.readFileSync(__dirname + '/items/droptarget.dot')
 };
 

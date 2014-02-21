@@ -368,6 +368,7 @@ var itemsClasses = {
     combolist: 'MLComboList',
     image: 'MLImage',
     previewimage: 'CCPreviewImage',
+    previewcropall: 'CCPreviewCropAll',
     droptarget: 'MLDropTarget'
 };
 
@@ -380,7 +381,8 @@ var modelPathRules = {
     wrapper: 'prohibited',
     button: 'optional',
     hyperlink: 'optional',
-    droptarget: 'prohibited'
+    droptarget: 'prohibited',
+    previewcropall: 'prohibited'
 };
 
 /**
