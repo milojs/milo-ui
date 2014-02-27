@@ -463,7 +463,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         if (itemRules) {
             check(comp, itemRules.CompClass);
             itemRules.func.call(this, comp, schema);
-            _processItemTranslations(viewPath, schema.modelPath, schema.translate, schema.validate);
+            _processItemTranslations(viewPath, schema);
         } else
             throw new FormError('unknown item type ' + schema.type);
     }
@@ -471,7 +471,12 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
     return modelPathTranslations;
 
 
-    function _processItemTranslations(viewPath, modelPath, translate, validate) {
+    function _processItemTranslations(viewPath, schema) {
+        var modelPath = schema.modelPath
+            , notInModel = schema.notInModel
+            , translate = schema.translate
+            , validate = schema.validate;
+
         if (viewPath) {
             _addDataTranslation(translate, 'toModel', viewPath);
             _addDataValidation(validate, 'toModel', viewPath);
@@ -482,8 +487,8 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                         throw new FormError('modelPath is prohibited for item type ' + schema.type);
                     break;
                 case 'required':
-                    if (! modelPath)
-                        throw new FormError('modelPath is required for item type ' + schema.type);
+                    if (! (modelPath || notInModel))
+                        throw new FormError('modelPath is required for item type ' + schema.type + ' . Add "noModelPath: true" to override');
                     // falling through to 'optional'
                 case 'optional':
                     if (modelPath) {
@@ -492,9 +497,11 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                             component: comp
                         };
 
-                        _addModelPathTranslation(viewPath, modelPath);
-                        _addDataTranslation(translate, 'fromModel', modelPath);
-                        _addDataValidation(validate, 'fromModel', modelPath);
+                        if (! notInModel) {
+                            _addModelPathTranslation(viewPath, modelPath);
+                            _addDataTranslation(translate, 'fromModel', modelPath);
+                            _addDataValidation(validate, 'fromModel', modelPath);
+                        }
                     }
                     break;
                 default:

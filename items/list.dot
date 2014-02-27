@@ -2,7 +2,7 @@
     {{# def.partials.label }}
     <ul ml-bind="MLList:{{= it.compName }}"
             {{? it.disabled }}disabled {{?}}>
-        <li ml-bind="MLListItem:itemSample">
+        <li ml-bind="MLListItem:itemSample" class="list-item">
             <span ml-bind="[data]:label"></span>
             <button ml-bind="[events]:deleteBtn">x</button>
         </li>
