@@ -3,6 +3,17 @@
 var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
+var listTemplate = '\
+                        <div> \
+                            <ul ml-bind="[list,events]:list"> \
+                                <li ml-bind="[item]:item"> \
+                                    <span ml-bind="[data]:user"></span> \
+                                    <span ml-bind="[data]:createdDate"></span> \
+                                </li> \
+                            </ul> \
+                        </div> \
+                    ';
+
 
 var CCArticleHistory = Component.createComponentClass('CCArticleHistory', {
     dom: {
@@ -10,7 +21,8 @@ var CCArticleHistory = Component.createComponentClass('CCArticleHistory', {
     },
     container: undefined,
     events: undefined,
-    template: { template: '<div ml-bind=":list"></div>' }
+    model: undefined,
+    template: { template: listTemplate }
 });
 
 componentsRegistry.add(CCArticleHistory);
@@ -19,7 +31,8 @@ module.exports = CCArticleHistory;
 
 
 _.extendProto(CCArticleHistory, {
-    init: CCArticleHistory$init
+    init: CCArticleHistory$init,
+    fetchHistory: fetchHistory
 });
 
 
@@ -29,11 +42,32 @@ _.extendProto(CCArticleHistory, {
  */
 function CCArticleHistory$init() {
     Component.prototype.init.apply(this, arguments);
-  
     this.on('childrenbound', onChildrenBound);
+    this.model.set([]);
 }
 
 function onChildrenBound () {
     this.off('childrenbound');
     this.template.render().binder();
+    milo.minder(this.model, '<<<->>>', this.container.scope.list.data);
+
+    var historyList = this.container.scope.list;
+
+    historyList.events.on('click', { subscriber: clickedHistoryEl, context: this });
+}
+
+function clickedHistoryEl (msg, event) {
+    var listComp = Component.getContainingComponent(event.target, true, 'item');
+    this.model.m('[$1]', listComp.item.index).get().id;
+}
+
+function fetchHistory (articleID) {
+    var model = this.model;
+    
+    milo.util.request.json(window.CC.config.apiHost + '/article/listVersions/' + articleID, function(err, res) {
+        if (err) logger.error('Cannot load versions list', err);
+        model.set(res.list);
+    });
+
+    
 }
