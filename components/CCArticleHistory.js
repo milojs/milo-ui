@@ -5,10 +5,10 @@ var componentsRegistry = milo.registry.components
 
 var listTemplate = '\
                         <div> \
-                            <ul ml-bind="[list,events]:list"> \
-                                <li ml-bind="[item]:item"> \
+                            <ul class="list-group" ml-bind="[list,events]:list"> \
+                                <li class="list-group-item" ml-bind="[item]:item"> \
                                     <span ml-bind="[data]:user"></span> \
-                                    <span ml-bind="[data]:createdDate"></span> \
+                                    <span class="pull-right" ml-bind="[data]:createdDate"></span> \
                                 </li> \
                             </ul> \
                         </div> \
