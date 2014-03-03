@@ -32,6 +32,7 @@ componentRegistry.add(CCPreviewImage);
 
 _.extendProto(CCPreviewImage, {
     setImageData: CCPreviewImage$setImageData,
+    getImageData: CCPreviewImage$getImageData,
     setImageSrc: CCPreviewImage$setImageSrc,
     setSize: CCPreviewImage$setSize,
     getSize: CCPreviewImage$getSize
@@ -43,6 +44,12 @@ function CCPreviewImage$setSize() {
 
 function CCPreviewImage$getSize() {
     //noop - just to satisfy Croppable interface
+}
+
+
+function CCPreviewImage$getImageData() {
+    var modelRootPath = this.croppable.config.modelRootPath;
+    return this.model.m(modelRootPath).get();
 }
 
 

@@ -4,6 +4,6 @@
         ml-bind="CCPreviewImage:{{= it.compName }}"
         {{? it.item.width }}width="{{= it.item.width }}"{{?}}
         {{? it.item.height }}height="{{= it.item.height }}"{{?}}
-        {{? it.item.height }}style="max-width:300px; max-height:{{= 300 / it.item.width * it.item.height }}px"{{?}}
+        {{? it.item.height }}style="max-width:300px !important; max-height:{{= 300 / it.item.width * it.item.height }}px !important"{{?}}
     >
 </div>
