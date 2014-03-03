@@ -69,7 +69,7 @@ function fetchHistory (articleID) {
     
     milo.util.request.json(window.CC.config.apiHost + '/article/listVersions/' + articleID, function(err, res) {
         if (err) logger.error('Cannot load versions list', err);
-        var list = Array.isArray(res.list) ? res.list || [];
+        var list = Array.isArray(res.list) ? res.list : [];
         self.container.scope.list.data.set(list);
         self.model.set(list);
     });
