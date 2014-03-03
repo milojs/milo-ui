@@ -49,7 +49,7 @@ function CCArticleHistory$init() {
 function onChildrenBound () {
     this.off('childrenbound');
     this.template.render().binder();
-    milo.minder(this.model, '<<<->>>', this.container.scope.list.data);
+    //milo.minder(this.model, '<<<->>>', this.container.scope.list.data);
 
     var historyList = this.container.scope.list;
 
@@ -62,11 +62,16 @@ function clickedHistoryEl (msg, event) {
 }
 
 function fetchHistory (articleID) {
-    var model = this.model;
+    var self = this;
+
+    this.container.scope.list.data.set([]);
+    this.model.set([]);
     
     milo.util.request.json(window.CC.config.apiHost + '/article/listVersions/' + articleID, function(err, res) {
         if (err) logger.error('Cannot load versions list', err);
-        model.set(res.list);
+        var list = Array.isArray(res.list) ? res.list || [];
+        self.container.scope.list.data.set(list);
+        self.model.set(list);
     });
 
     
