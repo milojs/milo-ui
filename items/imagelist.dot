@@ -1,0 +1,4 @@
+{{# def.partials.formGroup }}
+    {{# def.partials.label }}
+    <div ml-bind="CCImagePreviewList:{{= it.compName }}"></div>
+</div>

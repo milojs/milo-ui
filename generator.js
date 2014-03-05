@@ -37,7 +37,8 @@ var itemTemplatesText = {
     image: fs.readFileSync(__dirname + '/items/image.dot'),
     previewimage: fs.readFileSync(__dirname + '/items/previewimage.dot'),
     previewcropall: fs.readFileSync(__dirname + '/items/previewcropall.dot'),
-    droptarget: fs.readFileSync(__dirname + '/items/droptarget.dot')
+    droptarget: fs.readFileSync(__dirname + '/items/droptarget.dot'),
+    imagelist: fs.readFileSync(__dirname + '/items/imagelist.dot')
 };
 
 var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {
