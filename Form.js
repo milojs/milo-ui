@@ -370,7 +370,7 @@ var itemsClasses = {
     previewimage: 'CCPreviewImage',
     previewcropall: 'CCPreviewCropAll',
     droptarget: 'MLDropTarget',
-    imagelist: 'CCModuleImagePreview'
+    imagelist: 'CCImagePreviewList'
 };
 
 /**
