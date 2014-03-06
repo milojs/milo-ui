@@ -168,7 +168,7 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
     function _connectFormDataToModel() {
         // connect form view to form model using translation rules from modelPath properties of form items
-        form._connector = milo.minder(form.data, '<<<->>>', form.model, {
+        form._connector = milo.minder(form.data, '<->', form.model, { // connection depth is defined on field by field basis by pathTranslation
             pathTranslation: modelPathTranslations,
             dataTranslation: {
                 '<-': dataTranslations.fromModel,
