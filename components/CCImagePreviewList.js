@@ -22,12 +22,10 @@ var CCImagePreviewList = Component.createComponentClass('CCImagePreviewList', {
         event: IMAGEPREVIEWLIST_CHANGE_MESSAGE
     },
     template: {
-        template: '\
-            <ul ml-bind="[list]:imageList">\
-                <li ml-bind="CCModuleImagePreview[item]:imageItem">\
-                    <img ml-bind="[data]:src">\
-                </li>\
-            </ul>'
+        template:
+            '<div ml-bind="[list]:imageList">\
+                <img ml-bind="CCModuleImagePreview[item]:imageItem">\
+            </div>'
     }
 });
 
