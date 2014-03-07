@@ -44,6 +44,7 @@ function CCModuleImagePreview_get() {
 
 
 function CCModuleImagePreview_set(value) {
+    console.log("set", value);
     this.model.set(value);
     if (value && value.thumbUrl)
         this.el.src = value.thumbUrl;
@@ -58,7 +59,9 @@ function CCModuleImagePreview_del() {
 
 
 function _constructImageGroupState(value) {
+    if (!value) return;
     value.caption = milo.util.dom.stripHtml(value.caption);
+
     return {
         outerHTML: CMIMAGE_GROUP_TEMPLATE,
         compClass: 'CMImageGroup',

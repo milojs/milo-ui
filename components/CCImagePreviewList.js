@@ -60,6 +60,7 @@ function CCImagePreviewList_get() {
 
 
 function CCImagePreviewList_set(value) {
+    console.log("set", value)
     if (Array.isArray(value))
         this._list.data._set(value);
     this.model.set(value);
@@ -76,6 +77,7 @@ function CCImagePreviewList_del() {
 
 
 function CCImagePreviewList_splice() { // ... arguments
+    console.log("splice", arguments)
     var dataFacet = this._list.data;
     dataFacet._splice.apply(dataFacet, arguments);
     this.model.splice.apply(this.model, arguments);
