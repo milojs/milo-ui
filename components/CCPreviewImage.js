@@ -21,6 +21,9 @@ var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
     },
     croppable: {
         modelRootPath: '.croppable'
+    },
+    drag: {
+        off: true
     }
 });
 
