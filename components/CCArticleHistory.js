@@ -3,16 +3,12 @@
 var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
-var listTemplate = '\
-                        <div> \
-                            <ul class="list-group" ml-bind="[list,events]:list"> \
-                                <li class="list-group-item" ml-bind="[item]:item"> \
-                                    <span ml-bind="[data]:user"></span> \
-                                    <span class="pull-right" ml-bind="[data]:createdDate"></span> \
-                                </li> \
-                            </ul> \
-                        </div> \
-                    ';
+var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
+                        <li class="list-group-item" ml-bind="[item]:item"> \
+                            <span ml-bind="[data]:user"></span> \
+                            <span class="pull-right" ml-bind="[data]:createdDate"></span> \
+                        </li> \
+                    </ul>';
 
 
 var CCArticleHistory = Component.createComponentClass('CCArticleHistory', {
@@ -46,6 +42,7 @@ function CCArticleHistory$init() {
     this.model.set([]);
 }
 
+
 function onChildrenBound () {
     this.off('childrenbound');
     this.template.render().binder();
@@ -56,10 +53,12 @@ function onChildrenBound () {
     historyList.events.on('click', { subscriber: clickedHistoryEl, context: this });
 }
 
+
 function clickedHistoryEl (msg, event) {
     var listComp = Component.getContainingComponent(event.target, true, 'item');
     milo.mail.postMessage('loadarticleversion', { versionId: this.model.m('[$1]', listComp.item.index).get().id });
 }
+
 
 function fetchHistory (articleID) {
     var self = this;
@@ -73,6 +72,4 @@ function fetchHistory (articleID) {
         self.container.scope.list.data.set(list);
         self.model.set(list);
     });
-
-    
 }

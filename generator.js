@@ -1,9 +1,18 @@
 'use strict';
 
 var doT = require('dot')
-    , fs =require('fs')
+    , fs = require('fs')
+    , componentsRegistry = milo.registry.components
     , miloCount = milo.util.count
-    , componentName = milo.util.componentName;
+    , componentName = milo.util.componentName
+    , itemTypes = require('./item_types');
+
+
+var DEFAULT_TEMPLATE = '{{# def.partials.formGroup }}\
+                            {{# def.partials.label }}\
+                            <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">\
+                            </{{= it.tagName}}>\
+                        </div>';
 
 
 module.exports = formGenerator;
@@ -18,32 +27,24 @@ var dotDef = {
     partials: partials
 };
 
-var itemTemplatesText = {
-    group: fs.readFileSync(__dirname + '/items/group.dot'),
-    wrapper: fs.readFileSync(__dirname + '/items/wrapper.dot'),
-    select: fs.readFileSync(__dirname + '/items/select.dot'),
-    input: fs.readFileSync(__dirname + '/items/input.dot'),
-    inputlist: fs.readFileSync(__dirname + '/items/inputlist.dot'),
-    textarea: fs.readFileSync(__dirname + '/items/textarea.dot'),
-    button: fs.readFileSync(__dirname + '/items/button.dot'),
-    radio: fs.readFileSync(__dirname + '/items/radio.dot'),
-    hyperlink: fs.readFileSync(__dirname + '/items/hyperlink.dot'),
-    checkbox: fs.readFileSync(__dirname + '/items/checkbox.dot'),
-    list: fs.readFileSync(__dirname + '/items/list.dot'),
-    time: fs.readFileSync(__dirname + '/items/time.dot'),
-    date: fs.readFileSync(__dirname + '/items/date.dot'),
-    combo: fs.readFileSync(__dirname + '/items/combo.dot'),
-    combolist: fs.readFileSync(__dirname + '/items/combolist.dot'),
-    image: fs.readFileSync(__dirname + '/items/image.dot'),
-    previewimage: fs.readFileSync(__dirname + '/items/previewimage.dot'),
-    previewcropall: fs.readFileSync(__dirname + '/items/previewcropall.dot'),
-    droptarget: fs.readFileSync(__dirname + '/items/droptarget.dot'),
-    imagelist: fs.readFileSync(__dirname + '/items/imagelist.dot')
-};
 
-var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {
-    return doT.compile(templateStr, dotDef);
+_.eachKey(itemTypes, function(itemType) {
+    var templateStr = getTemplate(itemType);
+    itemType.template = doT.compile(templateStr, dotDef);
 });
+
+
+function getTemplate(itemType) {
+    return itemType.template || DEFAULT_TEMPLATE;
+} 
+
+
+getItemsClasses = _.once(getItemsClasses);
+function getItemsClasses() {
+    _.eachKey(itemTypes, function(itemType) {
+        itemType.CompClass = componentsRegistry.get(itemType.compClass);
+    });
+}
 
 
 /*
@@ -54,14 +55,25 @@ var itemTemplates = _.mapKeys(itemTemplatesText, function(templateStr) {
  * @return {String}
  */
 function formGenerator(schema) {
+    getItemsClasses();
+
     var renderedItems = schema.items.map(renderItem);
     return renderedItems.join('');
 
     function renderItem(item) {
+        var itemType = itemTypes[item.type];
+
         item.compName = item.compName || componentName();
-        return itemTemplates[item.type]({
+        // item.CompClass = itemType.CompClass;
+        var domFacetConfig = itemType.CompClass.getFacetConfig('dom')
+            , tagName = domFacetConfig && domFacetConfig.tagName || 'div';
+
+        var template = itemType.template;
+        return template({
             item: item,
             compName: item.compName,
+            compClass: itemType.compClass,
+            tagName: tagName,
             formGenerator: formGenerator,
             miloCount: miloCount,
             disabled: item.disabled
