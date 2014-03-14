@@ -15,13 +15,7 @@ var CCModuleImagePreview = Component.createComponentClass('CCModuleImagePreview'
         cls: 'cc-module-image-preview'
     },
     drag: {
-        allowedEffects: 'copy',
-        meta: {
-            params: {
-                imageCount: 1, 
-                articleId: -1 // not in article
-            }
-        }
+        allowedEffects: 'copy'
     },
     data: {
         get: CCModuleImagePreview_get,
