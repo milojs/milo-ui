@@ -364,7 +364,8 @@ var modelPathRules = {
     button: 'optional',
     hyperlink: 'optional',
     droptarget: 'prohibited',
-    previewcropall: 'prohibited'
+    previewcropall: 'prohibited',
+    articlehistory: 'prohibited'
 };
 
 /**

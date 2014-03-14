@@ -1,7 +1,8 @@
 'use strict';
 
 var componentsRegistry = milo.registry.components
-    , Component = componentsRegistry.get('Component');
+    , Component = componentsRegistry.get('Component')
+    , articleStorage = require('../../storage/article');
 
 var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                         <li class="list-group-item" ml-bind="[item]:item"> \
@@ -28,7 +29,8 @@ module.exports = CCArticleHistory;
 
 _.extendProto(CCArticleHistory, {
     init: CCArticleHistory$init,
-    fetchHistory: fetchHistory
+    fetchHistory: fetchHistory,
+    showLocalHistory: showLocalHistory
 });
 
 
@@ -56,7 +58,8 @@ function onChildrenBound () {
 
 function clickedHistoryEl (msg, event) {
     var listComp = Component.getContainingComponent(event.target, true, 'item');
-    milo.mail.postMessage('loadarticleversion', { versionId: this.model.m('[$1]', listComp.item.index).get().id });
+    milo.mail.postMessage('loadarticleversion',
+        { version: this.model.m('[$1]', listComp.item.index).get() });
 }
 
 
@@ -72,4 +75,20 @@ function fetchHistory (articleID) {
         self.container.scope.list.data.set(list);
         self.model.set(list);
     });
+}
+
+
+function showLocalHistory(articleStorageId) {
+    var ids = articleStorage.getArticleVersionIds(articleStorageId)
+        , list = ids && ids.reverse().map(function(id, index) {
+            return {
+                createdDate: index + 1,
+                versionType: 'local',
+                id: id,
+                user: 'autosave'
+            };
+        });
+    list = list || [];
+    this.container.scope.list.data.set(list);
+    this.model.set(list);
 }
