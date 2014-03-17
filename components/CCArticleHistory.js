@@ -2,7 +2,8 @@
 
 var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component')
-    , articleStorage = require('../../storage/article');
+    , articleStorage = require('../../storage/article') 
+    , moment = require('moment');
 
 var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                         <li class="list-group-item" ml-bind="[item]:item"> \
@@ -79,16 +80,35 @@ function fetchHistory (articleID) {
 
 
 function showLocalHistory(articleStorageId) {
-    var ids = articleStorage.getArticleVersionIds(articleStorageId)
-        , list = ids && ids.reverse().map(function(id, index) {
+    var ids = articleStorage.getVersionIds(articleStorageId)
+        , versions = articleStorage.getVersionMetas(articleStorageId);
+    
+    var list = ids && ids.reverse().map(function(id, index) {
+            var version = versions[id]
+                , isOpenedVersion = index == ids.length - 1
+                , createdDate = version && version.time;
+                // , createdDate = isOpenedVersion
+                //                     ? 'opened'
+                //                     : index
+                //                         ? ids.length - index - 1
+                //                         : 'latest'
             return {
-                createdDate: index + 1,
+                createdDate: fromNow(createdDate),
                 versionType: 'local',
                 id: id,
-                user: 'autosave'
+                user: isOpenedVersion ? 'opened' : 'autosaved'
             };
         });
     list = list || [];
     this.container.scope.list.data.set(list);
     this.model.set(list);
+}
+
+
+function fromNow(date) {
+    var period = Math.floor((new Date - new Date(date)) / 1000);
+    if (period > 1 && period < 60)
+        return (period) + ' seconds ago';
+    else
+        return moment(date).fromNow();
 }
