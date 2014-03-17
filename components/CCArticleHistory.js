@@ -102,8 +102,11 @@ function showLocalHistory(articleStorageId) {
 
 function fromNow(date) {
     var period = Math.floor((new Date - new Date(date)) / 1000);
-    if (period > 1 && period < 60)
-        return (period) + ' seconds ago';
-    else
+    if (period == 0)
+        return 'just now'; 
+    else if (period > 0 && period < 60) {
+        var S = period > 1 ? 's' : '';
+        return (period) + ' second' + S + ' ago';
+    } else
         return moment(date).fromNow();
 }
