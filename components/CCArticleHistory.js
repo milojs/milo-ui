@@ -87,16 +87,11 @@ function showLocalHistory(articleStorageId) {
             var version = versions[id]
                 , isOpenedVersion = index == ids.length - 1
                 , createdDate = version && version.time;
-                // , createdDate = isOpenedVersion
-                //                     ? 'opened'
-                //                     : index
-                //                         ? ids.length - index - 1
-                //                         : 'latest'
             return {
-                createdDate: fromNow(createdDate),
-                versionType: 'local',
                 id: id,
-                user: isOpenedVersion ? 'opened' : 'autosaved'
+                storage: 'local',
+                createdDate: fromNow(createdDate),
+                user: version.versionType
             };
         });
     list = list || [];
