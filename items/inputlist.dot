@@ -1,4 +1,0 @@
-{{# def.partials.formGroup }}
-  {{# def.partials.label }}
-  <div ml-bind="MLInputList:{{= it.compName }}"></div>
-</div>

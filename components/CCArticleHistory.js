@@ -1,18 +1,16 @@
 'use strict';
 
 var componentsRegistry = milo.registry.components
-    , Component = componentsRegistry.get('Component');
+    , Component = componentsRegistry.get('Component')
+    , articleStorage = require('../../storage/article') 
+    , moment = require('moment');
 
-var listTemplate = '\
-                        <div> \
-                            <ul class="list-group" ml-bind="[list,events]:list"> \
-                                <li class="list-group-item" ml-bind="[item]:item"> \
-                                    <span ml-bind="[data]:user"></span> \
-                                    <span class="pull-right" ml-bind="[data]:createdDate"></span> \
-                                </li> \
-                            </ul> \
-                        </div> \
-                    ';
+var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
+                        <li class="list-group-item" ml-bind="[item]:item"> \
+                            <span ml-bind="[data]:user"></span> \
+                            <span class="pull-right" ml-bind="[data]:createdDate"></span> \
+                        </li> \
+                    </ul>';
 
 
 var CCArticleHistory = Component.createComponentClass('CCArticleHistory', {
@@ -32,7 +30,8 @@ module.exports = CCArticleHistory;
 
 _.extendProto(CCArticleHistory, {
     init: CCArticleHistory$init,
-    fetchHistory: fetchHistory
+    fetchHistory: fetchHistory,
+    showLocalHistory: showLocalHistory
 });
 
 
@@ -46,6 +45,7 @@ function CCArticleHistory$init() {
     this.model.set([]);
 }
 
+
 function onChildrenBound () {
     this.off('childrenbound');
     this.template.render().binder();
@@ -56,10 +56,13 @@ function onChildrenBound () {
     historyList.events.on('click', { subscriber: clickedHistoryEl, context: this });
 }
 
+
 function clickedHistoryEl (msg, event) {
     var listComp = Component.getContainingComponent(event.target, true, 'item');
-    milo.mail.postMessage('loadarticleversion', { versionId: this.model.m('[$1]', listComp.item.index).get().id });
+    milo.mail.postMessage('loadarticleversion',
+        { version: this.model.m('[$1]', listComp.item.index).get() });
 }
+
 
 function fetchHistory (articleID) {
     var self = this;
@@ -73,6 +76,37 @@ function fetchHistory (articleID) {
         self.container.scope.list.data.set(list);
         self.model.set(list);
     });
+}
 
+
+function showLocalHistory(articleStorageId) {
+    var ids = articleStorage.getVersionIds(articleStorageId)
+        , versions = articleStorage.getVersionMetas(articleStorageId);
     
+    var list = ids && ids.reverse().map(function(id, index) {
+            var version = versions[id]
+                , isOpenedVersion = index == ids.length - 1
+                , createdDate = version && version.time;
+            return {
+                id: id,
+                storage: 'local',
+                createdDate: fromNow(createdDate),
+                user: version.versionType
+            };
+        });
+    list = list || [];
+    this.container.scope.list.data.set(list);
+    this.model.set(list);
+}
+
+
+function fromNow(date) {
+    var period = Math.floor((new Date - new Date(date)) / 1000);
+    if (period == 0)
+        return 'just now'; 
+    else if (period > 0 && period < 60) {
+        var S = period > 1 ? 's' : '';
+        return (period) + ' second' + S + ' ago';
+    } else
+        return moment(date).fromNow();
 }

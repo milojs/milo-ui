@@ -2,6 +2,7 @@
 
 var formGenerator = require('./generator')
     , componentsRegistry = milo.registry.components
+    , itemTypes = require('./item_types')
     , check = milo.util.check
     , FormError = milo.util.error.createClass('Form')
     , logger = milo.util.logger
@@ -347,31 +348,11 @@ function CCForm$viewPathSchema(viewPath) {
 
 
 /**
+ * See item_types.js for item classes and templates
  * Map of items types to items components classes
  * UI components are defined in `milo`
  */
-var itemsClasses = {
-    group: 'MLGroup',
-    wrapper: 'MLWrapper',
-    select: 'MLSelect',
-    input: 'MLInput',
-    inputlist: 'MLInputList',
-    textarea: 'MLTextarea',
-    button: 'MLButton',
-    radio: 'MLRadioGroup',
-    hyperlink: 'MLHyperlink',
-    checkbox: 'MLInput',
-    list: 'MLList',
-    time: 'MLTime',
-    date: 'MLDate',
-    combo: 'MLCombo',
-    combolist: 'MLComboList',
-    image: 'MLImage',
-    previewimage: 'CCPreviewImage',
-    previewcropall: 'CCPreviewCropAll',
-    droptarget: 'MLDropTarget',
-    imagelist: 'CCImagePreviewList'
-};
+
 
 /**
  * modelPath translation rules for item types.
@@ -383,7 +364,8 @@ var modelPathRules = {
     button: 'optional',
     hyperlink: 'optional',
     droptarget: 'prohibited',
-    previewcropall: 'prohibited'
+    previewcropall: 'prohibited',
+    articlehistory: 'prohibited'
 };
 
 /**
@@ -407,9 +389,9 @@ var validationFunctions = {
 };
 
 
-var _itemsSchemaRules = _.mapKeys(itemsClasses, function(className, itemType) {
+var _itemsSchemaRules = _.mapKeys(itemTypes, function(className, itemType) {
     return {
-        CompClass: componentsRegistry.get(className),
+        // CompClass: componentsRegistry.get(className),
         func: itemsFunctions[itemType] || doNothing,
         modelPathRule: modelPathRules[itemType] || 'required'
     };
@@ -462,7 +444,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         };
 
         if (itemRules) {
-            check(comp, itemRules.CompClass);
+            check(comp, itemTypes[schema.type].CompClass);
             itemRules.func.call(this, comp, schema);
             _processItemTranslations(viewPath, schema);
         } else
