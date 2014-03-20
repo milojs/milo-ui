@@ -9,10 +9,10 @@ var CMARTICLE_GROUP_TEMPLATE = '<div ml-bind="CMRelatedGroup:newRelated" class="
         <div class="relatedItems">\
             <h4>More...</h4>\
             <ul ml-bind="[list]:relatedList">\
-            <li ml-bind="CMRelated[item]:result">\
-            <a ml-bind="[data]:previewText" target="_blank">\
-            </a>\
-            </li>\
+                <li ml-bind="CMRelated[item]:result">\
+                    <a ml-bind="[data]:previewText" target="_blank">\
+                    </a>\
+                </li>\
             </ul>\
         </div>\
     </div>';
