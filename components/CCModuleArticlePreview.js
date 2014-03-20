@@ -62,7 +62,6 @@ function _constructRelatedGroupState(value) {
         compClass: 'CMRelatedGroup',
         compName: milo.util.componentName(),
         facetsStates: {
-            data: undefined,
             model: {
                 state: {
                     transferData: [
