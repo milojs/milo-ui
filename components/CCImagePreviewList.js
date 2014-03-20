@@ -42,7 +42,12 @@ _.extendProto(CCImagePreviewList, {
 
 function CCImagePreviewList$start() {
     Component.prototype.start.apply(this, arguments);
-    this.template.render().binder();
+    this.template.render();
+    this.on('childrenbound', onChildrenBound);
+}
+
+
+function onChildrenBound() {
     this._list = this.container.scope.imageList;
     this.model.set([]);
 }
