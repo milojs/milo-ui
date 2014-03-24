@@ -4,7 +4,7 @@ var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
 
-var CMARTICLE_GROUP_TEMPLATE = '<div ml-bind="CMRelatedGroup:newRelated" class="cc-module-related">\
+var CMARTICLE_GROUP_TEMPLATE = '<div ml-bind="CMRelatedGroup:newRelated" class="cc-module-related-group">\
         <div class="relatedItemsTopBorder">&nbsp;</div>\
         <div class="relatedItems">\
             <h4>More...</h4>\
