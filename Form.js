@@ -650,7 +650,7 @@ function setComponentOptions(comp, options, setModelFunc) {
 }
 
 function setComponentModel(comp, data) {
-    comp.model.set(data);
+    _.deferMethod(comp.model, 'set', data);
 }
 
 function setComboListOptions(comp, data) {
