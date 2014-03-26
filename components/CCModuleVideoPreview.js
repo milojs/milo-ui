@@ -4,7 +4,7 @@ var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
 
-var CMVIDEO_GROUP_TEMPLATE = '<div class="videoPreview">\
+var CMVIDEO_GROUP_TEMPLATE = '<div>this video\
     </div>';
 
 
@@ -50,8 +50,26 @@ function CCModuleVideoPreview_del() {
 
 
 function _constructVideoState(value) {
+    console.log(value);
     if (!value) return;
     return {
-        outerHTML: CMVIDEO_GROUP_TEMPLATE
+        outerHTML: CMVIDEO_GROUP_TEMPLATE,
+        compClass: 'MIVideoInstance',
+        compName: milo.util.componentName(),
+        facetsStates: {
+            model: {
+                state: {
+                    videoId: value._id,
+                    src: value.fields.stillImage.hostUrl,
+                    width: value.fields.stillImage.width,
+                    height: value.fields.stillImage.height,
+                    tag: {
+                        id: undefined,
+                        name: 'video',
+                        style: 2
+                    }
+                }
+            }
+        }
     };
 }
