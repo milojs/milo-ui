@@ -42,7 +42,10 @@ _.extendProto(CCArticleHistory, {
 function CCArticleHistory$init() {
     Component.prototype.init.apply(this, arguments);
     this.on('childrenbound', onChildrenBound);
-    this.model.set([]);
+    var m = this.model;
+    _.defer(function() {
+        if (! m.get()) m.set([]);
+    });
 }
 
 

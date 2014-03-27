@@ -49,7 +49,10 @@ function CCImagePreviewList$start() {
 
 function onChildrenBound() {
     this._list = this.container.scope.imageList;
-    this.model.set([]);
+    var m = this.model;
+    _.defer(function() {
+        if (! m.get()) m.set([]);
+    });
 }
 
 
