@@ -10,7 +10,7 @@ var CMARTICLE_GROUP_TEMPLATE = '<div ml-bind="CMRelatedGroup:newRelated" class="
             <h4>More...</h4>\
             <ul ml-bind="[list]:relatedList">\
                 <li ml-bind="CMRelated[item]:result">\
-                    <a ml-bind="[data]:previewText" target="_blank">\
+                    <a ml-bind="[data]:title" target="_blank">\
                     </a>\
                 </li>\
             </ul>\
@@ -67,6 +67,7 @@ function _constructRelatedGroupState(value) {
                     transferData: [
                         {
                             url: value.url,
+                            title: value.title,
                             previewText: value.previewText,
                             transferItem: value,
                             wpsRelated: createWpsData(value)
