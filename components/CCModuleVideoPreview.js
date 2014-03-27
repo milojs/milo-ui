@@ -50,7 +50,6 @@ function CCModuleVideoPreview_del() {
 
 
 function _constructVideoState(value) {
-    console.log(value);
     if (!value) return;
     return {
         outerHTML: CMVIDEO_GROUP_TEMPLATE,
