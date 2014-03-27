@@ -62,6 +62,7 @@ function _constructVideoState(value) {
                     src: value.fields.stillImage.hostUrl,
                     width: value.fields.stillImage.width,
                     height: value.fields.stillImage.height,
+                    headline: value.fields.headline,
                     tag: {
                         id: undefined,
                         name: 'video',
