@@ -624,9 +624,10 @@ function _processComboListSchema(comp, schema) {
     var options = schema.comboOptions
         , hasAddBtn = schema.hasAddBtn === false ? false : true;
 
-    comp.toggleAddButton(hasAddBtn);
-    setComponentOptions(comp, options, setComboListOptions);
-
+    _.deferTicks(function() {
+        comp.toggleAddButton(hasAddBtn);
+        setComponentOptions(comp, options, setComboListOptions);
+    }, 2);
 }
 
 function _processInputListSchema(comp, schema) {
