@@ -31,6 +31,23 @@ componentsRegistry.add(CCModuleImagePreview);
 
 module.exports = CCModuleImagePreview;
 
+_.extendProto(CCModuleImagePreview, {
+    init: CCModuleImagePreview$init
+});
+
+function CCModuleImagePreview$init() {
+    Component.prototype.init.apply(this, arguments);
+    this.el.addEventListener('error', function () {
+        this.src = 'http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png';
+    });
+    // this.el.onerror = function (event) {
+    //     event.preventDefault();
+    //     event.stopPropagation();
+    //     event.stopImmediatePropagation();
+        
+    //     return true;
+    // };
+}
 
 function CCModuleImagePreview_get() {
     return this.model.get();

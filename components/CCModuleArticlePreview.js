@@ -87,7 +87,8 @@ function _constructRelatedGroupState(value) {
             relatedId: Number(value.id),
             relatedUrl: value.url,
             target: null,
-            voteFollow: false
+            voteFollow: false,
+            getDetails: true
         };
     }
 }
