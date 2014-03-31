@@ -363,6 +363,7 @@ var modelPathRules = {
     wrapper: 'prohibited',
     button: 'optional',
     hyperlink: 'optional',
+    text: 'optional',
     droptarget: 'prohibited',
     previewcropall: 'prohibited',
     articlehistory: 'prohibited'

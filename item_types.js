@@ -24,6 +24,7 @@ var itemTypes = {
     previewimage:   { compClass: 'CCPreviewImage',      template: fs.readFileSync(__dirname + '/items/previewimage.dot') },
     previewcropall: { compClass: 'CCPreviewCropAll',    template: fs.readFileSync(__dirname + '/items/previewcropall.dot') },
     droptarget:     { compClass: 'MLDropTarget',        template: fs.readFileSync(__dirname + '/items/droptarget.dot') },
+    text:           { compClass: 'MLText',              template: fs.readFileSync(__dirname + '/items/text.dot') },
     imagelist:      { compClass: 'CCImagePreviewList' },
     articlehistory: { compClass: 'CCArticleHistory' }
 };
