@@ -25,11 +25,23 @@ componentsRegistry.add(CCModuleArticleModulePreview);
 
 module.exports = CCModuleArticleModulePreview;
 
+
 function CCModuleArticleModulePreview_set(value) {
+    var self = this;
     value = parseData(value);
     this.data._set(value);
     this.model.set(value);
-    this.transfer.setState(_constructRelatedGroupState(value));
+
+    var stylesPromise = window.CC.config.data.itemStyles;
+    stylesPromise.then(function (dontUse, data) {
+        var styleId = data[value.type] && data[value.type][value.styleKey];
+        value.styleId = styleId;
+        self.transfer.setState(_constructRelatedGroupState(value));
+
+    }).error(function (error) {
+        milo.util.logger.error('itemStyles config returned with an error.');
+    });
+    
 }
 
 function parseData(value) {
@@ -37,7 +49,9 @@ function parseData(value) {
     return {
         id: value._id,
         title: stripHtml(value.fields.title || value.fields.name || value.fields.headline),
-        type: value.fields.moduleStyle.replace(/_/g, ' ')
+        type: value._type,
+        styleName: value.fields.moduleStyle.replace(/_/g, ' '),
+        styleKey: value.fields.moduleStyle
     };
 }
 
@@ -52,14 +66,18 @@ function _constructRelatedGroupState(value) {
 
     return {
         outerHTML: CMARTICLEMODULE_GROUP_TEMPLATE,
-        compClass: 'CMModuleInstance',
+        compClass: 'MIStandard',
         compName: milo.util.componentName(),
         facetsStates: {
             model: {
                 state: {
-                    moduleId: value.id,
                     title: value.title,
-                    type: value.type
+                    styleName: value.styleKey,
+                    tag: {
+                        id: value.id,
+                        name: value.type,
+                        style: value.styleId
+                    }
                 }
             }
         }

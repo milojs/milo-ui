@@ -27,7 +27,7 @@ var CCArticleModulePreviewList = Component.createComponentClass('CCArticleModule
                 <article ml-bind="CCModuleArticleModulePreview[item]:result" >\
                     <span class="cc-articlemodule-id" ml-bind="[data]:id"></span>\
                     <span class="cc-articlemodule-title" ml-bind="[data]:title"></span>\
-                    <span class="cc-articlemodule-type" ml-bind="[data]:type"></span>\
+                    <span class="cc-articlemodule-type" ml-bind="[data]:styleName"></span>\
                 </article>\
             </div>'
     }
