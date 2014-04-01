@@ -68,7 +68,10 @@ function _constructRelatedGroupState(value) {
                         {
                             url: value.url,
                             title: value.title,
-                            previewText: value.previewText,
+
+                            //is not using previewText because the text that appears in relatedArticles
+                            //is the title not the previewText
+                            previewText: value.title,
                             transferItem: value,
                             wpsRelated: createWpsData(value)
                         }
