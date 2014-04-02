@@ -83,7 +83,7 @@ function _constructRelatedGroupState(value) {
 
     function createWpsData(value) {
         return  {
-            headline: value.headline,
+            headline: value.title,
             newWindow: false,
             previewLink: false,
             relatedArticleTypeId: 1,
