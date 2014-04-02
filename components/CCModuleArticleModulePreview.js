@@ -34,7 +34,7 @@ function CCModuleArticleModulePreview_set(value) {
 
     var stylesPromise = window.CC.config.data.itemStyles;
     stylesPromise.then(function (dontUse, data) {
-        var styleId = data[value.type] && data[value.type][value.styleKey];
+        var styleId = data[value.type] && data[value.type][value.styleKey].id;
         value.styleId = styleId;
         self.transfer.setState(_constructRelatedGroupState(value));
 
