@@ -2,7 +2,8 @@
 
 var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component')
-    , articleStorage = require('../../storage/article') 
+    , articleStorage = require('../../storage/article')
+    , logger = milo.util.logger
     , moment = require('moment');
 
 var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
