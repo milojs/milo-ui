@@ -45,7 +45,8 @@ function CCModuleArticleModulePreview_set(value) {
 }
 
 function parseData(value) {
-    value.fields = value.fields || {moduleStyle: ''};
+    value.fields = value.fields || {};
+    value.fields.moduleStyle = value.fields.moduleStyle || value.fields.galleryPreviewStyle || '';
     return {
         id: value._id,
         title: stripHtml(value.fields.title || value.fields.name || value.fields.headline),
