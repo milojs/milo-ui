@@ -637,7 +637,7 @@ function _processInputListSchema(comp, schema) {
 
 function setComponentOptions(comp, options, setModelFunc) {
     if (options) {
-        if (options instanceof Promise) {
+        if (Promise.isPromise(options)) {
             setModelFunc(comp, [{ value: 0, label: 'loading...' }]);
             options
                 .then(function(err, data) {

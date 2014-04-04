@@ -64,7 +64,7 @@ function onChildrenBound () {
 function clickedHistoryEl (msg, event) {
     var listComp = Component.getContainingComponent(event.target, true, 'item');
     milo.mail.postMessage('loadarticleversion',
-        { version: this.model.m('[$1]', listComp.item.index).get() });
+        { data: { version: this.model.m('[$1]', listComp.item.index).get() } });
 }
 
 
