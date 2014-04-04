@@ -112,5 +112,5 @@ function fromNow(date) {
         var S = period > 1 ? 's' : '';
         return (period) + ' second' + S + ' ago';
     } else
-        return moment(date).fromNow();
+        return moment(date).format('DD/MM/YYYY, HH:mm:ss');
 }
