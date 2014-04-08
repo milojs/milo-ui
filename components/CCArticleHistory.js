@@ -108,9 +108,11 @@ function fromNow(date) {
     var period = Math.floor((new Date - new Date(date)) / 1000);
     if (period == 0)
         return 'just now'; 
-    else if (period > 0 && period < 3600) {
+    else if (period > 0 && period < 60) {
         var S = period > 1 ? 's' : '';
         return (period) + ' second' + S + ' ago';
-    } else
+    } else if (period < 2700)
+        return moment(date).fromNow();
+    else
         return moment(date).format('DD/MM/YY HH:mm');
 }
