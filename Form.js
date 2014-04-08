@@ -377,7 +377,8 @@ var itemsFunctions = {
     radio: _processRadioSchema,
     combo: _processComboSchema,
     combolist: _processComboListSchema,
-    inputlist: _processInputListSchema
+    inputlist: _processInputListSchema,
+    textarea: _processTextareaSchema
 };
 
 /**
@@ -606,20 +607,24 @@ function _processSchemaMessages(comp, messages) {
     });
 }
 
+
 function _processSelectSchema(comp, schema) {
     var options = schema.selectOptions;
     setComponentOptions(comp, options, setComponentModel);
 }
+
 
 function _processRadioSchema(comp, schema) {
     var options = schema.radioOptions;
     setComponentOptions(comp, options, setComponentModel);
 }
 
+
 function _processComboSchema(comp, schema) {
     var options = schema.comboOptions;
     setComponentOptions(comp, options, setComponentModel);
 }
+
 
 function _processComboListSchema(comp, schema) {
     var options = schema.comboOptions
@@ -631,9 +636,17 @@ function _processComboListSchema(comp, schema) {
     }, 2);
 }
 
+
 function _processInputListSchema(comp, schema) {
     comp.setAsync(schema.asyncHandler);
 }
+
+
+function _processTextareaSchema(comp, schema) {
+    if (schema.autoresize)
+        comp.startAutoresize(schema.autoresize);
+}
+
 
 function setComponentOptions(comp, options, setModelFunc) {
     if (options) {
@@ -651,13 +664,16 @@ function setComponentOptions(comp, options, setModelFunc) {
     }
 }
 
+
 function setComponentModel(comp, data) {
     _.deferMethod(comp.model, 'set', data);
 }
 
+
 function setComboListOptions(comp, data) {
     comp.setOptions(data);
 }
+
 
 function validateRequired(data, callback) {
     var valid = typeof data != 'undefined'
@@ -666,11 +682,13 @@ function validateRequired(data, callback) {
     callback(null, response);
 }
 
+
 function validateUrl(data, callback) {
     var valid = typeof data == 'string' && /^http\:\/\//.test(data)
         , response = _validatorResponse(valid, 'should be valid URL');
     callback(null, response);
 }
+
 
 function _validatorResponse(valid, reason) {
     return valid
