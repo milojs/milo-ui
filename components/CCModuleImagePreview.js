@@ -28,7 +28,7 @@ var CCModuleImagePreview = Component.createComponentClass('CCModuleImagePreview'
     container: undefined,
     bigImagePreview: {
         modelPaths: {
-            imageSrc: '.printUrl',
+            imageSrc: '.proofUrl',
             captionText: '.caption'
         }
     }
