@@ -24,7 +24,14 @@ var CCModuleImagePreview = Component.createComponentClass('CCModuleImagePreview'
     },
     model: undefined,
     events: undefined,
-    transfer: undefined
+    transfer: undefined,
+    container: undefined,
+    bigImagePreview: {
+        modelPaths: {
+            imageSrc: '.printUrl',
+            captionText: '.caption'
+        }
+    }
 });
 
 componentsRegistry.add(CCModuleImagePreview);

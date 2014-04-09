@@ -22,7 +22,14 @@ var CCModuleVideoPreview = Component.createComponentClass('CCModuleVideoPreview'
     },
     model: undefined,
     events: undefined,
-    transfer: undefined
+    transfer: undefined,
+    container: undefined,
+    bigImagePreview: {
+        modelPaths: {
+            imageSrc: '.fields.stillImage.hostUrl',
+            captionText: '.fields.prviewText'
+        }
+    }
 });
 
 componentsRegistry.add(CCModuleVideoPreview);
