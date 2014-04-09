@@ -289,7 +289,7 @@ function CCForm$getInvalidControls() {
  * @return {String}
  */
 function CCForm$getInvalidReason() {
-    var invalidControls = this.getInvalidControls()
+    var invalidControls = this.getInvalidControls();
     var reason = _.reduceKeys(invalidControls,
         function(memo, invalidControl) {
             return memo + '\n' + invalidControl.reason;
