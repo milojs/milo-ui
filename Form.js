@@ -1,6 +1,7 @@
 'use strict';
 
 var formGenerator = require('./generator')
+    , Component = milo.Component
     , componentsRegistry = milo.registry.components
     , itemTypes = require('./item_types')
     , check = milo.util.check
@@ -79,7 +80,7 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *     ]    
  * }
  */
-var CCForm = milo.Component.createComponentClass('CCForm', {
+var CCForm = Component.createComponentClass('CCForm', {
     dom: {
         cls: 'cc-module-inspector'
     },
@@ -106,7 +107,8 @@ _.extendProto(CCForm, {
     modelPathComponent: CCForm$modelPathComponent,
     modelPathSchema: CCForm$modelPathSchema,
     viewPathComponent: CCForm$viewPathComponent,
-    viewPathSchema: CCForm$viewPathSchema
+    viewPathSchema: CCForm$viewPathSchema,
+    destroy: CCForm$destroy
 });
 
 
@@ -228,14 +230,16 @@ function CCForm$isValid() {
  * can be used to mark as invaid all required fields or to explicitely validate
  * form when it is saved. Returns validation state of the form via callback
  *
- * @return {Boolean}
+ * @param {Function} callback
  */
 function CCForm$validateModel(callback) {
     var validations = []
         , self = this;
+
     _.eachKey(this._dataValidations.toModel, function(validators, viewPath) {
         var modelPath = this._modelPathTranslations[viewPath]
             , data = this.model.m(modelPath).get();
+
         validations.push({
             viewPath: viewPath,
             data: data,
@@ -344,6 +348,13 @@ function CCForm$viewPathComponent(viewPath) {
 function CCForm$viewPathSchema(viewPath) {
     var viewPathObj = this._formViewPaths[viewPath];
     return viewPathObj && viewPathObj.schema;
+}
+
+
+function CCForm$destroy() {
+    Component.prototype.destroy.apply(this, arguments);
+    this._connector && milo.minder.destroyConnector(this._connector);
+    this._connector = null;
 }
 
 
