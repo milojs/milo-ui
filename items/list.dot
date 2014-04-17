@@ -4,6 +4,7 @@
             {{? it.disabled }}disabled {{?}}>
         <li ml-bind="MLListItem:itemSample" class="list-item">
             <span ml-bind="[data]:label"></span>
+            {{? it.editBtn }}<button ml-bind="[events]:editBtn">edit</button>{{?}}
             <button ml-bind="[events]:deleteBtn">x</button>
         </li>
     </ul>

@@ -26,7 +26,8 @@ var itemTypes = {
     droptarget:     { compClass: 'MLDropTarget',        template: fs.readFileSync(__dirname + '/items/droptarget.dot') },
     text:           { compClass: 'MLText',              template: fs.readFileSync(__dirname + '/items/text.dot') },
     imagelist:      { compClass: 'CCImagePreviewList' },
-    articlehistory: { compClass: 'CCArticleHistory' }
+    articlehistory: { compClass: 'CCArticleHistory' },
+    linklist:       { compClass: 'CCLinkList'}
 };
 
 

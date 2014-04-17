@@ -139,7 +139,7 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
     function _createFormComponent() {
         template = template || formGenerator(schema);
-        return CCForm.createOnElement(undefined, template);     
+        return CCForm.createOnElement(undefined, template);
     }
 
     function _processFormSchema() {
@@ -390,6 +390,8 @@ var itemsFunctions = {
     combolist: _processComboListSchema,
     inputlist: _processInputListSchema,
     textarea: _processTextareaSchema
+    //linkedlist: _processLinkedList
+
 };
 
 /**
@@ -652,6 +654,11 @@ function _processInputListSchema(comp, schema) {
     comp.setAsync(schema.asyncHandler);
 }
 
+
+function _processLinkedList(comp, schema) {
+
+//    comp.setOnEdit(schema.onEdit);
+}
 
 function _processTextareaSchema(comp, schema) {
     if (schema.autoresize)
