@@ -8,7 +8,7 @@ var componentsRegistry = milo.registry.components
 var listTemplate = '\
 <ul ml-bind="[list, events]:list">                 \
     <li ml-bind="[item]:result" class="linklist-item">  \
-        <span ml-bind="[data]:label"></span>                \
+        <span class="linklist-wrap"><span ml-bind="[data]:headline"></span> (<span ml-bind="[data]:relatedUrl"></span>)</span>  \
         <button ml-bind="[events]:editBtn">edit</button>    \
         <button ml-bind="[events]:deleteBtn">x</button>     \
     </li> \
@@ -119,9 +119,9 @@ function onCancelButtonSubscriber() {
 function editItem(index, data) {
     var item = this.model.get()[index];
     var urlData = this.container.scope.url.data;
-    urlData.set(item.value.relatedUrl);
+    urlData.set(item.relatedUrl);
     var headlineData = this.container.scope.headline.data;
-    headlineData.set(item.value.headline);
+    headlineData.set(item.headline);
     this.container.scope.saveBtn.el.innerHTML = 'Update';
 
     this._saving = { index: index };
@@ -136,9 +136,7 @@ function CCLinkList_get() {
 
 
 function CCLinkList_set(value) {
-    this.model.set(value.map(function (item) {
-        return makeItem(item);
-    }));
+    this.model.set(value);
     _sendChangeMessage.call(this);
 }
 
@@ -152,9 +150,8 @@ function CCLinkList_del() {
 
 function CCLinkList_splice(index, howmany) { // ... arguments
     var dataFacet = this.container.scope.list.data;
-    var args = [index, howmany].concat(Array.prototype.slice.call(arguments, 2).map(function () {
-        return makeItem(args);
-    }));
+    var args = [index, howmany].concat(Array.prototype.slice.call(arguments, 2));
+
     dataFacet._splice.apply(dataFacet, args);
 
     this.model.splice.apply(this.model, args);
@@ -169,16 +166,6 @@ function onSaveButtonSubscriber() {
     } else {
         addExternalLink.call(this);
     }
-}
-
-
-function makeItem(data) {
-    return { label: makeLabel(data), value: data };
-}
-
-
-function makeLabel(relatedLink) {
-    return relatedLink.headline + ' (' + relatedLink.relatedUrl + ')'
 }
 
 
@@ -200,15 +187,11 @@ function saveExternalLink(index) {
     }
 
     var data = this.model.get();
-    var value = data[index].value;
+    var value = data[index];
     _.extend(value, formData);
 
-    var replacementItem = {
-        label: makeLabel(formData),
-        value: value
-    };
 
-    this.model.splice(index, 1, replacementItem);
+    this.model.splice(index, 1, value);
 
     toggleEditMode.call(this, false);
 
@@ -225,7 +208,7 @@ function addExternalLink() {
     }
     var externalLinksModel = this.model;
     if (!externalLinksModel.get()) externalLinksModel.set([]);
-    externalLinksModel.push({ label: makeLabel(formData), value: formData });
+    externalLinksModel.push(formData);
 }
 
 
