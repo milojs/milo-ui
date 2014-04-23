@@ -206,9 +206,16 @@ function addExternalLink() {
         logger.error("Failed to Add External Link:" + e);
         return;
     }
+
+    var externalLink = _.extend({
+        relatedArticleTypeId: 10,
+        previewLink: false,
+        getDetails: true
+    }, formData);
+
     var externalLinksModel = this.model;
     if (!externalLinksModel.get()) externalLinksModel.set([]);
-    externalLinksModel.push(formData);
+    externalLinksModel.push(externalLink);
 }
 
 
