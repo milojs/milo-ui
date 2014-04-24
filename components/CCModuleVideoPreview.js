@@ -27,7 +27,7 @@ var CCModuleVideoPreview = Component.createComponentClass('CCModuleVideoPreview'
     bigImagePreview: {
         modelPaths: {
             imageSrc: '.fields.stillImage.hostUrl',
-            captionText: '.fields.prviewText'
+            captionText: '.fields.previewText'
         }
     }
 });
