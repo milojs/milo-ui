@@ -652,6 +652,7 @@ function _processComboListSchema(comp, schema) {
 
 function _processInputListSchema(comp, schema) {
     comp.setAsync(schema.asyncHandler);
+    comp.setPlaceHolder(schema.placeHolder);
 }
 
 
