@@ -27,7 +27,8 @@ var itemTypes = {
     text:           { compClass: 'MLText',              template: fs.readFileSync(__dirname + '/items/text.dot') },
     imagelist:      { compClass: 'CCImagePreviewList' },
     articlehistory: { compClass: 'CCArticleHistory' },
-    linklist:       { compClass: 'CCLinkList',          template: fs.readFileSync(__dirname + '/items/linklist.dot') }
+    linklist:       { compClass: 'CCLinkList',          template: fs.readFileSync(__dirname + '/items/linklist.dot') },
+    relatedlist:       { compClass: 'CCRelatedList'}
 };
 
 
