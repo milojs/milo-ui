@@ -1,0 +1,18 @@
+{{# def.partials.formGroup }}
+{{# def.partials.label }}
+<{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">
+    <ul ml-bind="[list, events]:list">
+        <li ml-bind="[item]:result" class="linklist-item">
+            <span class="linklist-wrap">
+                <span ml-bind="[data]:headline"></span> (<span ml-bind="[data]:relatedUrl"></span>)
+            </span>
+            <button ml-bind="[events]:editBtn" class="btn btn-default ml-ui-button">edit</button>
+            <button ml-bind="[events]:deleteBtn" class="btn btn-default ml-ui-button">x</button>
+        </li>
+    </ul>
+    <input placeholder="url" type="text" ml-bind="[data]:url" class="form-control ml-ui-input">
+    <input placeholder="headline" type="text" ml-bind="[data]:headline" class="form-control ml-ui-input">
+    <button ml-bind="[events]:saveBtn"  class="btn btn-default ml-ui-button"> Add </button>
+    <button ml-bind="[events, dom]:cancelBtn"  class="btn btn-default ml-ui-button cc-hidden"> Cancel </button>
+</{{= it.tagName}}>
+</div>

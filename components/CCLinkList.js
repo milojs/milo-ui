@@ -4,24 +4,6 @@ var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component')
     , logger = milo.util.logger;
 
-
-var listTemplate = '\
-<ul ml-bind="[list, events]:list">                 \
-    <li ml-bind="[item]:result" class="linklist-item">  \
-        <span class="linklist-wrap"><span ml-bind="[data]:headline"></span> (<span ml-bind="[data]:relatedUrl"></span>)</span>  \
-        <button ml-bind="[events]:editBtn">edit</button>    \
-        <button ml-bind="[events]:deleteBtn">x</button>     \
-    </li> \
-</ul> \
-<label>Url</label>\
-<input type="text" ml-bind="[data]:url" class="form-control ml-ui-input"> \
-<label>Headline</label>\
-<input type="text" ml-bind="[data]:headline" class="form-control ml-ui-input"> \
-<button ml-bind="[events]:saveBtn"  class="btn btn-default ml-ui-button"> Add </button>  \
-<button ml-bind="[events, dom]:cancelBtn"  class="btn btn-default ml-ui-button cc-hidden"> Cancel </button>  \
-</li>                                                   \
-</ul>';
-
 var LINKLIST_CHANGE_MESSAGE = 'cclinklistchange';
 
 
@@ -34,20 +16,8 @@ var CCLinkList = Component.createComponentClass('CCLinkList', {
         del: CCLinkList_del,
         splice: CCLinkList_splice,
         event: LINKLIST_CHANGE_MESSAGE
-
     },
-    model: {
-        messages: {
-            '*': {
-                subscriber: _sendChangeMessage,
-                context: 'owner'
-            }
-        }
-    },
-    template: {
-        template: listTemplate,
-        interpolate: false
-    }
+    model: undefined
 });
 
 componentsRegistry.add(CCLinkList);
@@ -65,10 +35,8 @@ function CCLinkList$init() {
 
 
 function onChildrenBound() {
-    this.template.render().binder();
 
-    milo.minder(this.container.scope.list.data, '<<<->>>', this.model);
-
+    milo.minder(this.model, '->>>', this.container.scope.list.data).deferChangeMode('<<<->>>');
     var saveBtn = this.container.scope.saveBtn;
     saveBtn.events.on('click', { subscriber: onSaveButtonSubscriber, context: this });
     var cancelBtn = this.container.scope.cancelBtn;
@@ -98,8 +66,11 @@ function onListClickSubscriber(type, event) {
     }
 }
 
+
 function deleteItem(index) {
     this.model.splice(index, 1);
+    _triggerExternalPropagation.call(this);
+
 }
 
 
@@ -137,13 +108,13 @@ function CCLinkList_get() {
 
 function CCLinkList_set(value) {
     this.model.set(value);
-    _sendChangeMessage.call(this);
+    _triggerExternalPropagation.call(this);
 }
 
 
 function CCLinkList_del() {
     var res = this.model.set([]);
-    _sendChangeMessage.call(this);
+    _triggerExternalPropagation.call(this);
     return res;
 }
 
@@ -151,18 +122,14 @@ function CCLinkList_del() {
 function CCLinkList_splice(index, howmany) { // ... arguments
     var dataFacet = this.container.scope.list.data;
     var args = [index, howmany].concat(Array.prototype.slice.call(arguments, 2));
-
-    dataFacet._splice.apply(dataFacet, args);
-
     this.model.splice.apply(this.model, args);
-    _sendChangeMessage.call(this);
+    _triggerExternalPropagation.call(this);
 }
 
 
 function onSaveButtonSubscriber() {
     if (this._saving) {
         saveExternalLink.call(this, this._saving.index);
-
     } else {
         addExternalLink.call(this);
     }
@@ -185,28 +152,24 @@ function saveExternalLink(index) {
         logger.error("Failed to Save External Link:" + e);
         return;
     }
-
     var data = this.model.get();
     var value = data[index];
     _.extend(value, formData);
-
-
     this.model.splice(index, 1, value);
-
     toggleEditMode.call(this, false);
-
     delete this._saving;
+    _triggerExternalPropagation.call(this);
 }
 
 
 function addExternalLink() {
+
     try {
         var formData = _getAndClearFormData.call(this, validateForm);
     } catch (e) {
         logger.error("Failed to Add External Link:" + e);
         return;
     }
-
     var externalLink = _.extend({
         relatedArticleTypeId: 10,
         previewLink: false,
@@ -214,8 +177,12 @@ function addExternalLink() {
     }, formData);
 
     var externalLinksModel = this.model;
-    if (!externalLinksModel.get()) externalLinksModel.set([]);
+    var existing = externalLinksModel.get();
+    if (!externalLinksModel.get()) {
+        externalLinksModel.set([]);
+    }
     externalLinksModel.push(externalLink);
+    _triggerExternalPropagation.call(this);
 }
 
 
@@ -231,11 +198,10 @@ function _getAndClearFormData(validateFn) {
 
     urlData.set('');
     headlineData.set('');
-
     return relatedLink;
 }
 
 
-function _sendChangeMessage() {
-    this.data.getMessageSource().dispatchMessage(LINKLIST_CHANGE_MESSAGE);
+function _triggerExternalPropagation() {
+    this.data.dispatchSourceMessage(LINKLIST_CHANGE_MESSAGE);
 }
