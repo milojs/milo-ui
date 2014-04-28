@@ -2,6 +2,7 @@
     {{# def.partials.label }}
     <input type="text"
             ml-bind="MLInput:{{= it.compName }}"
+            placeholder="{{? it.item.placeholder }}{{= it.item.placeholder}}{{?}}"
             {{? it.disabled }}disabled {{?}}
             class="form-control">
 </div>

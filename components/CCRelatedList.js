@@ -9,9 +9,9 @@ var listTemplate = '\
     <div>\
         <ul ml-bind="[list, events]:related">\
             <li ml-bind="[item]:result">\
-                <input type="text" ml-bind="[data]:headline"/>\
-                <span ml-bind="[data]:relatedUrl" class="cc-relatedlist-url"></span>\
-                <span ml-bind="[data]:relatedId" class="cc-relatedlist-id"></span>\
+                <input type="text" ml-bind="[data]:headline" class="ml-ui-input form-control" />\
+                <a ml-bind="[data]:relatedUrl" class="cc-relatedlist-url" target="_blank"></a>\
+                <a ml-bind="[data]:relatedId" class="cc-relatedlist-id" target="_blank"></a>\
                 <div class="cc-relatedlist-options">\
                     <label>\
                         <input type="checkbox" ml-bind="[data]:previewLink" class="ml-ui-input">\
@@ -23,13 +23,13 @@ var listTemplate = '\
                     </label>\
                 </div>\
                 <div class="cc-relatedlist-actions">\
-                    <button ml-bind="[events]:upBtn">&#x25B2;</button>\
-                    <button ml-bind="[events]:deleteBtn" class="glyphicon glyphicon-remove"> </button>\
-                    <button ml-bind="[events]:downBtn">&#x25BC;</button>\
+                    <button ml-bind="[events]:upBtn" class="btn btn-default">&#x25B2;</button>\
+                    <button ml-bind="[events]:deleteBtn" class="btn btn-default glyphicon glyphicon-remove"> </button>\
+                    <button ml-bind="[events]:downBtn" class="btn btn-default">&#x25BC;</button>\
                 </div>\
             </li>\
         </ul>\
-        <input type="text" ml-bind="[data]:input" class="form-control ml-ui-input" placeHolder="ID or URL">\
+        <input type="text" ml-bind="[data]:input" class="form-control ml-ui-input" placeHolder="Article ID or any website URL">\
         <button ml-bind="[events]:saveBtn"  class="btn btn-default ml-ui-button"> Add </button>\
     </div>';
 
@@ -51,7 +51,7 @@ var CCRelatedList = Component.createComponentClass('CCRelatedList', {
     model: {
         messages: {
             '*': {
-                subscriber: onListUpdated,
+                subscriber: _.throttle(onListUpdated, 100),
                 context: 'owner'
             },
             '**': {
@@ -113,9 +113,6 @@ function onListClickSubscriber(type, event) {
                 case 'deleteBtn':
                     deleteItem.call(this, index);
                     break;
-                case 'saveBtn':
-                    onAddClick.call(this);
-                    break;
             }
         }
     }
@@ -163,33 +160,59 @@ function CCRelatedList_splice(index, howmany) { // ... arguments
 
 
 function onSaveButtonSubscriber() {
-    addRelatedLink.call(this);
-}
 
+    var newRelated = this.container.scope.input.data.get();
 
-function onAddClick() {
-
-    var newRelated = this.container.scope.input.data;
+    var baseUrl = window.CC.config.apiHost;
+    var self = this;
     
     if ( _.isNumeric(newRelated) ) {
 
-        var baseUrl = window.CC.config.apiHost + '/article/getRelatedArticle/';
+        baseUrl += '/article/getRelatedArticle/';
 
         milo.util.request.json(baseUrl + newRelated, function (err, responseData) {
             if (err)
                 return milo.util.logger.error('can\'t find article', err);
 
-            // addRelatedLink(responseData);
+            addRelatedArticle.call(self, responseData);
+            self.container.scope.input.data.set('');
         });
 
     } else {
 
-        // addRelatedLink(responseData);
+        baseUrl += '/links/remotetitle';
+
+        milo.util.request.post(baseUrl, {url: newRelated}, function (err, responseData) {
+            if (err)
+                return milo.util.logger.error('can\'t find article', err);
+
+            addRelatedLink.call(self, newRelated, responseData);
+            self.container.scope.input.data.set('');
+        });
     }
+
 }
 
-function addRelatedLink() {
+function addRelatedLink(url, headline) {
+    var relatedData = createCommonRelatedData();
+    relatedData.relatedUrl = url.match(/^http:\/\//) ? url : 'http://' + url;
+    relatedData.relatedArticleTypeId = 10;
+    relatedData.newWindow = true;
+    relatedData.headline = headline;
+    this.model.push(relatedData);
+}
 
+function addRelatedArticle(relatedData) {
+    this.model.push(relatedData);
+}
+
+function createCommonRelatedData() {
+    return {
+        previewLink: false,
+        voteFollow: false,
+        target: null,
+        getDetails: false
+    };
 }
 
 function onListUpdated() {
@@ -203,11 +226,15 @@ function onInnerChange() {
 }
 
 function addStylesToList() {
+    var baseUrl = window.CC.config.environment == 'production' ? 'http://dailymail.co.uk' : 'http://integration.dailymail.co.uk';
     var listData = this.model.m.get();
     this.container.scope.related.list.each(function (comp, index) {
         if (comp.el._prevStyle) comp.el.classList.remove(comp.el._prevStyle);
         var typeClass = listData[index].relatedArticleTypeId != 10 ? 'cc-relatedlist-article' : 'cc-relatedlist-external';
+        var scope = comp.container.scope;
         comp.el.classList.add(typeClass);
+        scope.relatedUrl.el.href = scope.relatedUrl.el.innerHTML;
+        scope.relatedId.el.href =  baseUrl + scope.relatedUrl.el.innerHTML;
     });
 }
 
