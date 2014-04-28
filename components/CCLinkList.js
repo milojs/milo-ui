@@ -35,7 +35,6 @@ function CCLinkList$init() {
 
 
 function onChildrenBound() {
-
     milo.minder(this.model, '->>>', this.container.scope.list.data).deferChangeMode('<<<->>>');
     var saveBtn = this.container.scope.saveBtn;
     saveBtn.events.on('click', { subscriber: onSaveButtonSubscriber, context: this });
