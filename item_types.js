@@ -28,7 +28,7 @@ var itemTypes = {
     imagelist:      { compClass: 'CCImagePreviewList' },
     articlehistory: { compClass: 'CCArticleHistory' },
     linklist:       { compClass: 'CCLinkList',          template: fs.readFileSync(__dirname + '/items/linklist.dot') },
-    relatedlist:       { compClass: 'CCRelatedList'}
+    relatedlist:    { compClass: 'CCRelatedList',       template: fs.readFileSync(__dirname + '/items/relatedlist.dot') }
 };
 
 

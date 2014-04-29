@@ -4,35 +4,6 @@ var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component')
     , logger = milo.util.logger;
 
-
-var listTemplate = '\
-    <div>\
-        <ul ml-bind="[list, events]:related">\
-            <li ml-bind="[item]:result">\
-                <input type="text" ml-bind="[data]:headline" class="ml-ui-input form-control" />\
-                <a ml-bind="[data]:relatedUrl" class="cc-relatedlist-url" target="_blank"></a>\
-                <a ml-bind="[data]:relatedId" class="cc-relatedlist-id" target="_blank"></a>\
-                <div class="cc-relatedlist-options">\
-                    <label>\
-                        <input type="checkbox" ml-bind="[data]:previewLink" class="ml-ui-input">\
-                        <span>Use for Preview</span>\
-                    </label>\
-                    <label>\
-                        <input type="checkbox" ml-bind="[data]:voteFollow" class="ml-ui-input">\
-                        <span>No follow</span>\
-                    </label>\
-                </div>\
-                <div class="cc-relatedlist-actions">\
-                    <button ml-bind="[events]:upBtn" class="btn btn-default">&#x25B2;</button>\
-                    <button ml-bind="[events]:deleteBtn" class="btn btn-default glyphicon glyphicon-remove"> </button>\
-                    <button ml-bind="[events]:downBtn" class="btn btn-default">&#x25BC;</button>\
-                </div>\
-            </li>\
-        </ul>\
-        <input type="text" ml-bind="[data]:input" class="form-control ml-ui-input" placeHolder="Article ID or any website URL">\
-        <button ml-bind="[events]:saveBtn"  class="btn btn-default ml-ui-button"> Add </button>\
-    </div>';
-
 var RELATEDLIST_CHANGE_MESSAGE = 'ccrelatedlistchange';
 
 var CCRelatedList = Component.createComponentClass('CCRelatedList', {
@@ -59,10 +30,6 @@ var CCRelatedList = Component.createComponentClass('CCRelatedList', {
                 context: 'owner'
             }
         }
-    },
-    template: {
-        template: listTemplate,
-        interpolate: false
     }
 });
 
@@ -81,8 +48,6 @@ function CCRelatedList$init() {
 
 
 function onChildrenBound() {
-    this.template.render().binder();
-
     milo.minder(this.container.scope.related.data, '<<<->>>', this.model);
 
     var saveBtn = this.container.scope.saveBtn;
@@ -94,26 +59,24 @@ function onChildrenBound() {
 
 
 function onListClickSubscriber(type, event) {
-    if (type == 'click') {
-        var elm = event.target;
-        var comp = Component.getComponent(elm);
-        if (!comp) return;
-        var parent = comp.getScopeParent('Item');
-        if (parent) {
-            var index = parent.item.index;
-            var name = comp.name;
+    var elm = event.target;
+    var comp = Component.getComponent(elm);
+    if (!comp) return;
+    var parent = comp.getScopeParent('Item');
+    if (parent) {
+        var index = parent.item.index;
+        var name = comp.name;
 
-            switch (name) {
-                case 'downBtn':
-                    swapItems.call(this, index, index + 1);
-                    break;
-                case 'upBtn':
-                    swapItems.call(this, index - 1, index);
-                    break;
-                case 'deleteBtn':
-                    deleteItem.call(this, index);
-                    break;
-            }
+        switch (name) {
+            case 'downBtn':
+                swapItems.call(this, index, index + 1);
+                break;
+            case 'upBtn':
+                swapItems.call(this, index - 1, index);
+                break;
+            case 'deleteBtn':
+                deleteItem.call(this, index);
+                break;
         }
     }
 }
@@ -134,12 +97,12 @@ function deleteItem(index) {
 
 function CCRelatedList_get() {
     var model = this.model.get();
-    return model ? _.clone(model) : undefined;
+    return model ? _.deepClone(model) : [];
 }
 
 
 function CCRelatedList_set(value) {
-    this.model.set(value);
+    this.model.set(value || []);
     sendChangeMessage.call(this);
 }
 
@@ -216,9 +179,7 @@ function createCommonRelatedData() {
 }
 
 function onListUpdated() {
-    _.defer(function () {
-        addStylesToList.call(this);
-    }.bind(this));
+    addStylesToList.call(this);
 }
 
 function onInnerChange() {

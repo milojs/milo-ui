@@ -7,7 +7,7 @@ var componentsRegistry = milo.registry.components
 var CMARTICLE_GROUP_TEMPLATE = '<div ml-bind="CMRelatedGroup:newRelated" class="cc-module-related-group">\
         <div class="relatedItemsTopBorder">&nbsp;</div>\
         <div class="relatedItems">\
-            <h4>More...</h4>\
+            <h4 ml-bind="[data]:relatedCaption"></h4>\
             <ul ml-bind="[list]:relatedList">\
                 <li ml-bind="CMRelated[item]:result">\
                     <a ml-bind="[data]:title" target="_blank">\
@@ -90,8 +90,7 @@ function _constructRelatedGroupState(value) {
             relatedId: Number(value.id),
             relatedUrl: value.url,
             target: null,
-            voteFollow: false,
-            getDetails: true
+            voteFollow: false
         };
     }
 }
