@@ -191,6 +191,8 @@ function addStylesToList() {
     var listData = this.model.m.get();
     this.container.scope.related.list.each(function (comp, index) {
         if (comp.el._prevStyle) comp.el.classList.remove(comp.el._prevStyle);
+        if (!listData[index]) return;
+        
         var typeClass = listData[index].relatedArticleTypeId != 10 ? 'cc-relatedlist-article' : 'cc-relatedlist-external';
         var scope = comp.container.scope;
         comp.el.classList.add(typeClass);
