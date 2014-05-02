@@ -33,6 +33,8 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *             label: '<ui control label>',
  *                             // optional label, will not be added if not defined
  *                             // or empty string
+ *             altText: '<alt text or title>',
+ *                             // optional alt text string on buttons and hyperlinks
  *             modelPath: '<model mapping>',
  *                             // path in model where the value will be stored.
  *                             // Most types of items require this property,
