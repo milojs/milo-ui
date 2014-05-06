@@ -687,7 +687,9 @@ function setComponentOptions(comp, options, setModelFunc) {
 
 
 function setComponentModel(comp, data) {
-    _.deferMethod(comp.model, 'set', data);
+    comp.model.set(data);
+    // _.deferMethod(comp.model, 'set', data);
+    // doing it with defer makes channel not set when the article is opened
 }
 
 
