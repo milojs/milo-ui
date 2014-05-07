@@ -44,9 +44,7 @@ _.extendProto(CCModuleImagePreview, {
 
 function CCModuleImagePreview$init() {
     Component.prototype.init.apply(this, arguments);
-    this.el.addEventListener('error', function () {
-        this.src = 'http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png';
-    });
+    this.on('stateready', _init);
     // this.el.onerror = function (event) {
     //     event.preventDefault();
     //     event.stopPropagation();
@@ -54,6 +52,13 @@ function CCModuleImagePreview$init() {
         
     //     return true;
     // };
+}
+
+function _init() {
+    var imgEl = this.el.getElementsByTagName('img')[0];
+    imgEl.addEventListener('error', function () {
+        this.src = 'http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png';
+    });
 }
 
 function CCModuleImagePreview_get() {
@@ -64,14 +69,14 @@ function CCModuleImagePreview_get() {
 function CCModuleImagePreview_set(value) {
     this.model.set(value);
     if (value && value.thumbUrl)
-        this.el.src = value.thumbUrl;
+        this.container.scope.image.el.src = value.thumbUrl;
     this.transfer.setState(_constructImageGroupState(value));
 }
 
 
 function CCModuleImagePreview_del() {
     this.model.del();
-    this.el.removeAttribute(src);
+    this.container.scope.image.el.removeAttribute(src);
 }
 
 
