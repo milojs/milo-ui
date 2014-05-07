@@ -25,7 +25,7 @@ var CCImagePreviewList = Component.createComponentClass('CCImagePreviewList', {
         template:
             '<div ml-bind="[list]:imageList">\
                 <div ml-bind="CCModuleImagePreview[item]:imageItem">\
-                    <img ml-bind="[data]:image" />\
+                    <img ml-bind="[data]:image">\
                 </div>\
             </div>'
     }
