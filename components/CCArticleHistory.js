@@ -9,7 +9,6 @@ var componentsRegistry = milo.registry.components
 var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                         <li class="list-group-item" ml-bind="[item]:item"> \
                             <span ml-bind="[data]:user"></span> \
-                            <span class="text-center" ml-bind="[data]:editor"></span> \
                             <span class="pull-right" ml-bind="[data]:createdDate"></span> \
                         </li> \
                     </ul>';
@@ -74,31 +73,13 @@ function fetchHistory (articleID) {
 
     this.container.scope.list.data.set([]);
     this.model.set([]);
-    console.log('fetch history called with articleID', articleID);
+    
     milo.util.request.json(window.CC.config.apiHost + '/article/listVersions/' + articleID, function(err, res) {
         if (err) logger.error('Cannot load versions list', err);
-        var list = mergeWpsCCVersions(res);
-        var list = Array.isArray(list) ? list : [];
+        var list = Array.isArray(res.list) ? res.list : [];
         self.container.scope.list.data.set(list);
         self.model.set(list);
     });
-}
-
-function mergeWpsCCVersions(res) {
-    var wpsVersions = JSON.parse(res.wpsVersions).data.map(function(v) {
-        return { editor: 'wps', createdDate: v.createdDate, user: v.modifiedBy, id: v.articleVersionId };
-    });
-    
-    var data = wpsVersions.concat(res.ccVersions);
-    data.sort(function(a, b) {
-        return new Date(b.createdDate) - new Date(a.createdDate);
-    });
-    
-    data.forEach(function(version) {
-        version.createdDate = moment(version.createdDate).format('DD/MM/YY HH:mm');
-    });
-    
-    return data;
 }
 
 
