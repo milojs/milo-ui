@@ -6,14 +6,19 @@ var componentsRegistry = milo.registry.components
     , logger = milo.util.logger
     , moment = require('moment');
 
+
 var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                         <li class="list-group-item" ml-bind="[item]:item"> \
-                            <span ml-bind="[data]:user"></span> \
-                            <span class="text-center" ml-bind="[data]:editor"></span> \
-                            <span class="pull-right" ml-bind="[data]:createdDate"></span> \
+                            <div class="row"> \
+                                <span class="date col-md-6" ml-bind="[data]:createdDate"></span> \
+                                <span class="status col-md-6 text-right" ml-bind="[data]:status"></span> \
+                            </div> \
+                            <div class="row"> \
+                                <span class="user col-md-6" ml-bind="[data]:user"></span> \
+                                <span class="col-md-6 text-right" ml-bind="[data]:editor"></span> \
+                            </div> \
                         </li> \
                     </ul>';
-
 
 var CCArticleHistory = Component.createComponentClass('CCArticleHistory', {
     dom: {
@@ -74,7 +79,7 @@ function fetchHistory (articleID) {
 
     this.container.scope.list.data.set([]);
     this.model.set([]);
-    console.log('fetch history called with articleID', articleID);
+    
     milo.util.request.json(window.CC.config.apiHost + '/article/listVersions/' + articleID, function(err, res) {
         if (err) logger.error('Cannot load versions list', err);
         var list = mergeWpsCCVersions(res);
