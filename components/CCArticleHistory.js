@@ -15,7 +15,7 @@ var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                             </div> \
                             <div class="row"> \
                                 <span class="user col-md-6" ml-bind="[data]:user"></span> \
-                                <span class="col-md-6 text-right" ml-bind="[data]:editor"></span> \
+                                <span class="col-md-6 text-right" ml-bind="[data]:editorTool"></span> \
                             </div> \
                         </li> \
                     </ul>';
@@ -91,7 +91,7 @@ function fetchHistory (articleID) {
 
 function mergeWpsCCVersions(res) {
     var wpsVersions = JSON.parse(res.wpsVersions).data.map(function(v) {
-        return { editor: 'wps', createdDate: v.createdDate, user: v.modifiedBy, id: v.articleVersionId };
+        return { editorTool: 'wps', createdDate: v.createdDate, user: v.modifiedBy, id: v.articleVersionId };
     });
     
     var data = wpsVersions.concat(res.ccVersions);
