@@ -159,7 +159,7 @@ function onSaveButtonSubscriber() {
 function addRelatedLink(url, headline) {
     var relatedData = createCommonRelatedData();
     relatedData.relatedUrl = url.match(/^http:\/\//) ? url : 'http://' + url;
-    relatedData.relatedArticleTypeId = 10;
+    relatedData.relatedArticleTypeId = 2;
     relatedData.newWindow = true;
     relatedData.headline = headline;
     this.model.push(relatedData);
@@ -193,12 +193,16 @@ function addStylesToList() {
         if (comp.el._prevStyle) comp.el.classList.remove(comp.el._prevStyle);
         if (!listData[index]) return;
         
-        var typeClass = listData[index].relatedArticleTypeId != 10 ? 'cc-relatedlist-article' : 'cc-relatedlist-external';
+        var typeClass = isExternal(listData[index].relatedArticleTypeId != 10) ? 'cc-relatedlist-article' : 'cc-relatedlist-external';
         var scope = comp.container.scope;
         comp.el.classList.add(typeClass);
         scope.relatedUrl.el.href = scope.relatedUrl.el.innerHTML;
         scope.relatedId.el.href =  baseUrl + scope.relatedUrl.el.innerHTML;
     });
+}
+
+function isExternal(type) {
+    return type == 10 || type == 2;
 }
 
 function sendChangeMessage() {
