@@ -665,7 +665,7 @@ function _processLinkedList(comp, schema) {
 
 function _processTextareaSchema(comp, schema) {
     if (schema.autoresize)
-        comp.startAutoresize(schema.autoresize);
+        _.deferMethod(comp, 'startAutoresize', schema.autoresize);
 }
 
 
