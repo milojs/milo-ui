@@ -37,6 +37,21 @@ componentsRegistry.add(CCModuleVideoPreview);
 module.exports = CCModuleVideoPreview;
 
 
+_.extendProto(CCModuleVideoPreview, {
+    getMeta: CCModuleVideoPreview$getMeta
+});
+
+
+function CCModuleVideoPreview$getMeta() {
+    var model = this.model.get();
+    return {
+        description: model.fields.headline,
+        preview: model.fields.stillImage.hostUrl,
+        typeTitle: 'Video'
+    }
+}
+
+
 function CCModuleVideoPreview_get() {
     return this.model.get();
 }
@@ -45,14 +60,14 @@ function CCModuleVideoPreview_get() {
 function CCModuleVideoPreview_set(value) {
     this.model.set(value);
     if (value && value.fields.thumbImage.hostUrl)
-        this.el.src = value.fields.thumbImage.hostUrl;
+        try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
     this.transfer.setState(_constructVideoState(value));
 }
 
 
 function CCModuleVideoPreview_del() {
     this.model.del();
-    this.el.removeAttribute(src);
+    this.container.scope.image.el.removeAttribute(src);
 }
 
 

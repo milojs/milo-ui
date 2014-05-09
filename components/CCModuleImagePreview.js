@@ -39,20 +39,26 @@ componentsRegistry.add(CCModuleImagePreview);
 module.exports = CCModuleImagePreview;
 
 _.extendProto(CCModuleImagePreview, {
-    init: CCModuleImagePreview$init
+    init: CCModuleImagePreview$init,
+    getMeta: CCModuleImagePreview$getMeta
 });
+
 
 function CCModuleImagePreview$init() {
     Component.prototype.init.apply(this, arguments);
     this.on('stateready', _init);
-    // this.el.onerror = function (event) {
-    //     event.preventDefault();
-    //     event.stopPropagation();
-    //     event.stopImmediatePropagation();
-        
-    //     return true;
-    // };
 }
+
+
+function CCModuleImagePreview$getMeta() {
+    var model = this.model.get();
+    return {
+        description: model.caption,
+        preview: model.thumbUrl,
+        typeTitle: 'Video'
+    };
+}
+
 
 function _init() {
     var imgEl = this.el.getElementsByTagName('img')[0];

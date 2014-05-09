@@ -24,7 +24,9 @@ var CCVideoPreviewList = Component.createComponentClass('CCVideoPreviewList', {
     template: {
         template:
             '<div ml-bind="[list]:videoList">\
-                <img ml-bind="CCModuleVideoPreview[item]:videoItem">\
+                <div ml-bind="CCModuleVideoPreview[item]:videoItem">\
+                    <img ml-bind="[data]:image">\
+                </div>\
             </div>'
     }
 });
@@ -49,7 +51,10 @@ function CCVideoPreviewList$start() {
 
 function onChildrenBound() {
     this._list = this.container.scope.videoList;
-    this.model.set([]);
+    var m = this.model;
+    _.defer(function() {
+        if (! m.get()) m.set([]);
+    });
 }
 
 
