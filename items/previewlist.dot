@@ -1,0 +1,10 @@
+{{# def.partials.formGroup }}
+    {{# def.partials.label }}
+    <div ml-bind="CCPreviewList:{{= it.compName }}">
+        <div ml-bind="[list]:list">
+            <div ml-bind="CCModuleImagePreview[item]:item">
+                <img ml-bind="[data]:image">
+            </div>
+        </div>
+    </div>
+</div>
