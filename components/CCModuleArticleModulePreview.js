@@ -4,7 +4,7 @@ var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
 
-var CMARTICLEMODULE_GROUP_TEMPLATE = '<div>article module</div>';
+var CMARTICLEMODULE_GROUP_TEMPLATE = '<div><div ml-bind=":modulePreview">article module</div></div>';
 
 var CCModuleArticleModulePreview = Component.createComponentClass('CCModuleArticleModulePreview', {
     dom: {
