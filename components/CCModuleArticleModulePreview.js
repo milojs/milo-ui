@@ -34,7 +34,10 @@ function CCModuleArticleModulePreview_set(value) {
 
     var stylesPromise = window.CC.config.data.itemStyles;
     stylesPromise.then(function (dontUse, data) {
-        var styleId = data[value.type] && data[value.type][value.styleKey].id;
+        if (!data.linklist)
+            data.linklist = data.linkListGroup;
+
+        var styleId = data[value.type] && value.styleKey && data[value.type][value.styleKey].id;
         value.styleId = styleId;
         self.transfer.setState(_constructRelatedGroupState(value));
 
@@ -45,8 +48,10 @@ function CCModuleArticleModulePreview_set(value) {
 }
 
 function parseData(value) {
+    console.log(value);
     value.fields = value.fields || {};
-    value.fields.moduleStyle = value.fields.moduleStyle || value.fields.galleryPreviewStyle || '';
+    value.fields.moduleStyle = value.fields.moduleStyle || value.fields.galleryPreviewStyle || 
+        value.fields['linkListGroups.linkListGroupStyle'] && value.fields['linkListGroups.linkListGroupStyle'][0] || '';
     return {
         id: value._id,
         title: stripHtml(value.fields.title || value.fields.name || value.fields.headline),
