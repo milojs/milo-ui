@@ -89,12 +89,18 @@ function fetchHistory (articleID) {
     });
 }
 
+
 function mergeWpsCCVersions(res) {
-    var wpsVersions = JSON.parse(res.wpsVersions).data.map(function(v) {
-        return { editorTool: 'wps', createdDate: v.createdDate, user: v.modifiedBy, id: v.articleVersionId };
-    });
+    // TODO: editorTool should be comming back from the WPS endpoint and "cc" should be filtered out
+    // waiting for a WPS release
+
+    // var wpsVersions = res.wpsVersions || [];
+    // var wpsVersions = JSON.parse(wpsVersions).data.map(function(v) {
+    //     return { editorTool: 'wps', createdDate: v.createdDate, user: v.modifiedBy, id: v.articleVersionId };
+    // });
     
-    var data = wpsVersions.concat(res.ccVersions);
+    // var data = wpsVersions.concat(res.ccVersions);
+    var data = res.ccVersions || [];
     data.sort(function(a, b) {
         return new Date(b.createdDate) - new Date(a.createdDate);
     });
