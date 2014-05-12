@@ -4,7 +4,7 @@ var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
 
-var CMARTICLEMODULE_GROUP_TEMPLATE = '<div><div ml-bind=":modulePreview">article module</div></div>';
+var CMARTICLEMODULE_GROUP_TEMPLATE = '<div><div class="cc-modulePreview-content" ml-bind=":modulePreview">article module</div></div>';
 
 var CCModuleArticleModulePreview = Component.createComponentClass('CCModuleArticleModulePreview', {
     dom: {
@@ -48,17 +48,28 @@ function CCModuleArticleModulePreview_set(value) {
 }
 
 function parseData(value) {
-    console.log(value);
     value.fields = value.fields || {};
     value.fields.moduleStyle = value.fields.moduleStyle || value.fields.galleryPreviewStyle || 
         value.fields['linkListGroups.linkListGroupStyle'] && value.fields['linkListGroups.linkListGroupStyle'][0] || '';
+
+    var moduleType = getModuleType(value._type);
+
     return {
         id: value._id,
         title: stripHtml(value.fields.title || value.fields.name || value.fields.headline),
-        type: value._type,
+        type: moduleType,
         styleName: value.fields.moduleStyle.replace(/_/g, ' '),
         styleKey: value.fields.moduleStyle
     };
+
+    function getModuleType(moduleType) {
+        if (moduleType == 'linklist')
+            return 'linkListGroup';
+        else if (moduleType == 'standardmodule')
+            return 'standardModule';
+        else
+            return moduleType;
+    }
 }
 
 function stripHtml(text) {
