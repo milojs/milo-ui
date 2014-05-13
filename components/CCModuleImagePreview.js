@@ -55,7 +55,7 @@ function CCModuleImagePreview$getMeta() {
     return {
         description: model.caption,
         preview: model.thumbUrl,
-        typeTitle: 'Video'
+        typeTitle: 'Image'
     };
 }
 
