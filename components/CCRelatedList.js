@@ -123,38 +123,30 @@ function CCRelatedList_splice(index, howmany) { // ... arguments
 
 
 function onSaveButtonSubscriber() {
-
     var newRelated = this.container.scope.input.data.get();
 
     var baseUrl = window.CC.config.apiHost;
     var self = this;
     
     if ( _.isNumeric(newRelated) ) {
-
         baseUrl += '/article/getRelatedArticle/';
 
         milo.util.request.json(baseUrl + newRelated, function (err, responseData) {
-            if (err)
-                return milo.util.logger.error('can\'t find article', err);
-
+            if (err) return window.alert('can\'t find article');
             addRelatedArticle.call(self, responseData);
             self.container.scope.input.data.set('');
         });
-
     } else {
-
         baseUrl += '/links/remotetitle';
 
         milo.util.request.post(baseUrl, {url: newRelated}, function (err, responseData) {
-            if (err)
-                return milo.util.logger.error('can\'t find article', err);
-
+            if (err) return window.alert('can\'t find article');
             addRelatedLink.call(self, newRelated, responseData);
             self.container.scope.input.data.set('');
         });
     }
-
 }
+
 
 function addRelatedLink(url, headline) {
     var relatedData = createCommonRelatedData();
@@ -162,11 +154,14 @@ function addRelatedLink(url, headline) {
     relatedData.relatedArticleTypeId = 2;
     relatedData.newWindow = true;
     relatedData.headline = headline;
-    this.model.push(relatedData);
+    addRelatedArticle.call(this, relatedData);
 }
 
+
 function addRelatedArticle(relatedData) {
-    this.model.push(relatedData);
+    this.events.postMessage('cmgroup_additem', {
+        itemData: relatedData
+    });
 }
 
 function createCommonRelatedData() {
