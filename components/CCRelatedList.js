@@ -188,7 +188,7 @@ function addStylesToList() {
         if (comp.el._prevStyle) comp.el.classList.remove(comp.el._prevStyle);
         if (!listData[index]) return;
         
-        var typeClass = isExternal(listData[index].relatedArticleTypeId != 10) ? 'cc-relatedlist-article' : 'cc-relatedlist-external';
+        var typeClass = isExternal(listData[index].relatedArticleTypeId) ? 'cc-relatedlist-external' : 'cc-relatedlist-article';
         var scope = comp.container.scope;
         comp.el.classList.add(typeClass);
         scope.relatedUrl.el.href = scope.relatedUrl.el.innerHTML;
