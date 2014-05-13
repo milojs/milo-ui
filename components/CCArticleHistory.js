@@ -70,7 +70,7 @@ function onChildrenBound () {
 function clickedHistoryEl (msg, event) {
     var listComp = Component.getContainingComponent(event.target, true, 'item');
     milo.mail.postMessage('loadarticleversion',
-        { data: { version: this.model.m('[$1]', listComp.item.index).get() } });
+        { data: { version: this.model.m('[$1]', listComp.item.index).get(), currentArticleId: this._currentArticleId} });
 }
 
 
@@ -79,7 +79,8 @@ function fetchHistory (articleID) {
 
     this.container.scope.list.data.set([]);
     this.model.set([]);
-    
+    this._currentArticleId = articleID;
+
     milo.util.request.json(window.CC.config.apiHost + '/article/listVersions/' + articleID, function(err, res) {
         if (err) logger.error('Cannot load versions list', err);
         var list = mergeWpsCCVersions(res);
