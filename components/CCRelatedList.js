@@ -69,30 +69,30 @@ function onListClickSubscriber(type, event) {
 
         switch (name) {
             case 'downBtn':
-                swapItems.call(this, index, index + 1);
+                this.events.postMessage('cmgroup_moveitemat', { index: index, direction: 'down' });
                 break;
             case 'upBtn':
-                swapItems.call(this, index - 1, index);
+                this.events.postMessage('cmgroup_moveitemat', { index: index, direction: 'up' });
                 break;
             case 'deleteBtn':
-                deleteItem.call(this, index);
+                this.events.postMessage('cmgroup_removeitemat', { index: index });
                 break;
         }
     }
 }
 
 
-function swapItems(index1, index2) {
-    var data = this.model.get(),
-        data1 = _.deepClone(data[index1]),
-        data2 = _.deepClone(data[index2]);
-    this.model.splice(index1, 2, data2, data1);
-}
+// function swapItems(index1, index2) {
+//     var data = this.model.get(),
+//         data1 = _.deepClone(data[index1]),
+//         data2 = _.deepClone(data[index2]);
+//     this.model.splice(index1, 2, data2, data1);
+// }
 
 
-function deleteItem(index) {
-    this.model.splice(index, 1);
-}
+// function deleteItem(index) {
+//     this.model.splice(index, 1);
+// }
 
 
 function CCRelatedList_get() {
