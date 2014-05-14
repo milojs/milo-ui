@@ -201,8 +201,11 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
                     parentEl.title = '';
                     delete form._invalidFormControls[response.path];
                 } else {
-                    var reason = (label ? label + ': ' : '') + response.reason;
-                    parentEl.title = reason;
+                    var reason = {
+                        label: label || '',
+                        reason: response.reason
+                    };
+                    parentEl.title = reason.label + ' : ' + reason.reason;
                     form._invalidFormControls[response.path] = {
                         component: component,
                         reason: reason
@@ -290,17 +293,18 @@ function CCForm$getInvalidControls() {
 
 
 /**
- * Returns single string with all reasons for the form being invalid
+ * Returns an array of strings with all reasons for the form being invalid
  *
- * @return {String}
+ * @return {Array[String]}
  */
 function CCForm$getInvalidReason() {
     var invalidControls = this.getInvalidControls();
     var reason = _.reduceKeys(invalidControls,
         function(memo, invalidControl) {
-            return memo + '\n' + invalidControl.reason;
-        },
-    '');
+            memo.push(invalidControl.reason);
+            return memo;
+        }, []
+    );
     return reason;
 }
 
