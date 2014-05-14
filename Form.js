@@ -300,11 +300,11 @@ function CCForm$getInvalidControls() {
 function CCForm$getInvalidReason() {
     var invalidControls = this.getInvalidControls();
     var reason = _.reduceKeys(invalidControls,
-        function(memo, invalidControl) {
+        function(memo, invalidControl, compName) {
+            invalidControl.reason.modelPath = this.viewPathSchema(compName).modelPath;
             memo.push(invalidControl.reason);
             return memo;
-        }, []
-    );
+        }, [], this);
     return reason;
 }
 
