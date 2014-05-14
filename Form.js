@@ -188,7 +188,6 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
     function _manageFormValidation() {
         form._invalidFormControls = {};
-        
         form.model.on('validated', createOnValidated(false));
         form.data.on('validated', createOnValidated(true));
 
@@ -310,11 +309,11 @@ function CCForm$getInvalidControls() {
 function CCForm$getInvalidReason() {
     var invalidControls = this.getInvalidControls();
     var reason = _.reduceKeys(invalidControls,
-        function(memo, invalidControl, compName) {
-            invalidControl.reason.modelPath = this.viewPathSchema(compName).modelPath;
+        function(memo, invalidControl) {
             memo.push(invalidControl.reason);
             return memo;
-        }, [], this);
+        }, []
+    );
     return reason;
 }
 
