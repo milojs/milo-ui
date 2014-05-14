@@ -1,6 +1,6 @@
 'use strict';
 
-var doT = require('dot')
+var doT = milo.util.doT
     , fs = require('fs')
     , componentsRegistry = milo.registry.components
     , miloCount = milo.util.count
