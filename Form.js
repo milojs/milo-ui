@@ -188,6 +188,7 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
     function _manageFormValidation() {
         form._invalidFormControls = {};
+        
         form.model.on('validated', createOnValidated(false));
         form.data.on('validated', createOnValidated(true));
 
