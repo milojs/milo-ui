@@ -103,7 +103,6 @@ _.extend(CCForm, {
 
 _.extendProto(CCForm, {
     isValid: CCForm$isValid,
-    validateModel: CCForm$validateModel,
     getInvalidControls: CCForm$getInvalidControls,
     getInvalidReason: CCForm$getInvalidReason,
     modelPathComponent: CCForm$modelPathComponent,
@@ -231,64 +230,11 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 /**
  * Returns current validation status of the form
  * Will not validate fields that were never changed in view
- * To run all validators, validateModel should be used.
  *
  * @return {Boolean}
  */
 function CCForm$isValid() {
     return Object.keys(this._invalidFormControls).length == 0;
-}
-
-
-/**
- * Runs 'toModel' validators defined in schema on the current model of the form
- * can be used to mark as invaid all required fields or to explicitely validate
- * form when it is saved. Returns validation state of the form via callback
- *
- * @param {Function} callback
- */
-function CCForm$validateModel(callback) {
-    var validations = []
-        , self = this;
-
-    _.eachKey(this._dataValidations.toModel, function(validators, viewPath) {
-        var modelPath = this._modelPathTranslations[viewPath]
-            , data = this.model.m(modelPath).get();
-
-        validations.push({
-            viewPath: viewPath,
-            data: data,
-            validators: validators
-        });
-    }, this);
-
-
-    var allValid = true;
-    async.each(validations,
-        function(validation, nextValidation) {
-            var lastResponse;
-            async.every(validation.validators,
-                // call validator
-                function(validator, next) {
-                    validator(validation.data, function(err, response) {
-                        lastResponse = response || {};
-                        next(lastResponse.valid || err);
-                    });
-                },
-            // post validation result of item to form
-            function(valid) {
-                lastResponse.path = validation.viewPath;
-                lastResponse.valid = valid;
-                self.data.postMessage('validated', lastResponse);
-                if (! valid) allValid = false;
-                nextValidation(null);
-            });
-        },
-    // post form validation result
-    function(err) {
-        self.postMessage('validationcompleted', { valid: allValid });
-        callback && callback(allValid);
-    });
 }
 
 
