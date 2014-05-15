@@ -188,32 +188,42 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
     function _manageFormValidation() {
         form._invalidFormControls = {};
+        
+        form.model.on('validated', createOnValidated(false));
+        form.data.on('validated', createOnValidated(true));
 
-        form.data.on('validated', function(msg, response) {
-            var component = form.viewPathComponent(response.path)
-                , schema = form.viewPathSchema(response.path)
-                , label = schema && schema.label;
-            if (component) {
-                var parentEl = component.el.parentNode;
-                parentEl.classList.toggle(FORM_VALIDATION_FAILED_CSS_CLASS, ! response.valid);
+        function createOnValidated(isToModel) {
+            var pathCompMethod = isToModel ? 'viewPathComponent' : 'modelPathComponent'
+                , pathSchemaMethod = isToModel ? 'viewPathSchema' : 'modelPathSchema';
 
-                if (response.valid) {
-                    parentEl.title = '';
-                    delete form._invalidFormControls[response.path];
-                } else {
-                    var reason = {
-                        label: label || '',
-                        reason: response.reason
-                    };
-                    parentEl.title = reason.label + ' : ' + reason.reason;
-                    form._invalidFormControls[response.path] = {
-                        component: component,
-                        reason: reason
-                    };
-                }
-            } else
-                logger.error('Form: component for path ' + response.path + ' not found');
-        });
+            return function(msg, response) {
+                var component = form[pathCompMethod](response.path)
+                    , schema = form[pathSchemaMethod](response.path)
+                    , label = schema.label
+                    , modelPath = schema.modelPath;
+
+                if (component) {
+                    var parentEl = component.el.parentNode;
+                    parentEl.classList.toggle(FORM_VALIDATION_FAILED_CSS_CLASS, ! response.valid);
+
+                    if (response.valid) {
+                        parentEl.title = '';
+                        delete form._invalidFormControls[modelPath];
+                    } else {
+                        var reason = {
+                            label: label || '',
+                            reason: response.reason
+                        };
+                        parentEl.title = reason.label + ' : ' + reason.reason;
+                        form._invalidFormControls[modelPath] = {
+                            component: component,
+                            reason: reason
+                        };
+                    }
+                } else
+                    logger.error('Form: component for path ' + response.path + ' not found');
+            }
+        }
     }
 }
 
@@ -484,6 +494,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         if (viewPath) {
             _addDataTranslation(translate, 'toModel', viewPath);
             _addDataValidation(validate, 'toModel', viewPath);
+            _addDataValidation(validate, 'fromModel', modelPath);
 
             switch (itemRules.modelPathRule) {
                 case 'prohibited':
