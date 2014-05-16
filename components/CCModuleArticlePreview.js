@@ -4,7 +4,8 @@ var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
 
-var CMARTICLE_GROUP_TEMPLATE = '<div ml-bind="CMRelatedGroup:newRelated" class="cc-module-related-group">\
+var CMARTICLE_GROUP_TEMPLATE = '\
+    <div ml-bind="CMRelatedGroup:newRelated" class="cc-module-related-group">\
         <div class="relatedItemsTopBorder">&nbsp;</div>\
         <div class="relatedItems">\
             <h4 ml-bind="[data]:relatedCaption"></h4>\
@@ -46,9 +47,8 @@ function CCModuleArticlePreview_set(value) {
 
 
 function CCModuleArticlePreview_setChannel(newChannel) {
-    if (this._channel) {
+    if (this._channel)
         this.el.classList.remove(this._channel);
-    }
 
     this._channel = newChannel;
     this.el.classList.add(this._channel);
