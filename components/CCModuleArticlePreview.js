@@ -38,6 +38,60 @@ componentsRegistry.add(CCModuleArticlePreview);
 
 module.exports = CCModuleArticlePreview;
 
+
+_.extendProto(CCModuleArticlePreview, {
+    init: CCModuleArticlePreview$init
+});
+
+
+function CCModuleArticlePreview$init() {
+    Component.prototype.init.apply(this, arguments);
+    this.once('stateready', function(){
+        this.container.scope.scratchBtn.events.on('click', 
+            { subscriber: sendToScratch, context: this });
+    });
+}
+
+
+function sendToScratch(type, event) {
+    event.stopPropagation();
+
+    var state = this.transfer.getState();
+    var data = this.data.get();
+
+    var scratchData = {
+        data: state,
+        meta: {
+            compClass: state.compClass,
+            compName: state.compName,
+            metaData: {
+                description: '<strong>' + data.title + '</strong> - ' + data.previewText,
+                preview: data.thumb && data.thumb.hostUrl,
+                typeTitle: 'Article'
+            }
+        }
+    };
+
+    milo.mail.postMessage('addtoscratch', scratchData);
+    milo.mail.once('addedtoscratch', { subscriber: onAddedToScratch,  context: this });
+}
+
+
+function onAddedToScratch(msg, data) {
+    //TODO: refactor this icon animation into a nifty little reusable component/service.
+    var div = document.createElement('div');
+    if (data.err)
+        div.innerHTML = '<span class="glyphicon glyphicon-remove-sign cc-fade-in-out"></span>';
+    else
+        div.innerHTML = '<span class="glyphicon glyphicon-ok-sign cc-fade-in-out"></span>';
+    this.dom.append(div);
+
+    div.addEventListener('webkitAnimationEnd', function() {
+        div.parentNode.removeChild(div);
+    });
+}
+
+
 function CCModuleArticlePreview_set(value) {
     CCModuleArticlePreview_setChannel.call(this, value.channel);
     this.data._set(value);
