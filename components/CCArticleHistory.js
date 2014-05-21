@@ -92,25 +92,43 @@ function fetchHistory (articleID) {
 
 
 function mergeWpsCCVersions(res) {
-    // TODO: editorTool should be comming back from the WPS endpoint and "cc" should be filtered out
-    // waiting for a WPS release
+    var wpsVersions = res.wpsVersions || []
+        , ccVersions = res.ccVersions || [];
 
-    // var wpsVersions = res.wpsVersions || [];
-    // var wpsVersions = JSON.parse(wpsVersions).data.map(function(v) {
-    //     return { editorTool: 'wps', createdDate: v.createdDate, user: v.modifiedBy, id: v.articleVersionId };
-    // });
-    
-    // var data = wpsVersions.concat(res.ccVersions);
-    var data = res.ccVersions || [];
-    data.sort(function(a, b) {
+    ccVersions = transformCCVersions(ccVersions);
+    wpsVersions = transformWPSVersions(wpsVersions); 
+
+    var combined = wpsVersions.concat(ccVersions);
+    combined.sort(function(a, b) {
         return new Date(b.createdDate) - new Date(a.createdDate);
     });
     
-    data.forEach(function(version) {
+    combined.forEach(function(version) {
         version.createdDate = moment(version.createdDate).format('DD/MM/YY HH:mm');
     });
     
-    return data;
+    return combined;
+
+    function transformCCVersions(ccVersions) {
+        return ccVersions.map(function(v) {
+            v.editorTool = 'CC';
+            v.status = (v.status == 'Raw' ? '' : v.status);
+            
+            return v;
+        });
+    }
+
+    function transformWPSVersions(wpsVersions) {
+        return wpsVersions.data.map(function(v) {
+            if (v.editorTool != 'cc') {
+                v.user = v.modifiedBy;
+                v.status = (v.status == 'Raw' ? '' : v.status );
+                v.id = v.articleVersionId;
+                
+                return v;
+            }
+        }).filter(_.identity);
+    }
 }
 
 
