@@ -11,11 +11,15 @@ var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                         <li class="list-group-item" ml-bind="[item]:item"> \
                             <div class="row"> \
                                 <span class="date col-md-6" ml-bind="[data]:createdDate"></span> \
-                                <span class="status col-md-6 text-right" ml-bind="[data]:status"></span> \
+                                <span class="status col-md-6 text-right"> \
+                                    <span class="label" ml-bind="[data]:status"></span> \
+                                </span> \
                             </div> \
                             <div class="row"> \
                                 <span class="user col-md-6" ml-bind="[data]:user"></span> \
-                                <span class="col-md-6 text-right" ml-bind="[data]:editorTool"></span> \
+                                <span class="col-md-6 text-right"> \
+                                    <span ml-bind="[data]:editorTool"></span> \
+                                </span> \
                             </div> \
                         </li> \
                     </ul>';
@@ -69,10 +73,17 @@ function onChildrenBound () {
 
 function clickedHistoryEl (msg, event) {
     var listComp = Component.getContainingComponent(event.target, true, 'item');
+    console.log('clickedHistoryEl this.model.(bla).get', this.model.m('[$1]', listComp.item.index).get())
     milo.mail.postMessage('loadarticleversion',
         { data: { version: this.model.m('[$1]', listComp.item.index).get(), currentArticleId: this._currentArticleId} });
 }
 
+var articleStatusLabelCSS = {
+    'live': 'label-success',
+    'raw': 'label-primary',
+    'held': 'label-warning',
+    'spiked': 'label-danger'
+};
 
 function fetchHistory (articleID) {
     var self = this;
@@ -86,6 +97,14 @@ function fetchHistory (articleID) {
         var list = mergeWpsCCVersions(res);
         var list = Array.isArray(list) ? list : [];
         self.container.scope.list.data.set(list);
+        self.container.scope.list.list.each(function(item, index) {
+            var status = list[index].status.toLowerCase();
+            var statusComp = item.container.scope.status;
+            var editorToolComp = item.container.scope.editorTool;
+
+            statusComp.el.classList.add(articleStatusLabelCSS[status]);
+            if (list[index].editorTool != 'CC') editorToolComp.el.classList.add('label', 'label-warning');
+        });
         self.model.set(list);
     });
 }
@@ -112,7 +131,6 @@ function mergeWpsCCVersions(res) {
     function transformCCVersions(ccVersions) {
         return ccVersions.map(function(v) {
             v.editorTool = 'CC';
-            v.status = (v.status == 'Raw' ? '' : v.status);
             
             return v;
         });
@@ -122,7 +140,6 @@ function mergeWpsCCVersions(res) {
         return wpsVersions.data.map(function(v) {
             if (v.editorTool != 'cc') {
                 v.user = v.modifiedBy;
-                v.status = (v.status == 'Raw' ? '' : v.status );
                 v.id = v.articleVersionId;
                 
                 return v;
