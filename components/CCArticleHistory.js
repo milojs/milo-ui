@@ -131,7 +131,6 @@ function mergeWpsCCVersions(res) {
     function transformCCVersions(ccVersions) {
         return ccVersions.map(function(v) {
             v.editorTool = 'CC';
-            
             return v;
         });
     }
@@ -141,7 +140,6 @@ function mergeWpsCCVersions(res) {
             if (v.editorTool != 'cc') {
                 v.user = v.modifiedBy;
                 v.id = v.articleVersionId;
-                
                 return v;
             }
         }).filter(_.identity);
