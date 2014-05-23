@@ -489,7 +489,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             var newValue = comp.data.get();
             if (newValue === oldValue) return;
 
-            var cmd = modelCommand.createWithUndo(hostObject, modelPath, newValue, oldValue)
+            var cmd = modelCommand.createWithUndo(hostObject, modelPath, 'inspector', newValue, oldValue)
                 , rootContent = hostObject.editor.get();
 
             rootContent.editor.storeCommand(cmd);
