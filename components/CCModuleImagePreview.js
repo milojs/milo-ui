@@ -5,7 +5,7 @@ var componentsRegistry = milo.registry.components
 
 
 var CMIMAGE_GROUP_TEMPLATE = '<div class="artSplitter" ml-bind="CMImageGroup:newImage">\
-    <div ml-bind="CMImage[data]:img0"><img ml-bind="[data]:img" width="100%"></div>\
+    <div ml-bind="CMImage[data]:img0"><img ml-bind="[data]:img"></div>\
     <p class="imageCaption" ml-bind="CMImageCaption:imgCaption0">[caption]</p>\
 </div>';
 

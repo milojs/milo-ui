@@ -8,6 +8,7 @@ var formGenerator = require('./generator')
     , FormError = milo.util.error.createClass('Form')
     , logger = milo.util.logger
     , Promise = milo.util.promise
+    , modelCommand = require('../commands/model_2')
     , async = require('async');
 
 
@@ -221,7 +222,7 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
                     }
                 } else
                     logger.error('Form: component for path ' + response.path + ' not found');
-            }
+            };
         }
     }
 }
@@ -428,6 +429,9 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             throw new FormError('unknown item type ' + schema.type);
     }
 
+    if (schema.undoable && window.CC.config.debug)
+        _manageUndoable(this, comp, schema.modelPath);
+
     return modelPathTranslations;
 
 
@@ -469,6 +473,27 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                     throw new FormError('unknown modelPath rule for item type ' + schema.type);
             }
         }
+    }
+
+    function _manageUndoable(hostObject, comp, modelPath) {
+        var oldValue;
+
+        comp.data.on('', function(msg, data) {
+            // Keep old value up to date within the closure
+            oldValue = data.oldValue;
+        });
+
+        comp.events.on('change', function(type, event) {
+            // TODO: work on difference between inspector model path and component
+            // also watch out for component being destroyed when style is unwrapped.
+            var newValue = comp.data.get();
+            if (newValue === oldValue) return;
+
+            var cmd = modelCommand.createWithUndo(hostObject, modelPath, 'inspector', newValue, oldValue)
+                , rootContent = hostObject.editor.get();
+
+            rootContent.editor.storeCommand(cmd);
+        });
     }
 
     function _addModelPathTranslation(viewPath, modelPath) {
@@ -608,6 +633,7 @@ function _processComboListSchema(comp, schema) {
 
     _.deferTicks(function() {
         comp.toggleAddButton(hasAddBtn);
+        comp.setDataValidation(schema.dataValidation);
         setComponentOptions(comp, options, setComboListOptions);
     }, 2);
 }
