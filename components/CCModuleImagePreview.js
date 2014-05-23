@@ -89,7 +89,7 @@ function CCModuleImagePreview_del() {
 function _constructImageGroupState(value) {
     if (!value) return;
     value.caption = milo.util.dom.stripHtml(value.caption);
-
+    
     return {
         outerHTML: CMIMAGE_GROUP_TEMPLATE,
         compClass: 'CMImageGroup',
@@ -97,7 +97,7 @@ function _constructImageGroupState(value) {
         facetsStates: {
             data: {
                 state: {
-                    imgCaption0: value.caption
+                    imgCaption0: ''//value.caption
                 }
             },
             container: {
