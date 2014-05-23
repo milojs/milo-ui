@@ -73,10 +73,10 @@ function onChildrenBound () {
 
 function clickedHistoryEl (msg, event) {
     var listComp = Component.getContainingComponent(event.target, true, 'item');
-    console.log('clickedHistoryEl this.model.(bla).get', this.model.m('[$1]', listComp.item.index).get())
     milo.mail.postMessage('loadarticleversion',
         { data: { version: this.model.m('[$1]', listComp.item.index).get(), currentArticleId: this._currentArticleId} });
 }
+
 
 var articleStatusLabelCSS = {
     'live': 'label-success',
