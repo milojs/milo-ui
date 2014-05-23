@@ -222,7 +222,7 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
                     }
                 } else
                     logger.error('Form: component for path ' + response.path + ' not found');
-            }
+            };
         }
     }
 }
@@ -633,6 +633,7 @@ function _processComboListSchema(comp, schema) {
 
     _.deferTicks(function() {
         comp.toggleAddButton(hasAddBtn);
+        comp.setDataValidation(schema.dataValidation);
         setComponentOptions(comp, options, setComboListOptions);
     }, 2);
 }
