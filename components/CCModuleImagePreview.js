@@ -97,7 +97,7 @@ function _constructImageGroupState(value) {
         facetsStates: {
             data: {
                 state: {
-                    imgCaption0: ''//value.caption
+                    imgCaption0: "" //value.caption
                 }
             },
             container: {
