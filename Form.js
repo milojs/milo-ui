@@ -475,18 +475,16 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         }
     }
 
-    function _manageUndoable(hostObject, comp, modelPath) {
+    function _manageUndoable(hostObject, inspComp, modelPath) {
         var oldValue;
 
-        comp.data.on('', function(msg, data) {
-            // Keep old value up to date within the closure
+        inspComp.data.on('', function(msg, data) {
+            // Keep old value up to date to be used by the change event handler
             oldValue = data.oldValue;
         });
 
-        comp.events.on('change', function(type, event) {
-            // TODO: work on difference between inspector model path and component
-            // also watch out for component being destroyed when style is unwrapped.
-            var newValue = comp.data.get();
+        inspComp.events.on('change', function(type, event) {
+            var newValue = inspComp.data.get();
             if (newValue === oldValue) return;
 
             var cmd = modelCommand.createWithUndo(hostObject, modelPath, 'inspector', newValue, oldValue)
