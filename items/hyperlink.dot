@@ -1,5 +1,7 @@
 {{# def.partials.formGroup }}
-    <a {{? it.item.altText }}title="{{= it.item.altText}}" {{?}}{{? it.item.href}}href="{{= it.item.href }}"{{?}}    
+    <a {{? it.item.altText }}title="{{= it.item.altText}}" {{?}}
+        {{? it.item.href}}href="{{= it.item.href }}"{{?}} 
+        {{? it.item.target}}target="{{= it.item.target }}"{{?}}   
         ml-bind="MLHyperlink:{{= it.compName }}" 
         class="hyperlink hyperlink-default">
         {{= it.item.label || '' }}
