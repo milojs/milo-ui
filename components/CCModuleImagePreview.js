@@ -6,7 +6,7 @@ var componentsRegistry = milo.registry.components
 
 var CMIMAGE_GROUP_TEMPLATE = '<div class="artSplitter" ml-bind="CMImageGroup:newImage">\
     <div ml-bind="CMImage[data]:img0"><img ml-bind="[data]:img"></div>\
-    <p class="imageCaption" ml-bind="CMImageCaption:imgCaption0">[caption]</p>\
+    <p class="imageCaption" ml-bind="CMImageCaption:imgCaption0"></p>\
 </div>';
 
 
@@ -89,17 +89,12 @@ function CCModuleImagePreview_del() {
 function _constructImageGroupState(value) {
     if (!value) return;
     value.caption = milo.util.dom.stripHtml(value.caption);
-
+    
     return {
         outerHTML: CMIMAGE_GROUP_TEMPLATE,
         compClass: 'CMImageGroup',
         compName: milo.util.componentName(),
         facetsStates: {
-            data: {
-                state: {
-                    imgCaption0: value.caption
-                }
-            },
             container: {
                 scope: {
                     img0: {
