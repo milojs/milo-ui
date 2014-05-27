@@ -127,7 +127,7 @@ function onSaveButtonSubscriber() {
 
     var baseUrl = window.CC.config.apiHost;
     var self = this;
-    
+
     if ( _.isNumeric(newRelated) ) {
         baseUrl += '/article/getRelatedArticle/';
 
@@ -152,6 +152,7 @@ function addRelatedLink(url, headline) {
     var relatedData = createCommonRelatedData();
     relatedData.relatedUrl = url.match(/^http:\/\//) ? url : 'http://' + url;
     relatedData.relatedArticleTypeId = 2;
+    relatedData.voteFollow = true;
     relatedData.newWindow = true;
     relatedData.headline = headline;
     addRelatedArticle.call(this, relatedData);
@@ -187,7 +188,7 @@ function addStylesToList() {
     this.container.scope.related.list.each(function (comp, index) {
         if (comp.el._prevStyle) comp.el.classList.remove(comp.el._prevStyle);
         if (!listData[index]) return;
-        
+
         var typeClass = isExternal(listData[index].relatedArticleTypeId) ? 'cc-relatedlist-external' : 'cc-relatedlist-article';
         var scope = comp.container.scope;
         comp.el.classList.add(typeClass);
