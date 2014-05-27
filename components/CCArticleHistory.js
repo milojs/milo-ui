@@ -11,11 +11,15 @@ var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                         <li class="list-group-item" ml-bind="[item]:item"> \
                             <div class="row"> \
                                 <span class="date col-md-6" ml-bind="[data]:createdDate"></span> \
-                                <span class="status col-md-6 text-right" ml-bind="[data]:status"></span> \
+                                <span class="status col-md-6 text-right"> \
+                                    <span class="label" ml-bind="[data]:status"></span> \
+                                </span> \
                             </div> \
                             <div class="row"> \
                                 <span class="user col-md-6" ml-bind="[data]:user"></span> \
-                                <span class="col-md-6 text-right" ml-bind="[data]:editorTool"></span> \
+                                <span class="col-md-6 text-right"> \
+                                    <span ml-bind="[data]:editorTool"></span> \
+                                </span> \
                             </div> \
                         </li> \
                     </ul>';
@@ -74,6 +78,13 @@ function clickedHistoryEl (msg, event) {
 }
 
 
+var articleStatusLabelCSS = {
+    'live': 'label-success',
+    'raw': 'label-primary',
+    'held': 'label-warning',
+    'spiked': 'label-danger'
+};
+
 function fetchHistory (articleID) {
     var self = this;
 
@@ -86,31 +97,53 @@ function fetchHistory (articleID) {
         var list = mergeWpsCCVersions(res);
         var list = Array.isArray(list) ? list : [];
         self.container.scope.list.data.set(list);
+        self.container.scope.list.list.each(function(item, index) {
+            var status = list[index].status.toLowerCase();
+            var statusComp = item.container.scope.status;
+            var editorToolComp = item.container.scope.editorTool;
+
+            statusComp.el.classList.add(articleStatusLabelCSS[status]);
+            if (list[index].editorTool != 'CC') editorToolComp.el.classList.add('label', 'label-warning');
+        });
         self.model.set(list);
     });
 }
 
 
 function mergeWpsCCVersions(res) {
-    // TODO: editorTool should be comming back from the WPS endpoint and "cc" should be filtered out
-    // waiting for a WPS release
+    var wpsVersions = res.wpsVersions || []
+        , ccVersions = res.ccVersions || [];
 
-    // var wpsVersions = res.wpsVersions || [];
-    // var wpsVersions = JSON.parse(wpsVersions).data.map(function(v) {
-    //     return { editorTool: 'wps', createdDate: v.createdDate, user: v.modifiedBy, id: v.articleVersionId };
-    // });
-    
-    // var data = wpsVersions.concat(res.ccVersions);
-    var data = res.ccVersions || [];
-    data.sort(function(a, b) {
+    ccVersions = transformCCVersions(ccVersions);
+    wpsVersions = transformWPSVersions(wpsVersions); 
+
+    var combined = wpsVersions.concat(ccVersions);
+    combined.sort(function(a, b) {
         return new Date(b.createdDate) - new Date(a.createdDate);
     });
     
-    data.forEach(function(version) {
+    combined.forEach(function(version) {
         version.createdDate = moment(version.createdDate).format('DD/MM/YY HH:mm');
     });
     
-    return data;
+    return combined;
+
+    function transformCCVersions(ccVersions) {
+        return ccVersions.map(function(v) {
+            v.editorTool = 'CC';
+            return v;
+        });
+    }
+
+    function transformWPSVersions(wpsVersions) {
+        return wpsVersions.data.map(function(v) {
+            if (v.editorTool != 'cc') {
+                v.user = v.modifiedBy;
+                v.id = v.articleVersionId;
+                return v;
+            }
+        }).filter(_.identity);
+    }
 }
 
 
