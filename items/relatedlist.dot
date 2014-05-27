@@ -9,7 +9,7 @@
                 <div class="cc-relatedlist-options">
                     <label>
                         <input type="checkbox" ml-bind="[data]:previewLink" class="ml-ui-input"/>
-                        <span>Use for Preview</span>
+                        <span>Use for article Preview</span>
                     </label>
                     <label>
                         <input type="checkbox" ml-bind="[data]:voteFollow" class="ml-ui-input"/>
