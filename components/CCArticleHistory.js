@@ -111,7 +111,7 @@ function fetchHistory (articleID) {
 
 
 function mergeWpsCCVersions(res) {
-    var wpsVersions = res.wpsVersions || []
+    var wpsVersions = (res.wpsVersions && res.wpsVersions.data) || []
         , ccVersions = res.ccVersions || [];
 
     ccVersions = transformCCVersions(ccVersions);
@@ -136,7 +136,7 @@ function mergeWpsCCVersions(res) {
     }
 
     function transformWPSVersions(wpsVersions) {
-        return wpsVersions.data.map(function(v) {
+        return wpsVersions.map(function(v) {
             if (v.editorTool != 'cc') {
                 v.user = v.modifiedBy;
                 v.id = v.articleVersionId;
