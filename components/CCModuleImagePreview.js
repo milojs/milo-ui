@@ -65,6 +65,9 @@ function _init() {
     imgEl.addEventListener('error', function () {
         this.src = 'http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png';
     });
+    
+    var scope = this.container.scope;
+    scope.scratch && scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
 }
 
 function CCModuleImagePreview_get() {
@@ -83,6 +86,41 @@ function CCModuleImagePreview_set(value) {
 function CCModuleImagePreview_del() {
     this.model.del();
     this.container.scope.image.el.removeAttribute(src);
+}
+
+
+function sendToScratch(type, event) {
+    event.stopPropagation();
+
+    var state = this.transfer.getState();
+    var metaData = this.getMeta();
+
+    var scratchData = {
+        data: state,
+        meta: {
+            compClass: state.compClass,
+            compName: state.compName,
+            metaData: metaData
+        }
+    };
+
+    milo.mail.postMessage('addtoscratch', scratchData);
+    milo.mail.once('addedtoscratch', { subscriber: onAddedToScratch,  context: this });
+}
+
+
+function onAddedToScratch(msg, data) {
+    //TODO: refactor this icon animation into a nifty little reusable component/service.
+    var div = document.createElement('div');
+    if (data.err)
+        div.innerHTML = '<span class="glyphicon glyphicon-remove-sign cc-fade-in-out"></span>';
+    else
+        div.innerHTML = '<span class="glyphicon glyphicon-ok-sign cc-fade-in-out"></span>';
+    this.dom.append(div);
+
+    div.addEventListener('webkitAnimationEnd', function() {
+        div.parentNode.removeChild(div);
+    });
 }
 
 

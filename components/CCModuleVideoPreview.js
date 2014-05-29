@@ -1,5 +1,5 @@
 'use strict';
-
+//TODO: Refactor as soon as possible, very similar to CCModuleImagePreview
 var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
@@ -40,8 +40,55 @@ module.exports = CCModuleVideoPreview;
 
 
 _.extendProto(CCModuleVideoPreview, {
+    init: CCModuleVideoPreview$init,
     getMeta: CCModuleVideoPreview$getMeta
 });
+
+
+function CCModuleVideoPreview$init() {
+    Component.prototype.init.apply(this, arguments);
+    this.on('stateready', _init);
+}
+
+function _init() {
+    var scope = this.container.scope;
+    scope.scratch && scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
+}
+
+
+function sendToScratch(type, event) {
+    event.stopPropagation();
+
+    var state = this.transfer.getState();
+    var metaData = this.getMeta();
+
+    var scratchData = {
+        data: state,
+        meta: {
+            compClass: state.compClass,
+            compName: state.compName,
+            metaData: metaData
+        }
+    };
+
+    milo.mail.postMessage('addtoscratch', scratchData);
+    milo.mail.once('addedtoscratch', { subscriber: onAddedToScratch,  context: this });
+}
+
+
+function onAddedToScratch(msg, data) {
+    //TODO: refactor this icon animation into a nifty little reusable component/service.
+    var div = document.createElement('div');
+    if (data.err)
+        div.innerHTML = '<span class="glyphicon glyphicon-remove-sign cc-fade-in-out"></span>';
+    else
+        div.innerHTML = '<span class="glyphicon glyphicon-ok-sign cc-fade-in-out"></span>';
+    this.dom.append(div);
+
+    div.addEventListener('webkitAnimationEnd', function() {
+        div.parentNode.removeChild(div);
+    });
+}
 
 
 function CCModuleVideoPreview$getMeta() {
