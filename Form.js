@@ -8,7 +8,7 @@ var formGenerator = require('./generator')
     , FormError = milo.util.error.createClass('Form')
     , logger = milo.util.logger
     , Promise = milo.util.promise
-    , modelCommand = require('../commands/model_2')
+    , modelChangedCommand = require('../commands/model_changed')
     , async = require('async');
 
 
@@ -429,7 +429,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             throw new FormError('unknown item type ' + schema.type);
     }
 
-    if (schema.undoable && window.CC.config.debug)
+    if (schema.undoable)
         _manageUndoable(this, comp, schema.modelPath);
 
     return modelPathTranslations;
@@ -487,7 +487,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             var newValue = inspComp.data.get();
             if (newValue === oldValue) return;
 
-            var cmd = modelCommand.createWithUndo(hostObject, modelPath, 'inspector', newValue, oldValue)
+            var cmd = modelChangedCommand.createWithUndo(hostObject, 'inspector', modelPath, newValue, oldValue)
                 , rootContent = hostObject.editor.get();
 
             rootContent.editor.storeCommand(cmd);
