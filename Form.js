@@ -350,6 +350,7 @@ var itemsFunctions = {
     select: _processSelectSchema,
     radio: _processRadioSchema,
     combo: _processComboSchema,
+    supercombo: _processSuperComboSchema,
     combolist: _processComboListSchema,
     inputlist: _processInputListSchema,
     textarea: _processTextareaSchema
@@ -625,14 +626,25 @@ function _processComboSchema(comp, schema) {
 }
 
 
+function _processSuperComboSchema(comp, schema) {
+    var options = schema.comboOptions
+        , hasAddBtn = schema.hasAddBtn;
+
+    _.deferTicks(function() {
+        comp.toggleAddButton(hasAddBtn);
+        setComponentOptions(comp, options, setComboOptions);
+    }, 2);
+}
+
+
 function _processComboListSchema(comp, schema) {
     var options = schema.comboOptions
-        , hasAddBtn = schema.hasAddBtn === false ? false : true;
+        , hasAddBtn = schema.hasAddBtn;
 
     _.deferTicks(function() {
         comp.toggleAddButton(hasAddBtn);
         comp.setDataValidation(schema.dataValidation);
-        setComponentOptions(comp, options, setComboListOptions);
+        setComponentOptions(comp, options, setComboOptions);
     }, 2);
 }
 
@@ -678,7 +690,7 @@ function setComponentModel(comp, data) {
 }
 
 
-function setComboListOptions(comp, data) {
+function setComboOptions(comp, data) {
     comp.setOptions(data);
 }
 

@@ -19,6 +19,7 @@ var itemTypes = {
     time:           { compClass: 'MLTime',              template: fs.readFileSync(__dirname + '/items/time.dot') },
     date:           { compClass: 'MLDate',              template: fs.readFileSync(__dirname + '/items/date.dot') },
     combo:          { compClass: 'MLCombo',             template: fs.readFileSync(__dirname + '/items/combo.dot') },
+    supercombo:     { compClass: 'MLSuperCombo' },
     combolist:      { compClass: 'MLComboList' },
     image:          { compClass: 'MLImage',             template: fs.readFileSync(__dirname + '/items/image.dot') },
     previewimage:   { compClass: 'CCPreviewImage',      template: fs.readFileSync(__dirname + '/items/previewimage.dot') },
