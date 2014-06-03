@@ -491,6 +491,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             var cmd = modelChangedCommand.createWithUndo(hostObject, 'inspector', modelPath, newValue, oldValue)
                 , rootContent = hostObject.editor.get();
 
+            cmd.setComment('track model change');
             rootContent.editor.storeCommand(cmd);
         });
     }
