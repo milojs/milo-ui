@@ -1,0 +1,11 @@
+{{# def.partials.formGroup }}
+    {{# def.partials.label }}
+    <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">
+        <ul ml-bind="[list, events]:imagesList">
+            <li ml-bind="[item]:result">
+				<img src="http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png">
+				<textarea ml-bind="[data]:caption" class="form-control ml-ui-textarea" placeholder="Preview text goes here"></textarea>
+            </li>
+        </ul>
+    </{{= it.tagName}}>
+</div>
