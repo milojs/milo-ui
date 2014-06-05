@@ -49,7 +49,7 @@ function CCImageGroupCaptionList$init() {
 
 
 function onChildrenBound() {
-    milo.minder(this.container.scope.imagesList.data, '<<<-', this.model);
+    //milo.minder(this.container.scope.imagesList.data, '<<<->>>', this.model);
 }
 
 
@@ -60,14 +60,13 @@ function CCImageGroupCaptionList_get() {
 
 
 function CCImageGroupCaptionList_set(value) {
-   debugger;
+    console.log('CCImageGroupCaptionList_set', value);
     this.model.set(value || []);
     sendChangeMessage.call(this);
 }
 
 
 function CCImageGroupCaptionList_del() {
-    debugger;
     var res = this.model.set([]);
     sendChangeMessage.call(this);
     return res;
@@ -75,6 +74,7 @@ function CCImageGroupCaptionList_del() {
 
 
 function CCImageGroupCaptionList_splice(index, howmany) { // ... arguments
+    console.log('CCImageGroupCaptionList_splice', index, howmany);
     var args = [index, howmany].concat(Array.prototype.slice.call(arguments, 2));
 
     this.model.splice.apply(this.model, args);

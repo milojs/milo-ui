@@ -438,6 +438,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 
     function _processItemTranslations(viewPath, schema) {
         var modelPath = schema.modelPath
+            , modelPattern = schema.modelPattern || ''
             , notInModel = schema.notInModel
             , translate = schema.translate
             , validate = schema.validate;
@@ -464,7 +465,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                         };
 
                         if (! notInModel) {
-                            _addModelPathTranslation(viewPath, modelPath);
+                            _addModelPathTranslation(viewPath, modelPath, modelPattern);
                             _addDataTranslation(translate, 'fromModel', modelPath);
                             _addDataValidation(validate, 'fromModel', modelPath);
                         }
@@ -495,13 +496,13 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         });
     }
 
-    function _addModelPathTranslation(viewPath, modelPath) {
+    function _addModelPathTranslation(viewPath, modelPath, pathPattern) {
         if (viewPath in modelPathTranslations)
             throw new FormError('duplicate view path ' + viewPath);
         else if (_.keyOf(modelPathTranslations, modelPath))
             throw new FormError('duplicate model path ' + modelPath + ' for view path ' + viewPath);
         else
-            modelPathTranslations[viewPath] = modelPath;
+            modelPathTranslations[viewPath + pathPattern] = modelPath + pathPattern;
     }
 
     function _addDataTranslation(translate, direction, path) {
