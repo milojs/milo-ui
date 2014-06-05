@@ -67,7 +67,7 @@ function onChildrenBound () {
 
     var historyList = this.container.scope.list;
 
-    historyList.events.on('click', { subscriber: clickedHistoryEl, context: this });
+    historyList.events.on('dblclick', { subscriber: clickedHistoryEl, context: this });
 }
 
 

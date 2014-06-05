@@ -77,9 +77,43 @@ function CCModuleImagePreview_get() {
 
 function CCModuleImagePreview_set(value) {
     this.model.set(value);
+
+    var isLandscape = isLandscapeImage(value);
+    this.el.classList.toggle('cc-landscape', isLandscape);
+    this.el.classList.toggle('cc-portrait', !isLandscape);
+
     if (value && value.thumbUrl)
-        this.container.scope.image.el.src = value.thumbUrl;
+        this.container.scope.image.el.src = _createThumbUrl.call(this, value.thumbUrl);
     this.transfer.setState(_constructImageGroupState(value));
+}
+
+function isLandscapeImage(value) {
+    return (value.propertyProductionWidth / value.propertyProductionHeight) > 1;
+}
+
+//generated a new thumb using the width as a ref
+function _createThumbUrl(thumbUrl) {
+
+    //if someone request better images uncomment this
+    // var scaledWidth = this.el.offsetWidth;
+
+    // if (scaledWidth == 0)
+    //     return thumbUrl;
+
+    // thumbUrl = decodeURIComponent(thumbUrl);
+
+    // //use the original image when generating the new image
+    // thumbUrl = thumbUrl.replace('type=t', 'type=o');
+
+    // var originalWidth = /(?:width=)([0-9]+),/.exec(thumbUrl)[1];
+    // var originalHeight = /(?:height=)([0-9]+),/.exec(thumbUrl)[1];
+    // var scaledHeight = Math.round(scaledWidth * parseInt(originalHeight, 10) / parseInt(originalWidth, 10));
+
+    // thumbUrl = thumbUrl.replace(/width=[0-9]+/, 'width=' + scaledWidth);
+    // thumbUrl = thumbUrl.replace(/height=[0-9]+/, 'height=' + scaledHeight);
+
+
+    return thumbUrl;
 }
 
 
