@@ -73,22 +73,19 @@ function sendToScratch(type, event) {
     };
 
     milo.mail.postMessage('addtoscratch', scratchData);
-    milo.mail.once('addedtoscratch', { subscriber: onAddedToScratch,  context: this });
+    milo.mail.once('addedtoscratch', onAddedToScratch.bind(this, event));
 }
 
 
-function onAddedToScratch(msg, data) {
-    //TODO: refactor this icon animation into a nifty little reusable component/service.
-    var div = document.createElement('div');
-    if (data.err)
-        div.innerHTML = '<span class="glyphicon glyphicon-remove-sign cc-fade-in-out"></span>';
-    else
-        div.innerHTML = '<span class="glyphicon glyphicon-ok-sign cc-fade-in-out"></span>';
-    this.dom.append(div);
+function onAddedToScratch(event, msg, data) {
+    var options = { x: event.pageX-30, y: event.pageY-5, animationCls: 'cc-fade-in-out'};
 
-    div.addEventListener('webkitAnimationEnd', function() {
-        div.parentNode.removeChild(div);
-    });
+    if (data.err)
+        options.iconCls = 'glyphicon glyphicon-remove-sign';
+    else
+        options.iconCls = 'glyphicon glyphicon-ok-sign';
+    
+    milo.mail.postMessage('iconnotification', {options: options});
 }
 
 
