@@ -154,12 +154,13 @@ function showLocalHistory(articleStorageId) {
     var list = ids && ids.reverse().map(function(id, index) {
             var version = versions[id]
                 , isOpenedVersion = index == ids.length - 1
-                , createdDate = version && version.time;
+                , createdDate = version && version.time
+                , user = version && version.versionType;
             return {
                 id: id,
                 storage: 'local',
                 createdDate: fromNow(createdDate),
-                user: version.versionType
+                user: user
             };
         });
     list = list || [];
