@@ -6,6 +6,12 @@ var componentRegistry = milo.registry.components
 
 
 var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
+    data: {
+        get: CCPreviewImage_get,
+        set: CCPreviewImage_set,
+        del: CCPreviewImage_del
+    },
+    model: undefined,
     drop: {
         allow: {
             components: {
@@ -41,6 +47,19 @@ _.extendProto(CCPreviewImage, {
     getSize: CCPreviewImage$getSize
 });
 
+function CCPreviewImage_set(value) {
+    this.model.set(value);
+}
+
+function CCPreviewImage_get() {
+    return this.model.get();
+}
+
+function CCPreviewImage_del() {
+    this.model.del();
+    this.container.scope.image.el.removeAttribute(src);
+}
+
 function CCPreviewImage$setSize() {
     //noop - just to satisfy Croppable interface
 }
@@ -57,13 +76,12 @@ function CCPreviewImage$getImageData() {
 
 
 function CCPreviewImage$setImageData(data) {
-    var modelRootPath = this.croppable.config.modelRootPath;
-    this.model.m(modelRootPath).set(data);
+    this.container.scope.image.el.src = data.url;
 }
 
 
 function CCPreviewImage$setImageSrc(url) {
-    this.model.m('.src').set(url);
+    this.container.scope.image.el.src = url;
 }
 
 
@@ -78,7 +96,7 @@ function CCPreviewImage_onDragOver(eventType, event) {
 
 
 function CCPreviewImage_leaveImage(eventType, event) {
-    
+
 }
 
 
