@@ -6,7 +6,7 @@
                 <img ml-bind="[data]:hostUrl">
             </div>
             <div class="img-group-item">
-                <textarea ml-bind="[data]:caption" class="form-control ml-ui-textarea" placeholder="Preview text goes here"></textarea>
+                <textarea ml-bind="[data]:caption" class="form-control ml-ui-textarea"></textarea>
             </div>
         </li>
     </ul>
