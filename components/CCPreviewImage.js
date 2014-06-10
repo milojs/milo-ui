@@ -76,6 +76,8 @@ function CCPreviewImage$getImageData() {
 
 
 function CCPreviewImage$setImageData(data) {
+    var modelRootPath = this.croppable.config.modelRootPath;
+    this.model.m(modelRootPath).set(data);
     this.container.scope.image.el.src = data.url;
 }
 
