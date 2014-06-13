@@ -126,7 +126,9 @@ function _constructVideoState(value) {
         facetsStates: {
             model: {
                 state: {
-                    videoId: value._id,
+                    instance: {
+                        videoId: value.fields.id
+                    },
                     src: value.fields.stillImage.hostUrl,
                     width: value.fields.stillImage.width,
                     height: value.fields.stillImage.height,
