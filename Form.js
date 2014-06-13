@@ -630,10 +630,10 @@ function _processComboSchema(comp, schema) {
 
 function _processSuperComboSchema(comp, schema) {
     var options = schema.comboOptions
-        , hasAddBtn = schema.hasAddBtn;
+        , addItemPrompt = schema.addItemPrompt;
 
     _.deferTicks(function() {
-        comp.toggleAddButton(hasAddBtn);
+        if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
         setComponentOptions(comp, options, setComboOptions);
     }, 2);
 }
@@ -641,10 +641,10 @@ function _processSuperComboSchema(comp, schema) {
 
 function _processComboListSchema(comp, schema) {
     var options = schema.comboOptions
-        , hasAddBtn = schema.hasAddBtn;
+        , addItemPrompt = schema.addItemPrompt;
 
     _.deferTicks(function() {
-        comp.toggleAddButton(hasAddBtn);
+        if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
         comp.setDataValidation(schema.dataValidation);
         setComponentOptions(comp, options, setComboOptions);
     }, 2);
