@@ -78,11 +78,13 @@ function CCModuleImagePreview_get() {
 function CCModuleImagePreview_set(value) {
     this.model.set(value);
 
+    if (!value) return;
+
     var isLandscape = isLandscapeImage(value);
     this.el.classList.toggle('cc-landscape', isLandscape);
     this.el.classList.toggle('cc-portrait', !isLandscape);
 
-    if (value && value.thumbUrl)
+    if (value.thumbUrl)
         this.container.scope.image.el.src = _createThumbUrl.call(this, value.thumbUrl);
     this.transfer.setState(_constructImageGroupState(value));
 }
