@@ -26,7 +26,7 @@ var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
 
 var CCArticleHistory = Component.createComponentClass('CCArticleHistory', {
     dom: {
-        cls: 'cc-article-history'
+        cls: ['cc-article-history']
     },
     container: undefined,
     events: undefined,
