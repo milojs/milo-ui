@@ -37,7 +37,7 @@ function CCModuleArticleModulePreview_set(value) {
         if (!data.linklist)
             data.linklist = data.linkListGroup;
 
-        var styleId = data[value.type] && value.styleKey && data[value.type][value.styleKey].id;
+        try { var styleId = data[value.type][value.styleKey].id; } catch(e) {}
         value.styleId = styleId;
         self.transfer.setState(_constructRelatedGroupState(value));
 
@@ -48,18 +48,18 @@ function CCModuleArticleModulePreview_set(value) {
 }
 
 function parseData(value) {
-    value.fields = value.fields || {};
-    value.fields.moduleStyle = value.fields.moduleStyle || value.fields.galleryPreviewStyle || 
-        value.fields['linkListGroups.linkListGroupStyle'] && value.fields['linkListGroups.linkListGroupStyle'][0] || '';
+    var fields = value.fields = value.fields || {};
+    fields.moduleStyle = fields.moduleStyle || fields.galleryPreviewStyle || 
+        (fields['linkListGroups.linkListGroupStyle'] && fields['linkListGroups.linkListGroupStyle'][0]) || '';
 
     var moduleType = getModuleType(value._type);
 
     return {
         id: value._id,
-        title: stripHtml(value.fields.title || value.fields.name || value.fields.headline),
+        title: stripHtml(fields.title || fields.name || fields.headline),
         type: moduleType,
-        styleName: value.fields.moduleStyle.replace(/_/g, ' '),
-        styleKey: value.fields.moduleStyle
+        styleName: fields.moduleStyle.replace(/_/g, ' '),
+        styleKey: fields.moduleStyle
     };
 
     function getModuleType(moduleType) {
