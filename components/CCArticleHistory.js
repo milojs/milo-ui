@@ -85,7 +85,7 @@ var articleStatusLabelCSS = {
     'spiked': 'label-danger'
 };
 
-function fetchHistory (articleID) {
+function fetchHistory (articleID, currentArticleId) {
     var self = this;
 
     this.container.scope.list.data.set([]);
@@ -96,6 +96,7 @@ function fetchHistory (articleID) {
         if (err) logger.error('Cannot load versions list', err);
         var list = mergeWpsCCVersions(res);
         var list = Array.isArray(list) ? list : [];
+
         self.container.scope.list.data.set(list);
         self.container.scope.list.list.each(function(item, index) {
             var status = list[index].status.toLowerCase();
@@ -103,6 +104,8 @@ function fetchHistory (articleID) {
             var editorToolComp = item.container.scope.editorTool;
 
             statusComp.el.classList.add(articleStatusLabelCSS[status]);
+            item.el.classList.toggle('active', currentArticleId == list[index].id);
+
             if (list[index].editorTool != 'CC') editorToolComp.el.classList.add('label', 'label-warning');
         });
         self.model.set(list);
@@ -164,6 +167,7 @@ function showLocalHistory(articleStorageId) {
             };
         });
     list = list || [];
+
     this.container.scope.list.data.set(list);
     this.model.set(list);
 }

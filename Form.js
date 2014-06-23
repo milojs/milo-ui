@@ -483,7 +483,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 
         inspComp.data.on('', function(msg, data) {
             // Keep old value up to date to be used by the change event handler
-            oldValue = data.oldValue;
+            if (typeof oldValue == 'undefined') oldValue = data.oldValue;
         });
 
         inspComp.events.on('change', function(type, event) {
@@ -495,6 +495,8 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 
             cmd.setComment('track model change');
             rootContent.editor.storeCommand(cmd);
+
+            oldValue = undefined;
         });
     }
 

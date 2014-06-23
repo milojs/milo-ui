@@ -1,6 +1,7 @@
 {{# def.partials.formGroup }}
     {{# def.partials.label }}
-    <input type="text"
+    <input type="{{= it.item.inputType || 'text' }}"
+            {{? it.item.inputName }}name="{{= it.item.inputName }}"{{?}}
             ml-bind="MLInput:{{= it.compName }}"
             placeholder="{{? it.item.placeholder }}{{= it.item.placeholder}}{{?}}"
             {{? it.disabled }}disabled {{?}}
