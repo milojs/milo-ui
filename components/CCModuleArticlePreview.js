@@ -46,9 +46,11 @@ _.extendProto(CCModuleArticlePreview, {
 
 function CCModuleArticlePreview$init() {
     Component.prototype.init.apply(this, arguments);
-    this.once('stateready', function(){
-        this.container.scope.scratchBtn.events.on('click', 
+    this.once('stateready', function() {
+        this.container.scope.scratchBtn.events.on('click',
             { subscriber: sendToScratch, context: this });
+        this.container.scope.previewBtn.events.on('click',
+            { subscriber: previewArticle, context: this });
     });
 }
 
@@ -86,6 +88,13 @@ function onAddedToScratch(event, msg, data) {
         options.iconCls = 'glyphicon glyphicon-ok-sign';
     
     milo.mail.postMessage('iconnotification', {options: options});
+}
+
+function previewArticle(type, event) {
+    milo.mail.postMessage('previewasset', {
+        assetType: 'article',
+        assetId: this.model.m('.id').get()
+    });
 }
 
 
