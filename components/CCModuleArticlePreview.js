@@ -51,6 +51,8 @@ function CCModuleArticlePreview$init() {
             { subscriber: sendToScratch, context: this });
         this.container.scope.previewBtn.events.on('click',
             { subscriber: previewArticle, context: this });
+        this.container.scope.cloneBtn.events.on('click',
+            { subscriber: cloneArticle, context: this });
     });
 }
 
@@ -88,6 +90,13 @@ function onAddedToScratch(event, msg, data) {
         options.iconCls = 'glyphicon glyphicon-ok-sign';
     
     milo.mail.postMessage('iconnotification', {options: options});
+}
+
+function cloneArticle(type, event) {
+    milo.mail.postMessage('clonearticle', {
+        assetType: 'article',
+        assetId: this.model.m('.id').get()
+    });
 }
 
 function previewArticle(type, event) {
