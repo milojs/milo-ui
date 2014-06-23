@@ -353,7 +353,8 @@ var itemsFunctions = {
     supercombo: _processSuperComboSchema,
     combolist: _processComboListSchema,
     inputlist: _processInputListSchema,
-    textarea: _processTextareaSchema
+    textarea: _processTextareaSchema,
+    linklist: _processLinkListSchema
     //linkedlist: _processLinkedList
 
 };
@@ -665,6 +666,11 @@ function _processLinkedList(comp, schema) {
 function _processTextareaSchema(comp, schema) {
     if (schema.autoresize)
         _.deferMethod(comp, 'startAutoresize', schema.autoresize);
+}
+
+
+function _processLinkListSchema(comp, schema) {
+    comp.setHostComponent(this);
 }
 
 
