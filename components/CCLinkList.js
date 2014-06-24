@@ -202,7 +202,6 @@ function saveExternalLink(index) {
 
 
 function addExternalLink() {
-
     try {
         var formData = _getAndClearFormData.call(this, validateForm);
     } catch (e) {
@@ -210,6 +209,7 @@ function addExternalLink() {
         return;
     }
     var externalLink = _.extend(_.clone(externalLinkDefaults), formData);
+
 
     var externalLinksModel = this.model;
     var existing = externalLinksModel.get();
@@ -222,17 +222,21 @@ function addExternalLink() {
 
 
 function _getAndClearFormData(validateFn) {
-    var urlData = this.container.scope.url.data;
-    var headlineData = this.container.scope.headline.data;
+    var headlineDataPath = this.container.scope.headline.data;
+    var urlDataPath = this.container.scope.url.data;
+
+    var IMHyperlink = componentsRegistry.get('IMHyperlink')
+
+    var url = urlDataPath.get()
     var relatedLink = {
-        relatedUrl: urlData.get(),
-        headline: headlineData.get()
+        relatedUrl: url && IMHyperlink.prependUrlProtocol(url),
+        headline: headlineDataPath.get()
     };
 
     validateFn && validateFn.call(this, relatedLink);
 
-    urlData.set('');
-    headlineData.set('');
+    urlDataPath.set('');
+    headlineDataPath.set('');
     return relatedLink;
 }
 
