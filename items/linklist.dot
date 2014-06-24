@@ -3,17 +3,19 @@
 <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">
     <ul ml-bind="[list, events]:list">
         <li ml-bind="[item]:result" class="linklist-item">
-            <span class="linklist-wrap">
-                <span ml-bind="[data]:headline"></span> (<span ml-bind="[data]:relatedUrl"></span>)
-            </span>
-            
-            <div class="cc-external-links-auto-action">
-                <button ml-bind="[events]:editHyperlinkBtn" class="btn btn-default ml-ui-button">Select hyperlink</button>
-            </div>
+            <div style="clear:both;">
+                <span class="linklist-wrap">
+                    <span ml-bind="[data]:headline"></span> (<span ml-bind="[data]:relatedUrl"></span>)
+                </span>
+                
+                <div class="cc-external-links-auto-action">
+                    <button ml-bind="[events]:editHyperlinkBtn" class="btn btn-default ml-ui-button">Select hyperlink</button>
+                </div>
 
-            <div class="cc-external-links-manual-action">
-                <button ml-bind="[events]:editBtn" class="btn btn-default ml-ui-button">Edit headline</button>
-                <button ml-bind="[events]:deleteBtn" class="btn btn-default ml-ui-button">X</button>
+                <div class="cc-external-links-manual-action">
+                    <button ml-bind="[events]:editBtn" class="btn btn-default ml-ui-button">Edit headline</button>
+                    <button ml-bind="[events]:deleteBtn" class="btn btn-default ml-ui-button">X</button>
+                </div>
             </div>
         </li>
     </ul>
