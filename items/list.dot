@@ -5,7 +5,7 @@
         <li ml-bind="MLListItem:itemSample" class="list-item">
             <span ml-bind="[data]:label"></span>
             {{? it.editBtn }}<button ml-bind="[events]:editBtn">edit</button>{{?}}
-            <button ml-bind="[events]:deleteBtn">x</button>
+            <button ml-bind="[events]:deleteBtn" class="btn btn-default glyphicon glyphicon-remove"> </button>
         </li>
     </ul>
 </div>
