@@ -33,6 +33,13 @@ _.extendProto(CCLinkList, {
 });
 
 
+var externalLinkDefaults = {
+    relatedArticleTypeId: 10,
+    previewLink: false,
+    getDetails: true
+};
+
+
 function CCLinkList$init() {
     Component.prototype.init.apply(this, arguments);
     this.once('childrenbound', onChildrenBound);
@@ -61,6 +68,8 @@ function onListClickSubscriber(type, event) {
     if (type == 'click') {
         var elm = event.target;
         var comp = Component.getComponent(elm);
+        if (! comp) return;
+
         var parent = comp.getScopeParent('Item');
         if (parent) {
             var index = parent.item.index;
@@ -182,9 +191,10 @@ function saveExternalLink(index) {
         return;
     }
     var data = this.model.get();
-    var value = data[index];
-    _.extend(value, formData);
-    this.model.splice(index, 1, value);
+    var externalLink = data[index];
+    _.extend(externalLink, externalLinkDefaults);
+    _.extend(externalLink, formData);
+    this.model.splice(index, 1, externalLink);
     toggleEditMode.call(this, false);
     delete this._saving;
     _triggerExternalPropagation.call(this);
@@ -199,11 +209,7 @@ function addExternalLink() {
         logger.error("Failed to Add External Link:" + e);
         return;
     }
-    var externalLink = _.extend({
-        relatedArticleTypeId: 10,
-        previewLink: false,
-        getDetails: true
-    }, formData);
+    var externalLink = _.extend(_.clone(externalLinkDefaults), formData);
 
     var externalLinksModel = this.model;
     var existing = externalLinksModel.get();
