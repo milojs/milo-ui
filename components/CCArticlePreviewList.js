@@ -34,9 +34,9 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
                         <span ml-bind="[data]:title" class="media-heading"></span>\
                         <span ml-bind="[data]:previewText"></span>\
                         <span class="cc-article-actions">\
-                            <span class="fa fa-search" ml-bind="[events]:previewBtn"></span>\
-                            <span class="cc-icon cc-clone-article-small-icon" ml-bind="[events]:cloneBtn"></span>\
-                            <span class="cc-icon cc-scratch-icon" ml-bind="[events]:scratchBtn"></span>\
+                            <span class="fa fa-search" ml-bind="[events]:previewBtn" title="read-only article"></span>\
+                            <span class="cc-icon cc-clone-article-small-icon" ml-bind="[events]:cloneBtn" title="clone article"></span>\
+                            <span class="cc-icon cc-scratch-icon" ml-bind="[events]:scratchBtn" title="scratch article"></span>\
                         </span>\
                     </div>\
                     <time ml-bind="[data]:createdDate"></time>\
