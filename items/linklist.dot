@@ -6,8 +6,15 @@
             <span class="linklist-wrap">
                 <span ml-bind="[data]:headline"></span> (<span ml-bind="[data]:relatedUrl"></span>)
             </span>
-            <button ml-bind="[events]:editBtn" class="btn btn-default ml-ui-button">edit</button>
-            <button ml-bind="[events]:deleteBtn" class="btn btn-default ml-ui-button">x</button>
+            
+            <div class="cc-external-links-auto-action">
+                <button ml-bind="[events]:editHyperlinkBtn" class="btn btn-default ml-ui-button">Select hyperlink</button>
+            </div>
+
+            <div class="cc-external-links-manual-action">
+                <button ml-bind="[events]:editBtn" class="btn btn-default ml-ui-button">Edit headline</button>
+                <button ml-bind="[events]:deleteBtn" class="btn btn-default ml-ui-button">X</button>
+            </div>
         </li>
     </ul>
     <input placeholder="url" type="text" ml-bind="[data]:url" class="form-control ml-ui-input">

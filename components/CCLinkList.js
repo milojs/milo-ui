@@ -17,14 +17,19 @@ var CCLinkList = Component.createComponentClass('CCLinkList', {
         splice: CCLinkList_splice,
         event: LINKLIST_CHANGE_MESSAGE
     },
-    model: undefined
+    model: {
+        messages: {
+            '*': { subscriber: _.debounce(onListUpdated, 20), context: 'owner' }
+        }
+    }
 });
 
 componentsRegistry.add(CCLinkList);
 module.exports = CCLinkList;
 
 _.extendProto(CCLinkList, {
-    init: CCLinkList$init
+    init: CCLinkList$init,
+    setHostComponent: CCLinkList$setHostComponent
 });
 
 
@@ -34,12 +39,20 @@ function CCLinkList$init() {
 }
 
 
+function CCLinkList$setHostComponent(hostComponent) {
+    this._hostComponent = hostComponent
+}
+
+
 function onChildrenBound() {
     milo.minder(this.model, '->>>', this.container.scope.list.data).deferChangeMode('<<<->>>');
+    
     var saveBtn = this.container.scope.saveBtn;
     saveBtn.events.on('click', { subscriber: onSaveButtonSubscriber, context: this });
+    
     var cancelBtn = this.container.scope.cancelBtn;
     cancelBtn.events.on('click', { subscriber: onCancelButtonSubscriber, context: this });
+
     var list = this.container.scope.list;
     list.events.on('click', { subscriber: onListClickSubscriber, context: this });
 }
@@ -52,13 +65,15 @@ function onListClickSubscriber(type, event) {
         if (parent) {
             var index = parent.item.index;
             var name = comp.name;
-
             switch (name) {
                 case 'editBtn':
                     editItem.call(this, index);
                     break;
                 case 'deleteBtn':
                     deleteItem.call(this, index);
+                    break;
+                case 'editHyperlinkBtn':
+                    editHyperlink.call(this, index);
                     break;
             }
         }
@@ -83,6 +98,21 @@ function toggleEditMode(isOn) {
 function onCancelButtonSubscriber() {
     delete this._saving;
     toggleEditMode.call(this, false);
+}
+
+
+function onListUpdated() {
+    var listData = this.model.m.get();
+    this.container.scope.list.list.each(function(comp, index) {
+        var link = listData[index];
+        comp.el.classList.toggle('external-links-auto', link.id ? true : false);
+        comp.el.classList.toggle('external-links-manual', link.id ? false : true);
+    });
+}
+
+
+function editHyperlink(index) {
+    this._hostComponent.broadcast('selecthyperlink', { id: this.model.get()[index].id });
 }
 
 
