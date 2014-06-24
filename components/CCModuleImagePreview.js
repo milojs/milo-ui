@@ -47,6 +47,10 @@ _.extendProto(CCModuleImagePreview, {
 function CCModuleImagePreview$init() {
     Component.prototype.init.apply(this, arguments);
     this.on('stateready', _init);
+
+    var isInFrame = !!window.frameElement;
+    this._postMethod = isInFrame ? 'trigger' : 'postMessage';
+    this._subscribePrefix = isInFrame ? 'message:' : '';
 }
 
 
@@ -140,20 +144,20 @@ function sendToScratch(type, event) {
         }
     };
 
-    milo.mail.postMessage('addtoscratch', scratchData);
-    milo.mail.once('addedtoscratch', onAddedToScratch.bind(this, event));
+    milo.mail[this._postMethod]('addtoscratch', scratchData);
+    milo.mail.once(this._subscribePrefix + 'addedtoscratch', onAddedToScratch.bind(this, event));
 }
 
 
 function onAddedToScratch(event, msg, data) {
-    var options = { x: event.pageX-30, y: event.pageY-5, animationCls: 'cc-fade-in-out'};
+    var options = { x: event.clientX-30, y: event.clientY-5, animationCls: 'cc-fade-in-out'};
 
     if (data.err)
         options.iconCls = 'glyphicon glyphicon-remove-sign';
     else
         options.iconCls = 'glyphicon glyphicon-ok-sign';
     
-    milo.mail.postMessage('iconnotification', {options: options});
+    milo.mail[this._postMethod]('iconnotification', {options: options});
 }
 
 
