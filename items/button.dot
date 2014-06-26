@@ -1,7 +1,7 @@
 <div {{? it.item.altText }}title="{{= it.item.altText}}" {{?}}class="btn-toolbar{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}">
     <button ml-bind="MLButton:{{= it.compName }}"
         {{? it.disabled }}disabled {{?}}
-        class="btn btn-default">
+        class="btn btn-default {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}">
         {{= it.item.label || '' }}
     </button>
 </div>
