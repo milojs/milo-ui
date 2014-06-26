@@ -128,7 +128,7 @@ function _parseData(data) {
     result.type = data._type;
     result.title = data.fields.headline;
     result.previewText = data.fields.previewText;
-    result.channel = data.fields.channel;
+    result.channel = data.fields.topParentChannel || data.fields.channel;
     result.createdDate = _dateHelper(data.fields.createdDate);
     result.url = data.fields.articleURL;
 
