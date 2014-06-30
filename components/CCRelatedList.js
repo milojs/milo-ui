@@ -2,6 +2,7 @@
 
 var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component')
+    , ElementLock = require('../ElementLock')
     , logger = milo.util.logger;
 
 var RELATEDLIST_CHANGE_MESSAGE = 'ccrelatedlistchange';
@@ -128,10 +129,13 @@ function onSaveButtonSubscriber() {
     var baseUrl = window.CC.config.apiHost;
     var self = this;
 
+    var lock = new ElementLock(self.el, 5000);
+
     if ( _.isNumeric(newRelated) ) {
         baseUrl += '/article/getRelatedArticle/';
 
         milo.util.request.json(baseUrl + newRelated, function (err, responseData) {
+            lock.unlock();
             if (err) return window.alert('can\'t find article');
             addRelatedArticle.call(self, responseData);
             self.container.scope.input.data.set('');
@@ -140,6 +144,7 @@ function onSaveButtonSubscriber() {
         baseUrl += '/links/remotetitle';
 
         milo.util.request.post(baseUrl, {url: newRelated}, function (err, responseData) {
+            lock.unlock();
             if (err) return window.alert('can\'t find article');
             addRelatedLink.call(self, newRelated, responseData);
             self.container.scope.input.data.set('');
