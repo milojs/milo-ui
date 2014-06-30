@@ -140,7 +140,8 @@ function mergeWpsCCVersions(res) {
 
     function transformWPSVersions(wpsVersions) {
         return wpsVersions.map(function(v) {
-            if (v.editorTool != 'cc') {
+            var editorTool = (v.editorTool || '').toLowerCase();
+            if (editorTool != 'cc') {
                 v.user = v.modifiedBy;
                 v.id = v.articleVersionId;
                 return v;
