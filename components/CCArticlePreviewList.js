@@ -26,20 +26,32 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
             '<span ml-bind="[list]:relatedArticles">\
             <article ml-bind="CCModuleArticlePreview[item]:result" class="media" >\
                 <span class="bocc channel-bar"></span>\
-                <span class="pull-left" ml-bind="[data container]:thumb">\
-                    <img ml-bind="[data]:hostUrl" class="media-object">\
-                </span>\
                 <div>\
-                    <div class="media-body">\
-                        <span ml-bind="[data]:title" class="media-heading"></span>\
-                        <span ml-bind="[data]:previewText"></span>\
-                        <span class="cc-article-actions">\
-                            <span class="fa fa-search" ml-bind="[events]:previewBtn" title="read-only article"></span>\
-                            <span class="cc-icon cc-clone-article-small-icon" ml-bind="[events]:cloneBtn" title="clone article"></span>\
-                            <span class="cc-icon cc-scratch-icon" ml-bind="[events]:scratchBtn" title="scratch article"></span>\
-                        </span>\
+                    <div>\
+                        <div class="cc-article-top-bar">\
+                            <div class="cc-text-light cc-fl">ID: <span class="cc-dark" ml-bind="[data]:id"></span></div>\
+                            <div class="cc-text-light cc-posa cc-r5">Modified: <span class="cc-dark" ml-bind="[data]:modifiedDate"></span></span></div>\
+                        </div>\
+                        <div class="cc-article-title-bar cc-clear cc-width-100 cc-pt5">\
+                            <div class="cc-dark-bg cc-text cc-fl cc-light cc-bg-dark cc-plr5 cc-mr5" ml-bind="[data]:status"></div>\
+                            <div class="cc-dark cc-lcall cc-bold" ml-bind="[data]:title"></div>\
+                        </div>\
+                        <div class="cc-article-short-body cc-clear cc-fl cc-width-100 cc-pt5">\
+                            <div class="cc-fl cc-mr5" ml-bind="[data container]:thumb">\
+                                <img ml-bind="[data]:hostUrl" class="media-object">\
+                            </div>\
+                            <div class="" ml-bind="[data]:previewText"></div>\
+                        </div>\
+                        <div class="cc-article-bottom-bar cc-clear cc-pt5">\
+                            <div class="cc-text-light cc-fl">Created by: <span ml-bind="[data]:createdBy"></span></div>\
+                            <div class="cc-text-light cc-fl cc-pl5"> - <span ml-bind="[data]:createdDate"></span></div>\
+                            <span class="cc-article-actions">\
+                                <span class="fa fa-search" ml-bind="[events]:previewBtn" title="read-only article"></span>\
+                                <span class="cc-icon cc-clone-article-small-icon" ml-bind="[events]:cloneBtn" title="clone article"></span>\
+                                <span class="cc-icon cc-scratch-icon" ml-bind="[events]:scratchBtn" title="scratch article"></span>\
+                            </span>\
+                        </div>\
                     </div>\
-                    <time ml-bind="[data]:createdDate"></time>\
                 </div>\
             </article>\
             </span>'
@@ -129,7 +141,10 @@ function _parseData(data) {
     result.title = data.fields.headline;
     result.previewText = data.fields.previewText;
     result.channel = data.fields.topParentChannel || data.fields.channel;
+    result.createdBy = data.fields.authors[0] && data.fields.authors[0].name;
     result.createdDate = _dateHelper(data.fields.createdDate);
+    result.modifiedDate = _dateHelper(data.fields.modifiedDate);
+    result.status = data.fields.status;
     result.url = data.fields.articleURL;
 
     // Search through the images and find the puff thumb
@@ -138,6 +153,7 @@ function _parseData(data) {
 }
 
 function _dateHelper(date) {
+    if(!date) return null;
     date = _.toDate(date);
     var ddmmyyyy = [
         date.getDate(),

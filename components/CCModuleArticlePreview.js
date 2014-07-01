@@ -47,11 +47,15 @@ _.extendProto(CCModuleArticlePreview, {
 function CCModuleArticlePreview$init() {
     Component.prototype.init.apply(this, arguments);
     this.once('stateready', function() {
+        if(this.data.get().thumb.hostUrl == "http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png")
+            this.container.scope.thumb.el.classList.add('cc-hidden');
+        else
+            this.container.scope.thumb.el.classList.remove('cc-hidden');
         this.container.scope.scratchBtn.events.on('click',
             { subscriber: sendToScratch, context: this });
-        this.container.scope.previewBtn.events.on('click',
+        this.container.scope.previewBtn && this.container.scope.previewBtn.events.on('click',
             { subscriber: previewArticle, context: this });
-        this.container.scope.cloneBtn.events.on('click',
+        this.container.scope.cloneBtn && this.container.scope.cloneBtn.events.on('click',
             { subscriber: cloneArticle, context: this });
     });
 }
