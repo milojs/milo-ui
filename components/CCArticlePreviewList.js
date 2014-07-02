@@ -30,9 +30,9 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
                 <div>\
                     <div>\
                         <div class="cc-article-top-bar cc-table cc-table-bs3 cc-width-100">\
-                            <div class="cc-text-light cc-cell cc-bg-lightgrey cc-center">ID: <span class="cc-dark" ml-bind="[data]:id"></span></div>\
-                            <div class="cc-text-light cc-cell cc-bg-lightgrey cc-center"> <span ml-bind="[data]:createdDate"></span></div>\
-                            <div class="cc-text-light cc-cell cc-bg-lightgrey cc-center">Modified: <span class="cc-dark" ml-bind="[data]:modifiedDate"></span></span></div>\
+                            <div class="cc-text-light cc-cell cc-bg-lightgrey cc-align-left">ID: <span class="cc-dark" ml-bind="[data]:id"></span></div>\
+                            <div class="cc-text-light cc-cell cc-bg-lightgrey cc-align-center"> <span ml-bind="[data]:createdDate"></span></div>\
+                            <div class="cc-text-light cc-cell cc-bg-lightgrey cc-align-center">Modified: <span class="cc-dark" ml-bind="[data]:modifiedDate"></span></span></div>\
                         </div>\
                         <div class="cc-article-title-bar cc-clear cc-width-100 cc-pt5">\
                             <div class="cc-dark-bg cc-text cc-fl cc-light cc-bg-dark cc-plr5 cc-mr5" ml-bind="[data]:status"></div>\
