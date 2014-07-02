@@ -212,7 +212,8 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
                     } else {
                         var reason = {
                             label: label || '',
-                            reason: response.reason
+                            reason: response.reason,
+                            reasonCode: response.reasonCode
                         };
                         parentEl.title = reason.label + ' : ' + reason.reason;
                         form._invalidFormControls[modelPath] = {
@@ -364,6 +365,7 @@ var itemsFunctions = {
  */
 var validationFunctions = {
     'required': validateRequired,
+    'latin1': validateLatin1,
 
     'url': validateUrl
 };
@@ -705,10 +707,19 @@ function setComboOptions(comp, data) {
 }
 
 
+var notLatin1Regex = /[^('\u0020-\u00FF)]+/;
+function validateLatin1(data, callback) {
+    var valid = typeof data != 'undefined' && !notLatin1Regex.test(data);
+
+    var response = _validatorResponse(valid, 'value needs to be latin1 characters only');
+    callback(null, response);
+}
+
+
 function validateRequired(data, callback) {
     var valid = typeof data != 'undefined'
                 && (typeof data != 'string' || data.trim() != '');
-    var response = _validatorResponse(valid, 'value is required');
+    var response = _validatorResponse(valid, 'value is required', 'REQUIRED');
     callback(null, response);
 }
 
@@ -720,8 +731,8 @@ function validateUrl(data, callback) {
 }
 
 
-function _validatorResponse(valid, reason) {
+function _validatorResponse(valid, reason, reasonCode) {
     return valid
             ? { valid: true }
-            : { valid: false, reason: reason };
+            : { valid: false, reason: reason, reasonCode: reasonCode };
 }
