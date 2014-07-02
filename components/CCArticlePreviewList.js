@@ -1,6 +1,7 @@
 'use strict';
 
 var componentsRegistry = milo.registry.components
+    , moment = require('moment')
     , Component = componentsRegistry.get('Component');
 
 
@@ -28,23 +29,23 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
                 <span class="bocc channel-bar"></span>\
                 <div>\
                     <div>\
-                        <div class="cc-article-top-bar">\
-                            <div class="cc-text-light cc-fl">ID: <span class="cc-dark" ml-bind="[data]:id"></span></div>\
-                            <div class="cc-text-light cc-posa cc-r5">Modified: <span class="cc-dark" ml-bind="[data]:modifiedDate"></span></span></div>\
+                        <div class="cc-article-top-bar cc-table cc-table-bs3 cc-width-100">\
+                            <div class="cc-text-light cc-cell cc-bg-lightgrey cc-center">ID: <span class="cc-dark" ml-bind="[data]:id"></span></div>\
+                            <div class="cc-text-light cc-cell cc-bg-lightgrey cc-center"> <span ml-bind="[data]:createdDate"></span></div>\
+                            <div class="cc-text-light cc-cell cc-bg-lightgrey cc-center">Modified: <span class="cc-dark" ml-bind="[data]:modifiedDate"></span></span></div>\
                         </div>\
                         <div class="cc-article-title-bar cc-clear cc-width-100 cc-pt5">\
                             <div class="cc-dark-bg cc-text cc-fl cc-light cc-bg-dark cc-plr5 cc-mr5" ml-bind="[data]:status"></div>\
-                            <div class="cc-dark cc-lcall cc-bold" ml-bind="[data]:title"></div>\
+                            <div class="cc-article-title cc-dark cc-bold" ml-bind="[data]:title"></div>\
                         </div>\
                         <div class="cc-article-short-body cc-clear cc-fl cc-width-100 cc-pt5">\
                             <div class="cc-fl cc-mr5" ml-bind="[data container]:thumb">\
-                                <img ml-bind="[data]:hostUrl" class="media-object">\
+                                <img ml-bind="[data]:hostUrl" class="media-object cc-hidden">\
                             </div>\
                             <div class="" ml-bind="[data]:previewText"></div>\
                         </div>\
                         <div class="cc-article-bottom-bar cc-clear cc-pt5">\
                             <div class="cc-text-light cc-fl">Created by: <span ml-bind="[data]:createdBy"></span></div>\
-                            <div class="cc-text-light cc-fl cc-pl5"> - <span ml-bind="[data]:createdDate"></span></div>\
                             <span class="cc-article-actions">\
                                 <span class="fa fa-search" ml-bind="[events]:previewBtn" title="read-only article"></span>\
                                 <span class="cc-icon cc-clone-article-small-icon" ml-bind="[events]:cloneBtn" title="clone article"></span>\
@@ -155,17 +156,14 @@ function _parseData(data) {
 function _dateHelper(date) {
     if(!date) return null;
     date = _.toDate(date);
-    var ddmmyyyy = [
-        date.getDate(),
-        date.getMonth() + 1,
-        date.getFullYear()
-    ];
-    var time = [
-        date.getHours(),
-        date.getMinutes(),
-        date.getSeconds()
-    ];
-    return ddmmyyyy.join('/') + ' ' + time.join(':');
+
+    return date && moment(date).format('MMM DD, YYYY HH:mm');
+    //// native solution
+    //var options = {
+    //    year: "numeric", hour12:false, month: "short",
+    //    day: "2-digit", hour: "2-digit", minute: "2-digit"
+    //};
+    //return date.toLocaleTimeString("en-gb",options).replace(/( [^ ]+)/,function(str,gr1){return gr1+','})
 }
 
 function _findThumb(images) {
