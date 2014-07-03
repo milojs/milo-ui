@@ -7,7 +7,6 @@
             </div>
             <div class="img-group-item">
                 <textarea ml-bind="[data]:caption" class="form-control ml-ui-textarea"></textarea>
-                <label><input type="checkbox" ml-bind="[data]:leaveCaptionBlank" class="ml-ui-input"> Leave caption blank</label>
             </div>
         </li>
     </ul>
