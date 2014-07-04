@@ -38,13 +38,19 @@ componentsRegistry.add(CCRelatedList);
 module.exports = CCRelatedList;
 
 _.extendProto(CCRelatedList, {
-    init: CCRelatedList$init
+    init: CCRelatedList$init,
+    setLinkDefaults: CCRelatedList$setLinkDefaults
 });
 
 
 function CCRelatedList$init() {
     Component.prototype.init.apply(this, arguments);
     this.once('childrenbound', onChildrenBound);
+}
+
+
+function CCRelatedList$setLinkDefaults(defaultLink) {
+    this._defaultLink = defaultLink;
 }
 
 
@@ -137,7 +143,7 @@ function onSaveButtonSubscriber() {
         milo.util.request.json(baseUrl + newRelated, function (err, responseData) {
             lock.unlock();
             if (err) return window.alert('can\'t find article');
-            addRelatedArticle.call(self, responseData);
+            addRelatedArticle.call(self, _.extend(responseData, self._defaultLink));
             self.container.scope.input.data.set('');
         });
     } else {
@@ -154,7 +160,7 @@ function onSaveButtonSubscriber() {
 
 
 function addRelatedLink(url, headline) {
-    var relatedData = createCommonRelatedData();
+    var relatedData = createCommonRelatedData.call(this);
     relatedData.relatedUrl = url.match(/^http:\/\//) ? url : 'http://' + url;
     relatedData.relatedArticleTypeId = 2;
     relatedData.voteFollow = true;
@@ -171,12 +177,11 @@ function addRelatedArticle(relatedData) {
 }
 
 function createCommonRelatedData() {
-    return {
-        previewLink: false,
+    return _.extend(_.clone(this._defaultLink), {
         voteFollow: false,
         target: null,
         getDetails: false
-    };
+    });
 }
 
 function onListUpdated() {

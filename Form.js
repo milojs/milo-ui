@@ -355,7 +355,8 @@ var itemsFunctions = {
     combolist: _processComboListSchema,
     inputlist: _processInputListSchema,
     textarea: _processTextareaSchema,
-    linklist: _processLinkListSchema
+    linklist: _processLinkListSchema,
+    relatedlist: _processRelatedListSchema
     //linkedlist: _processLinkedList
 
 };
@@ -675,6 +676,11 @@ function _processTextareaSchema(comp, schema) {
 
 function _processLinkListSchema(comp, schema) {
     comp.setHostComponent(this);
+}
+
+
+function _processRelatedListSchema(comp, schema) {
+    comp.setLinkDefaults(schema.defaultLinkData);
 }
 
 
