@@ -1,6 +1,7 @@
 'use strict';
 //TODO: Refactor as soon as possible, very similar to CCModuleImagePreview
 var componentsRegistry = milo.registry.components
+    , moment = require('moment')
     , Component = componentsRegistry.get('Component');
 
 
@@ -10,7 +11,7 @@ var CMVIDEO_GROUP_TEMPLATE = '<div>this video\
 
 var CCModuleVideoPreview = Component.createComponentClass('CCModuleVideoPreview', {
     dom: {
-        cls: 'cc-module-video-preview'
+        cls: ['cc-module-video-preview', 'media', 'video']
     },
     drag: {
         allowedEffects: 'copy'
@@ -83,7 +84,7 @@ function onAddedToScratch(event, msg, data) {
         options.iconCls = 'glyphicon glyphicon-remove-sign';
     else
         options.iconCls = 'glyphicon glyphicon-ok-sign';
-    
+
     milo.mail.postMessage('iconnotification', {options: options});
 }
 
@@ -106,8 +107,23 @@ function CCModuleVideoPreview_get() {
 function CCModuleVideoPreview_set(value) {
     this.model.set(value);
     if (value && value.fields.thumbImage.hostUrl)
-        try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
+       try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
     this.transfer.setState(_constructVideoState(value));
+    value = _parseData(value);
+    this.data._set(value);
+}
+
+function _parseData(data) {
+    var result = {};
+    result = data.fields;
+    result.createdDate = _dateHelper(data.fields.createdDate);
+    return result;
+}
+
+function _dateHelper(date) {
+    if(!date) return null;
+    date = _.toDate(date);
+    return date && moment(date).format('MMM DD, YYYY HH:mm');
 }
 
 
