@@ -3,7 +3,8 @@
 var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component')
     , ElementLock = require('../ElementLock')
-    , logger = milo.util.logger;
+    , logger = milo.util.logger
+    , text = require('cc-common').text;
 
 var RELATEDLIST_CHANGE_MESSAGE = 'ccrelatedlistchange';
 
@@ -171,9 +172,18 @@ function addRelatedLink(url, headline) {
 
 
 function addRelatedArticle(relatedData) {
-    this.events.postMessage('cmgroup_additem', {
-        itemData: relatedData
-    });
+    if (relatedData.headline)
+        this.events.postMessage('cmgroup_additem', {
+            itemData: relatedData
+        });
+    else
+        milo.mail.trigger('opendialog', {
+            name: 'cannotaddrelatedlink',
+            options: {
+                title: 'Error',
+                text: text('DIALOG_LINKS_NO_DATA_FOUND')
+            }
+        })
 }
 
 function createCommonRelatedData() {
