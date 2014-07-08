@@ -713,9 +713,9 @@ function setComboOptions(comp, data) {
 }
 
 
-var notLatin1Regex = /^[('\u0020-\u00FF)]+$/;
+var latin1Regex = /^[('\u0020-\u00FF)]*$/;
 function validateLatin1(data, callback) {
-    var valid = typeof data == 'string' && notLatin1Regex.test(data);
+    var valid = typeof data == 'string' && latin1Regex.test(data);
 
     var response = _validatorResponse(valid, 'value needs to be latin1 characters only');
     callback(null, response);
