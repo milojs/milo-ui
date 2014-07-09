@@ -12,6 +12,7 @@ var itemTypes = {
     inputlist:      { compClass: 'MLInputList' },
     textarea:       { compClass: 'MLTextarea',          template: fs.readFileSync(__dirname + '/items/textarea.dot') },
     button:         { compClass: 'MLButton',            template: fs.readFileSync(__dirname + '/items/button.dot') },
+    fabutton:       { compClass: 'MLButton',            template: fs.readFileSync(__dirname + '/items/fabutton.dot') },
     radio:          { compClass: 'MLRadioGroup' },
     hyperlink:      { compClass: 'MLHyperlink',         template: fs.readFileSync(__dirname + '/items/hyperlink.dot') },
     checkbox:       { compClass: 'MLInput',             template: fs.readFileSync(__dirname + '/items/checkbox.dot') },

@@ -71,7 +71,7 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *             },                    // data validation functions should accept two parameters: data and callback (they are asynchronous).
  *                                   // when validation is finished, callback should be called with (error, response) parameters.
  *                                   // response should have properties valid (Boolean) and optional reason (String - reason of validation failure).
- *                                   // Note!: at the moment, if callback is called with error parameter which is not falsy, validation will be passed. 
+ *                                   // Note!: at the moment, if callback is called with error parameter which is not falsy, validation will be passed.
  *             <item specific>: {<item configuration>}
  *                             // "select" supports "selectOptions" - array of objects
  *                             // with properties "value" and "label"
@@ -80,7 +80,7 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *                 { ... } //, ... - items inside "group" or "wrapper" item
  *             ]
  *         } // , ... more items
- *     ]    
+ *     ]
  * }
  */
 var CCForm = Component.createComponentClass('CCForm', {
@@ -188,7 +188,7 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
     function _manageFormValidation() {
         form._invalidFormControls = {};
-        
+
         form.model.on('validated', createOnValidated(false));
         form.data.on('validated', createOnValidated(true));
 
@@ -337,6 +337,7 @@ var modelPathRules = {
     group: 'prohibited',
     wrapper: 'prohibited',
     button: 'optional',
+    fabutton: 'optional',
     hyperlink: 'optional',
     text: 'optional',
     droptarget: 'prohibited',
@@ -385,7 +386,7 @@ function doNothing() {}
 
 /**
  * Processes form schema to subscribe for messages as defined in schema. Performs special processing for some types of items.
- * Returns translation rules for Connector object. 
+ * Returns translation rules for Connector object.
  * This function is called recursively for groups (and subgroups)
  *
  * @private
@@ -412,7 +413,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
     dataValidations.fromModel = dataValidations.fromModel || {};
     dataValidations.toModel = dataValidations.toModel || {};
 
-    if (schema.items) 
+    if (schema.items)
         _processSchemaItems.call(this, comp, schema.items, viewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations);
 
     if (schema.messages)
@@ -538,7 +539,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                 valFunc = makeRegexValidator(validator);
             else if (typeof validator == 'function')
                 valFunc = validator;
-            else 
+            else
                 throw new FormError(direction + ' validator for ' + path + ' should be function or string');
             formValidators.push(valFunc);
         }
@@ -566,7 +567,7 @@ function makeRegexValidator(validatorRegExp) {
  * Processes items of the form (or group).
  * Component that has items should have Container facet.
  * Returns translation rules for Connector.
- * 
+ *
  * @private
  * @param {Component} comp form or group component
  * @param {Array} items list of items in schema
@@ -575,7 +576,7 @@ function makeRegexValidator(validatorRegExp) {
  * @param {Object} formModelPaths view paths accumulated so far (have component and schema properties)
  * @param {Object} modelPathTranslations model path translation rules accumulated so far
  * @param {Object} dataTranslations data translation functions so far
- * @param {Object} dataValidations data validation functions so far 
+ * @param {Object} dataValidations data validation functions so far
  * @return {Object}
  */
 function _processSchemaItems(comp, items, viewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations) {
@@ -695,7 +696,7 @@ function setComponentOptions(comp, options, setModelFunc) {
                 .error(function() {
                     setModelFunc(comp, [{ value: 0, label: 'loading error' }]);
                 });
-        } else 
+        } else
             setModelFunc(comp, options);
     }
 }
