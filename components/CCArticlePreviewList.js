@@ -39,8 +39,8 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
                             <div class="cc-article-title cc-dark cc-bold" ml-bind="[data]:title"></div>\
                         </div>\
                         <div class="cc-article-short-body cc-clear cc-fl cc-width-100 cc-pt5">\
-                            <div class="cc-fl cc-mr5" ml-bind="[data container]:thumb">\
-                                <img ml-bind="[data]:hostUrl" class="media-object cc-hidden">\
+                            <div class="cc-fl cc-mr5 cc-preview-image">\
+                                <img ml-bind="[data]:image" class="media-object">\
                             </div>\
                             <div class="" ml-bind="[data]:previewText"></div>\
                         </div>\

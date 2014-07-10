@@ -106,8 +106,15 @@ function CCModuleVideoPreview_get() {
 
 function CCModuleVideoPreview_set(value) {
     this.model.set(value);
+
+    // prevent preload images if hidden using data-src instead of src
+    var settings = window.CC.user.ccProfile.settings || {};
+    if(settings.showPreviewImages === undefined)
+        settings.showPreviewImages = true;
+    var srcAttr = settings.showPreviewImages ? 'src' : 'data-src';
     if (value && value.fields.thumbImage.hostUrl)
-       try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
+       try { this.container.scope.image.el.setAttribute(srcAttr, value.fields.thumbImage.hostUrl); } catch(e) {}
+
     this.transfer.setState(_constructVideoState(value));
     value = _parseData(value);
     this.data._set(value);
@@ -129,7 +136,8 @@ function _dateHelper(date) {
 
 function CCModuleVideoPreview_del() {
     this.model.del();
-    this.container.scope.image.el.removeAttribute(src);
+    this.container.scope.image.el.removeAttribute('src');
+    this.container.scope.image.el.removeAttribute('data-src');
 }
 
 
