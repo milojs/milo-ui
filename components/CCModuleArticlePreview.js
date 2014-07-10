@@ -47,6 +47,10 @@ _.extendProto(CCModuleArticlePreview, {
 function CCModuleArticlePreview$init() {
     Component.prototype.init.apply(this, arguments);
     this.once('stateready', function() {
+        if(this.data.get().thumb.hostUrl == "http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png")
+            this.container.scope.thumb.el.classList.add('cc-hidden');
+        else
+            this.container.scope.thumb.el.classList.remove('cc-hidden');
         this.container.scope.scratchBtn.events.on('click',
             { subscriber: sendToScratch, context: this });
         this.container.scope.previewBtn && this.container.scope.previewBtn.events.on('click',
@@ -109,25 +113,8 @@ function previewArticle(type, event) {
 
 function CCModuleArticlePreview_set(value) {
     CCModuleArticlePreview_setChannel.call(this, value.channel);
-    this.model.set(value);
     this.data._set(value);
-
-    var settings = window.CC.user.ccProfile.settings || {};
-    if(settings.showPreviewImages === undefined)
-        settings.showPreviewImages = true;
-    var srcAttr = settings.showPreviewImages ? 'src' : 'data-src';
-
-    if (value.thumb.hostUrl) {
-        this.container.scope.image.el.removeAttribute('src');
-        this.container.scope.image.el.setAttribute(srcAttr, value.thumb.hostUrl);
-    }
-
-    //if(thumbData.hostUrl == "http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png")
-    //    thumb.el.classList.add('cc-hidden');
-    //else
-    //    thumb.el.classList.remove('cc-hidden');
-
-
+    this.model.set(value);
     this.transfer.setState(_constructRelatedGroupState(value));
 }
 
