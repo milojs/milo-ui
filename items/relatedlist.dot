@@ -1,28 +1,29 @@
 {{# def.partials.formGroup }}
     {{# def.partials.label }}
     <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">
-        <ul ml-bind="[list, events]:related">
-            <li ml-bind="[item]:result">
-                <input type="text" ml-bind="[data]:headline" class="ml-ui-input form-control" />
-                <a ml-bind="[data]:relatedUrl" class="cc-relatedlist-url" target="_blank"></a>
-                <a ml-bind="[data]:relatedId" class="cc-relatedlist-id" target="_blank"></a>
-                <div class="cc-relatedlist-options">
-                    <!--<label>
-                        <input type="checkbox" ml-bind="[data]:previewLink" class="ml-ui-input"/>
-                        <span>Use for article Preview</span>
-                    </label>-->
-                    <label>
-                        <input type="checkbox" ml-bind="[data]:voteFollow" class="ml-ui-input"/>
-                        <span>No follow</span>
-                    </label>
-                </div>
-                <div class="cc-relatedlist-actions">
-                    <button ml-bind="[events]:upBtn" class="btn btn-default">&#x25B2;</button>
-                    <button ml-bind="[events]:deleteBtn" class="btn btn-default glyphicon glyphicon-remove"> </button>
-                    <button ml-bind="[events]:downBtn" class="btn btn-default">&#x25BC;</button>
-                </div>
-            </li>
-        </ul>
+
+        <div ml-bind="[item]:result" class="cc-relatedlinks-item">
+            <input type="text" ml-bind="[data]:headline" class="ml-ui-input form-control" />
+            <a ml-bind="[data]:relatedUrl" class="cc-relatedlist-url" target="_blank"></a>
+            <a ml-bind="[data]:relatedId" class="cc-relatedlist-id" target="_blank"></a>
+            <div class="cc-relatedlist-options">
+                <!--<label>
+                    <input type="checkbox" ml-bind="[data]:previewLink" class="ml-ui-input"/>
+                    <span>Use for article Preview</span>
+                </label>-->
+                <label>
+                    <input type="checkbox" ml-bind="[data]:voteFollow" class="ml-ui-input"/>
+                    <span>No follow</span>
+                </label>
+            </div>
+            <div class="cc-relatedlist-actions">
+                <button ml-bind="[events]:upBtn" class="btn btn-default">&#x25B2;</button>
+                <button ml-bind="[events]:deleteBtn" class="btn btn-default glyphicon glyphicon-remove"> </button>
+                <button ml-bind="[events]:downBtn" class="btn btn-default">&#x25BC;</button>
+            </div>
+            <input type="hidden" ml-bind="[data]:relatedArticleTypeId">
+        </div>
+
         <input type="text" ml-bind="[data]:input" class="form-control ml-ui-input" placeHolder="Article ID or any website URL"/>
         <button ml-bind="[events]:saveBtn"  class="btn btn-default ml-ui-button"> Add </button>
     </{{= it.tagName}}>

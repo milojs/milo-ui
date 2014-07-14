@@ -14,21 +14,12 @@ var CCRelatedList = Component.createComponentClass('CCRelatedList', {
     dom: {
         cls: 'cc-relatedlist-group'
     },
-    data: {
-        get: CCRelatedList_get,
-        set: CCRelatedList_set,
-        del: CCRelatedList_del,
-        splice: CCRelatedList_splice,
-        event: RELATEDLIST_CHANGE_MESSAGE
-    },
+    list: undefined,
+    data: undefined,
     model: {
         messages: {
-            '*': {
-                subscriber: _.throttle(onListUpdated, 100),
-                context: 'owner'
-            },
             '**': {
-                subscriber: _.throttle(onInnerChange, 50),
+                subscriber: _.throttle(onListUpdated, 75),
                 context: 'owner'
             }
         }
@@ -43,12 +34,11 @@ _.extendProto(CCRelatedList, {
     setLinkDefaults: CCRelatedList$setLinkDefaults
 });
 
-
 function CCRelatedList$init() {
     Component.prototype.init.apply(this, arguments);
+    this._connector = milo.minder(this.model, '<<<->>>', this.data);
     this.once('childrenbound', onChildrenBound);
 }
-
 
 function CCRelatedList$setLinkDefaults(defaultLink) {
     this._defaultLink = defaultLink;
@@ -56,13 +46,10 @@ function CCRelatedList$setLinkDefaults(defaultLink) {
 
 
 function onChildrenBound() {
-    milo.minder(this.container.scope.related.data, '<<<->>>', this.model);
-
     var saveBtn = this.container.scope.saveBtn;
     saveBtn.events.on('click', { subscriber: onSaveButtonSubscriber, context: this });
 
-    var list = this.container.scope.related;
-    list.events.on('click', { subscriber: onListClickSubscriber, context: this });
+    this.events.on('click', { subscriber: onListClickSubscriber, context: this });
 }
 
 
@@ -87,46 +74,6 @@ function onListClickSubscriber(type, event) {
                 break;
         }
     }
-}
-
-
-// function swapItems(index1, index2) {
-//     var data = this.model.get(),
-//         data1 = _.deepClone(data[index1]),
-//         data2 = _.deepClone(data[index2]);
-//     this.model.splice(index1, 2, data2, data1);
-// }
-
-
-// function deleteItem(index) {
-//     this.model.splice(index, 1);
-// }
-
-
-function CCRelatedList_get() {
-    var model = this.model.get();
-    return model ? _.deepClone(model) : [];
-}
-
-
-function CCRelatedList_set(value) {
-    this.model.set(value || []);
-    sendChangeMessage.call(this);
-}
-
-
-function CCRelatedList_del() {
-    var res = this.model.set([]);
-    sendChangeMessage.call(this);
-    return res;
-}
-
-
-function CCRelatedList_splice(index, howmany) { // ... arguments
-    var args = [index, howmany].concat(Array.prototype.slice.call(arguments, 2));
-
-    this.model.splice.apply(this.model, args);
-    sendChangeMessage.call(this);
 }
 
 
@@ -183,7 +130,7 @@ function addRelatedArticle(relatedData) {
                 title: 'Error',
                 text: text('DIALOG_LINKS_NO_DATA_FOUND')
             }
-        })
+        });
 }
 
 function createCommonRelatedData() {
@@ -198,18 +145,13 @@ function onListUpdated() {
     addStylesToList.call(this);
 }
 
-function onInnerChange() {
-    sendChangeMessage.call(this);
-}
-
 function addStylesToList() {
     var baseUrl = window.CC.config.environment == 'production' ? 'http://dailymail.co.uk' : 'http://integration.dailymail.co.uk';
-    var listData = this.model.m.get();
-    this.container.scope.related.list.each(function (comp, index) {
+    this.list.each(function (comp, index) {
         if (comp.el._prevStyle) comp.el.classList.remove(comp.el._prevStyle);
-        if (!listData[index]) return;
 
-        var typeClass = isExternal(listData[index].relatedArticleTypeId) ? 'cc-relatedlist-external' : 'cc-relatedlist-article';
+        var articleID = comp.container.scope.relatedArticleTypeId.data.get();
+        var typeClass = isExternal(articleID) ? 'cc-relatedlist-external' : 'cc-relatedlist-article';
         var scope = comp.container.scope;
         comp.el.classList.add(typeClass);
         scope.relatedUrl.el.href = scope.relatedUrl.el.innerHTML;
@@ -221,6 +163,3 @@ function isExternal(type) {
     return type == 10 || type == 2;
 }
 
-function sendChangeMessage() {
-    this.data.getMessageSource().dispatchMessage(RELATEDLIST_CHANGE_MESSAGE);
-}
