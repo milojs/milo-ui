@@ -18,6 +18,12 @@ var CMARTICLE_GROUP_TEMPLATE = '\
         </div>\
     </div>';
 
+var articleStatusLabelCSS = {
+    'Live': 'label-success',
+    'Raw': 'label-primary',
+    'Held': 'label-warning',
+    'Spiked': 'label-danger'
+};
 
 var CCModuleArticlePreview = Component.createComponentClass('CCModuleArticlePreview', {
     dom: {
@@ -114,10 +120,19 @@ function previewArticle(type, event) {
 function CCModuleArticlePreview_set(value) {
     CCModuleArticlePreview_setChannel.call(this, value.channel);
     this.data._set(value);
+    setStatusColor.call(this);
     this.model.set(value);
     this.transfer.setState(_constructRelatedGroupState(value));
 }
 
+function setStatusColor() {
+    var statusPath = this.container.scope.status;
+    _.eachKey(articleStatusLabelCSS , function(cssClass, status){
+        statusPath.el.classList.remove(cssClass);
+    });
+    var statusCssClass = articleStatusLabelCSS[statusPath.data.get()];
+    statusPath.el.classList.add(statusCssClass);
+}
 
 function CCModuleArticlePreview_setChannel(newChannel) {
     if (this._channel)
