@@ -15,11 +15,10 @@ var CCRelatedList = Component.createComponentClass('CCRelatedList', {
         cls: 'cc-relatedlist-group'
     },
     list: undefined,
-    data: undefined,
-    model: {
+    data: {
         messages: {
             '**': {
-                subscriber: _.throttle(onListUpdated, 75),
+                subscriber: _.debounce(addStylesToList, 75),
                 context: 'owner'
             }
         }
@@ -36,8 +35,8 @@ _.extendProto(CCRelatedList, {
 
 function CCRelatedList$init() {
     Component.prototype.init.apply(this, arguments);
-    this._connector = milo.minder(this.model, '<<<->>>', this.data);
     this.once('childrenbound', onChildrenBound);
+    this.once('stateready', _.deferred(addStylesToList));
 }
 
 function CCRelatedList$setLinkDefaults(defaultLink) {
@@ -139,10 +138,6 @@ function createCommonRelatedData() {
         target: null,
         getDetails: false
     });
-}
-
-function onListUpdated() {
-    addStylesToList.call(this);
 }
 
 function addStylesToList() {
