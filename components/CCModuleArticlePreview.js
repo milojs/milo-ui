@@ -11,7 +11,7 @@ var CMARTICLE_GROUP_TEMPLATE = '\
             <h4 ml-bind="[data]:relatedCaption"></h4>\
             <ul ml-bind="[list]:relatedList">\
                 <li ml-bind="CMRelated[item]:result">\
-                    <a ml-bind="[data]:title" target="_blank">\
+                    <a ml-bind="[data]:headline" target="_blank">\
                     </a>\
                 </li>\
             </ul>\
