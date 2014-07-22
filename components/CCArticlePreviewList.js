@@ -47,7 +47,7 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
                         <div class="cc-article-bottom-bar cc-clear cc-pt5">\
                             <div class="cc-text-light cc-fl">Created by: <span ml-bind="[data]:createdBy"></span></div>\
                             <span class="cc-article-actions">\
-                                <span class="fa fa-search" ml-bind="[events]:previewBtn" title="read-only article"></span>\
+                                <span class="fa fa-search cc-debug" ml-bind="[events]:previewBtn" title="read-only article"></span>\
                                 <span class="cc-icon cc-clone-article-small-icon" ml-bind="[events]:cloneBtn" title="clone article"></span>\
                                 <span class="cc-icon cc-scratch-icon" ml-bind="[events]:scratchBtn" title="scratch article"></span>\
                             </span>\
