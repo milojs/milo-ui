@@ -25,6 +25,11 @@ var articleStatusLabelCSS = {
     'Spiked': 'label-danger'
 };
 
+var activeState = 'article';
+milo.mail.on('changeactiveasset', function (msg, data) {
+    activeState = data.assetType;
+});
+
 var CCModuleArticlePreview = Component.createComponentClass('CCModuleArticlePreview', {
     dom: {
         cls: 'cc-module-article-preview'
@@ -46,7 +51,9 @@ module.exports = CCModuleArticlePreview;
 
 
 _.extendProto(CCModuleArticlePreview, {
-    init: CCModuleArticlePreview$init
+    init: CCModuleArticlePreview$init,
+    destroy: CCModuleArticlePreview$destroy,
+    changeActiveState: CCModuleArticlePreview$changeActiveState
 });
 
 
@@ -64,8 +71,13 @@ function CCModuleArticlePreview$init() {
         this.container.scope.cloneBtn && this.container.scope.cloneBtn.events.on('click',
             { subscriber: cloneArticle, context: this });
     });
+
+    milo.mail.on('changeactiveasset', {subscriber: this.changeActiveState, context: this});
 }
 
+function CCModuleArticlePreview$changeActiveState() {
+    this.transfer.setActiveState(activeState);
+}
 
 function sendToScratch(type, event) {
     event.stopPropagation();
@@ -122,7 +134,9 @@ function CCModuleArticlePreview_set(value) {
     this.data._set(value);
     setStatusColor.call(this);
     this.model.set(value);
-    this.transfer.setState(_constructRelatedGroupState(value));
+    this.transfer.setStateWithKey('channel', _constructArticleState(value));
+    this.transfer.setStateWithKey('article', _constructRelatedGroupState(value));
+    this.transfer.setActiveState(activeState);
 }
 
 function setStatusColor() {
@@ -140,6 +154,20 @@ function CCModuleArticlePreview_setChannel(newChannel) {
 
     this._channel = newChannel;
     this.el.classList.add(this._channel);
+}
+
+function CCModuleArticlePreview$destroy() {
+    milo.mail.offMessages({
+        'changeactiveasset': { subscriber: this.changeActiveState, context: this}
+    });
+}
+
+function _constructArticleState(value) {
+    if (!value) return;
+    //todo create article item for channel
+    return {
+
+    };
 }
 
 function _constructRelatedGroupState(value) {
