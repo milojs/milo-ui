@@ -5,7 +5,8 @@ var componentsRegistry = milo.registry.components
     , ElementLock = require('../ElementLock')
     , logger = milo.util.logger
     , prependUrlProtocol = require('cc-common').util.prependUrlProtocol
-    , text = require('cc-common').text;
+    , text = require('cc-common').text
+    , async = require('async');
 
 var RELATEDLIST_CHANGE_MESSAGE = 'ccrelatedlistchange';
 
@@ -78,32 +79,51 @@ function onListClickSubscriber(type, event) {
 
 
 function onSaveButtonSubscriber() {
-    var newRelated = this.container.scope.input.data.get();
+    var newRelated = this.container.scope.input.data.get()
+        .split(' ').filter(function(value) {
+            return value != '';
+        }),
+        self = this,
+        lock = new ElementLock(self.el, 5000);
 
-    var baseUrl = window.CC.config.apiHost;
-    var self = this;
+    async.series(newRelated.map(function(link, index) {
+        return _.partial(getLinkMeta, link);
+    }), function (err, success) {
+        lock.unlock();
+        if (!err) return self.container.scope.input.data.set('');
 
-    var lock = new ElementLock(self.el, 5000);
+        self.container.scope.input.data.set(
+            newRelated.splice(newRelated.indexOf(err)).join(' ')
+        );
 
-    if ( _.isNumeric(newRelated) ) {
-        baseUrl += '/article/getRelatedArticle/';
-
-        milo.util.request.json(baseUrl + newRelated, function (err, responseData) {
-            lock.unlock();
-            if (err) return window.alert('can\'t find article');
-            addRelatedArticle.call(self, _.extend(responseData, self._defaultLink));
-            self.container.scope.input.data.set('');
+        milo.mail.trigger('opendialog', {
+            name: 'cannotaddrelatedlink',
+            options: {
+                title: 'Error',
+                text: 'can\'t find link'
+            }
         });
-    } else {
-        newRelated = prependUrlProtocol(newRelated);
-        baseUrl += '/links/remotetitle';
+    });
 
-        milo.util.request.post(baseUrl, {url: newRelated}, function (err, responseData) {
-            lock.unlock();
-            if (err) return window.alert('can\'t find article');
-            addRelatedLink.call(self, newRelated, responseData);
-            self.container.scope.input.data.set('');
-        });
+    function getLinkMeta(link, callback) {
+        var baseUrl = window.CC.config.apiHost;
+        if ( _.isNumeric(link) ) {
+            baseUrl += '/article/getRelatedArticle/';
+
+            milo.util.request.json(baseUrl + link, function (err, responseData) {
+                if (err) return error(link);
+                addRelatedArticle.call(self, _.extend(responseData, self._defaultLink));
+                callback(null, link);
+            });
+        } else {
+            baseUrl += '/links/remotetitle';
+
+            milo.util.request.post(baseUrl, {url: prependUrlProtocol(link)}, function (err, responseData) {
+                if (err) return callback(link);
+                addRelatedLink.call(self, link, responseData);
+                callback(null, link);
+            });
+        }
     }
 }
 
