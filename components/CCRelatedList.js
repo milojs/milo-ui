@@ -4,6 +4,7 @@ var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component')
     , ElementLock = require('../ElementLock')
     , logger = milo.util.logger
+    , prependUrlProtocol = require('cc-common').util.prependUrlProtocol
     , text = require('cc-common').text;
 
 var RELATEDLIST_CHANGE_MESSAGE = 'ccrelatedlistchange';
@@ -94,6 +95,7 @@ function onSaveButtonSubscriber() {
             self.container.scope.input.data.set('');
         });
     } else {
+        newRelated = prependUrlProtocol(newRelated);
         baseUrl += '/links/remotetitle';
 
         milo.util.request.post(baseUrl, {url: newRelated}, function (err, responseData) {
