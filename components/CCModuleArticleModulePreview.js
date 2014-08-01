@@ -106,7 +106,8 @@ function _constructRelatedGroupState(value) {
                         id: value.id,
                         name: value.type,
                         style: value.styleId
-                    }
+                    },
+                    linkListGroups: value.linkListGroups
                 }
             }
         }
