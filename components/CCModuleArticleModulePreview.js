@@ -49,17 +49,29 @@ function CCModuleArticleModulePreview_set(value) {
 
 function parseData(value) {
     var fields = value.fields = value.fields || {};
+    var linkListGroupIds = fields['linkListGroups.linkListGroupId'];
+    var linkListGroups = [];
+    linkListGroupIds && linkListGroupIds.forEach(function (groupId, index) {
+        linkListGroups.push({
+            id: groupId,
+            style: fields['linkListGroups.linkListGroupStyle'][index],
+            title: fields['linkListGroups.title'][index]
+        });
+    });
     fields.moduleStyle = fields.moduleStyle || fields.galleryPreviewStyle || 
         (fields['linkListGroups.linkListGroupStyle'] && fields['linkListGroups.linkListGroupStyle'][0]) || '';
 
     var moduleType = getModuleType(value._type);
+    var moduleId = linkListGroups.length ? linkListGroups[0].id : value._id;
+    var moduleStyle = linkListGroups.length ? linkListGroups[0].style : fields.moduleStyle;
 
     return {
-        id: value._id,
+        id: moduleId,
         title: stripHtml(fields.title || fields.name || fields.headline),
         type: moduleType,
-        styleName: fields.moduleStyle.replace(/_/g, ' '),
-        styleKey: fields.moduleStyle
+        styleName: moduleStyle.replace(/_/g, ' '),
+        styleKey: moduleStyle,
+        linkListGroups: linkListGroups
     };
 
     function getModuleType(moduleType) {
