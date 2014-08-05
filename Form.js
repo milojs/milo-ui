@@ -104,6 +104,7 @@ _.extend(CCForm, {
 
 _.extendProto(CCForm, {
     isValid: CCForm$isValid,
+    validateModel: CCForm$validateModel,
     getInvalidControls: CCForm$getInvalidControls,
     getInvalidReason: CCForm$getInvalidReason,
     modelPathComponent: CCForm$modelPathComponent,
@@ -237,6 +238,58 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
  */
 function CCForm$isValid() {
     return Object.keys(this._invalidFormControls).length == 0;
+}
+
+
+/**
+ * Runs 'toModel' validators defined in schema on the current model of the form
+ * can be used to mark as invaid all required fields or to explicitely validate
+ * form when it is saved. Returns validation state of the form via callback
+ *
+ * @param {Function} callback
+ */
+function CCForm$validateModel(callback) {
+    var validations = []
+        , self = this;
+
+    _.eachKey(this._dataValidations.toModel, function(validators, viewPath) {
+        var modelPath = this._modelPathTranslations[viewPath]
+            , data = this.model.m(modelPath).get();
+
+        validations.push({
+            viewPath: viewPath,
+            data: data,
+            validators: validators
+        });
+    }, this);
+
+
+    var allValid = true;
+    async.each(validations,
+        function(validation, nextValidation) {
+            var lastResponse;
+            async.every(validation.validators,
+                // call validator
+                function(validator, next) {
+                    validator(validation.data, function(err, response) {
+                        lastResponse = response || {};
+                        next(lastResponse.valid || err);
+                    });
+                },
+            // post validation result of item to form
+            function(valid) {
+                lastResponse.path = validation.viewPath;
+                lastResponse.valid = valid;
+                self.data.postMessage('validated', lastResponse);
+                if (! valid) allValid = false;
+                nextValidation(null);
+            });
+        },
+    // post form validation result
+    function(err) {
+        self.postMessage('validationcompleted', { valid: allValid });
+        callback && callback(allValid);
+    });
 }
 
 
@@ -430,7 +483,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         if (itemRules) {
             check(comp, itemTypes[schema.type].CompClass);
             itemRules.func.call(this, comp, schema);
-            _processItemTranslations(viewPath, schema);
+            _processItemTranslations.call(this, viewPath, schema);
         } else
             throw new FormError('unknown item type ' + schema.type);
     }
@@ -450,8 +503,6 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 
         if (viewPath) {
             _addDataTranslation(translate, 'toModel', viewPath);
-            _addDataValidation(validate, 'toModel', viewPath);
-            _addDataValidation(validate, 'fromModel', modelPath);
 
             switch (itemRules.modelPathRule) {
                 case 'prohibited':
@@ -472,7 +523,8 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                         if (! notInModel) {
                             _addModelPathTranslation(viewPath, modelPath, modelPattern);
                             _addDataTranslation(translate, 'fromModel', modelPath);
-                            _addDataValidation(validate, 'fromModel', modelPath);
+                            _addDataValidation.call(this, validate, 'toModel', viewPath);
+                            _addDataValidation.call(this, validate, 'fromModel', modelPath);
                         }
                     }
                     break;
@@ -527,6 +579,8 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         if (! validators) return;
 
         var formValidators = dataValidations[direction][path] = [];
+        var hostObject = this;
+
         if (Array.isArray(validators))
             validators.forEach(_addValidatorFunc);
         else
@@ -541,6 +595,15 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                 valFunc = validator;
             else
                 throw new FormError(direction + ' validator for ' + path + ' should be function or string');
+            
+            if (validate.context) {
+                if (validate.context == 'host')
+                    var context = hostObject;
+                else
+                    throw new FormError('Incorrect validator context: ' + validate.context);
+                valFunc = valFunc.bind(context);
+            }
+
             formValidators.push(valFunc);
         }
     }
