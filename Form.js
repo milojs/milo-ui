@@ -9,6 +9,8 @@ var formGenerator = require('./generator')
     , logger = milo.util.logger
     , Promise = milo.util.promise
     , modelChangedCommand = require('../commands/model_changed')
+    , ccCommon = require('cc-common')
+    , REGEX = ccCommon.util.REGEX
     , async = require('async');
 
 
@@ -421,7 +423,7 @@ var itemsFunctions = {
 var validationFunctions = {
     'required': validateRequired,
     'latin1': validateLatin1,
-
+    'standard': validateStandard,
     'url': validateUrl
 };
 
@@ -595,7 +597,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                 valFunc = validator;
             else
                 throw new FormError(direction + ' validator for ' + path + ' should be function or string');
-            
+
             if (validate.context) {
                 if (validate.context == 'host')
                     var context = hostObject;
@@ -777,14 +779,19 @@ function setComboOptions(comp, data) {
 }
 
 
-var latin1Regex = /^[('\u0020-\u00FF)]*$/;
 function validateLatin1(data, callback) {
-    var valid = typeof data == 'string' && latin1Regex.test(data);
+    var valid = typeof data == 'string' && REGEX.latin1.test(data);
 
     var response = _validatorResponse(valid, 'value needs to be latin1 characters only');
     callback(null, response);
 }
 
+function validateStandard(data, callback) {
+    var valid = typeof data == 'string' && !data.match(REGEX.nonStandard);
+    var errorText = valid ? '' : 'value contains non-standard characters: ' + data.match(REGEX.nonStandard).join(' ')
+    var response = _validatorResponse(valid, errorText);
+    callback(null, response);
+}
 
 function validateRequired(data, callback) {
     var valid = typeof data != 'undefined'
@@ -795,7 +802,7 @@ function validateRequired(data, callback) {
 
 
 function validateUrl(data, callback) {
-    var valid = typeof data == 'string' && /^http\:\/\//.test(data)
+    var valid = typeof data == 'string' && REGEX.url.test(data)
         , response = _validatorResponse(valid, 'should be valid URL');
     callback(null, response);
 }
