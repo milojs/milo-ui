@@ -53,10 +53,10 @@ function CCLinkList$setHostComponent(hostComponent) {
 
 function onChildrenBound() {
     milo.minder(this.model, '->>>', this.container.scope.list.data).deferChangeMode('<<<->>>');
-    
+
     var saveBtn = this.container.scope.saveBtn;
     saveBtn.events.on('click', { subscriber: onSaveButtonSubscriber, context: this });
-    
+
     var cancelBtn = this.container.scope.cancelBtn;
     cancelBtn.events.on('click', { subscriber: onCancelButtonSubscriber, context: this });
 
@@ -79,6 +79,7 @@ function onListClickSubscriber(type, event) {
                     editItem.call(this, index);
                     break;
                 case 'deleteBtn':
+                case 'deleteHyperlinkBtn':
                     deleteItem.call(this, index);
                     break;
                 case 'editHyperlinkBtn':
@@ -93,7 +94,6 @@ function onListClickSubscriber(type, event) {
 function deleteItem(index) {
     this.model.splice(index, 1);
     _triggerExternalPropagation.call(this);
-
 }
 
 

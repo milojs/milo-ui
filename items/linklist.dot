@@ -7,9 +7,10 @@
                 <span class="linklist-wrap">
                     <span ml-bind="[data]:headline"></span> (<span ml-bind="[data]:relatedUrl"></span>)
                 </span>
-                
+
                 <div class="cc-external-links-auto-action">
                     <button ml-bind="[events]:editHyperlinkBtn" class="btn btn-default ml-ui-button">Select hyperlink</button>
+                    <button ml-bind="[events]:deleteHyperlinkBtn" class="btn btn-default ml-ui-button">X</button>
                 </div>
 
                 <div class="cc-external-links-manual-action">
