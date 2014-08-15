@@ -142,7 +142,7 @@ function _parseData(data) {
     result.title = data.fields.headline;
     result.previewText = data.fields.previewText;
     result.channel = data.fields.topParentChannel || data.fields.channel;
-    result.createdBy = data.fields.authors[0] && data.fields.authors[0].name;
+    result.createdBy = (data.fields.authors && data.fields.authors[0] && data.fields.authors[0].name) || '';
     result.createdDate = _dateHelper(data.fields.createdDate);
     result.modifiedDate = _dateHelper(data.fields.modifiedDate);
     result.status = data.fields.status;
