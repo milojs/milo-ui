@@ -106,7 +106,7 @@ function CCModuleVideoPreview_get() {
 
 function CCModuleVideoPreview_set(value) {
     this.model.set(value);
-    if (value && value.fields.thumbImage.hostUrl)
+    if (value && value.fields.thumbImage && value.fields.thumbImage.hostUrl)
        try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
     this.transfer.setState(_constructVideoState(value));
     value = _parseData(value);
@@ -145,9 +145,9 @@ function _constructVideoState(value) {
                     instance: {
                         videoId: value.fields.id
                     },
-                    src: value.fields.stillImage.hostUrl,
-                    width: value.fields.stillImage.width,
-                    height: value.fields.stillImage.height,
+                    src: value.fields.stillImage && value.fields.stillImage.hostUrl,
+                    width: value.fields.stillImage && value.fields.stillImage.width,
+                    height: value.fields.stillImage && value.fields.stillImage.height,
                     headline: value.fields.headline,
                     tag: {
                         id: undefined,
