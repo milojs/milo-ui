@@ -26,7 +26,7 @@ function ElementLock(element, timeout) {
     spinnerStyle.top = spinnerStyle.left = 'calc(50% - 10px)';
     spinnerStyle.width = spinnerStyle.height = '20px';
 
-    setTimeout(function(){ this.unlock(5000); }.bind(this), 5000);
+    _.delayMethod(this, 'unlock', timeout);
 
     return this;
 }

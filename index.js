@@ -4,5 +4,6 @@
 module.exports = {
     generator: require('./generator'),
     Form: require('./Form'),
-    translate: require('./translate')
+    translate: require('./translate'),
+    ElementLock: require('./ElementLock')
 };
