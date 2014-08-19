@@ -105,23 +105,23 @@ function onSaveButtonSubscriber() {
         });
     });
 
-    function getLinkMeta(link, callback) {
+    function getLinkMeta(urlOrId, callback) {
         var baseUrl = window.CC.config.apiHost;
-        if ( _.isNumeric(link) ) {
+        if ( _.isNumeric(urlOrId) ) {
             baseUrl += '/article/getRelatedArticle/';
 
-            milo.util.request.json(baseUrl + link, function (err, responseData) {
-                if (err) return error(link);
+            milo.util.request.json(baseUrl + urlOrId, function (err, responseData) {
+                if (err) return callback(urlOrId);
                 addRelatedArticle.call(self, _.extend(responseData, self._defaultLink));
-                callback(null, link);
+                callback(null, urlOrId);
             });
         } else {
             baseUrl += '/links/remotetitle';
 
-            milo.util.request.post(baseUrl, {url: prependUrlProtocol(link)}, function (err, responseData) {
-                if (err) return callback(link);
-                addRelatedLink.call(self, link, responseData);
-                callback(null, link);
+            milo.util.request.post(baseUrl, {url: prependUrlProtocol(urlOrId)}, function (err, responseData) {
+                if (err) return callback(urlOrId);
+                addRelatedLink.call(self, urlOrId, responseData);
+                callback(null, urlOrId);
             });
         }
     }
