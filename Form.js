@@ -1,6 +1,7 @@
 'use strict';
 
 var formGenerator = require('./generator')
+    , keyboard = require('../keyboard')
     , Component = milo.Component
     , componentsRegistry = milo.registry.components
     , itemTypes = require('./item_types')
@@ -537,25 +538,54 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
     }
 
     function _manageUndoable(hostObject, inspComp, modelPath) {
+        var debouncedModelChange = _.debounce(executeModelChange, 500);
+        var el = inspComp.el;
+        var tagName = el.tagName.toLowerCase();
         var oldValue;
 
-        inspComp.data.on('', function(msg, data) {
-            // Keep old value up to date to be used by the change event handler
-            if (typeof oldValue == 'undefined') oldValue = data.oldValue;
-        });
+        if (tagName == 'textarea' || (tagName == 'input' && el.type == 'text')) {
+            inspComp.events.on('keydown', function (type, event) {
+                var keyPressed = keyboard.getKeyPressed(event);
+                console.log(!keyPressed.cmdCtrl);
+                if (!keyPressed.cmdCtrl) {            
+                    if (!oldValue) oldValue = inspComp.data.get() || '';
+                    debouncedModelChange(oldValue);
+                }
+            });
 
-        inspComp.events.on('change', function(type, event) {
+        } else {
+            inspComp.data.on('', function(msg, data) {
+                // Keep old value up to date to be used by the change event handler
+                if (typeof oldValue == 'undefined') oldValue = data.oldValue;
+            });
+            inspComp.events.on('change', function () {
+                var newValue = inspComp.data.get();
+                if (newValue === oldValue) return;
+
+                var cmd = modelChangedCommand.createWithUndo(hostObject, 'inspector', modelPath, newValue, oldValue);
+                var rootContent = hostObject.editor.get();
+
+                cmd.setComment('track model change');
+                rootContent.editor.storeCommand(cmd);
+
+                oldValue = undefined;
+            });
+
+        }
+
+        function executeModelChange(undoValue) {
             var newValue = inspComp.data.get();
-            if (newValue === oldValue) return;
+            console.log('executeModelChange', undoValue, newValue);
+            if (newValue === undoValue) return;
 
-            var cmd = modelChangedCommand.createWithUndo(hostObject, 'inspector', modelPath, newValue, oldValue)
-                , rootContent = hostObject.editor.get();
+            var cmd = modelChangedCommand.createWithUndo(hostObject, 'inspector', modelPath, newValue, undoValue);
+            var rootContent = hostObject.editor.get();
 
             cmd.setComment('track model change');
             rootContent.editor.storeCommand(cmd);
-
+            
             oldValue = undefined;
-        });
+        }
     }
 
     function _addModelPathTranslation(viewPath, modelPath, pathPattern) {
