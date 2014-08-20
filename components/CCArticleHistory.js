@@ -126,7 +126,7 @@ function mergeWpsCCVersions(res) {
     });
     
     combined.forEach(function(version) {
-        version.createdDate = moment(version.createdDate).format('DD/MM/YY HH:mm');
+        version.createdDate = moment(version.createdDate).format('MMM DD, YYYY HH:mm');
     });
     
     return combined;
@@ -184,5 +184,5 @@ function fromNow(date) {
     } else if (period < 2700)
         return moment(date).fromNow();
     else
-        return moment(date).format('DD/MM/YY HH:mm');
+        return moment(date).format('MMM DD, YYYY HH:mm');
 }
