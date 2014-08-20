@@ -5,7 +5,7 @@ var componentsRegistry = milo.registry.components
 
 
 var CMIMAGE_GROUP_TEMPLATE = '<div class="artSplitter mol-img-group" ml-bind="CMImageGroup:newImage">\
-    <div ml-bind="CMImage[data]:img0" class="mol-img"><img ml-bind="[data]:img"></div>\
+    <div ml-bind="CMImage[data]:img0" class="mol-img"><img ml-bind="[data,events]:img"></div>\
     <p class="imageCaption" ml-bind="CMImageCaption:imgCaption0"></p>\
 </div>';
 
@@ -46,7 +46,7 @@ _.extendProto(CCModuleImagePreview, {
 
 function CCModuleImagePreview$init() {
     Component.prototype.init.apply(this, arguments);
-    this.on('stateready', _init);
+    this.on('stateready', onStateReady);
 
     var isInFrame = !!window.frameElement;
     this._postMethod = isInFrame ? 'trigger' : 'postMessage';
@@ -64,14 +64,17 @@ function CCModuleImagePreview$getMeta() {
 }
 
 
-function _init() {
-    var imgEl = this.el.getElementsByTagName('img')[0];
-    imgEl.addEventListener('error', function () {
-        this.src = 'http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png';
-    });
-    
-    var scope = this.container.scope;
-    scope.scratch && scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
+function onStateReady() {
+    var scope = this.container.scope
+        , imgComponent = scope.image;
+
+    imgComponent.events.on('error', onImageError);
+    if (scope.scratch)
+        scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
+
+    function onImageError() {
+        this.owner.el.src = 'http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png';
+    }
 }
 
 function CCModuleImagePreview_get() {
