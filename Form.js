@@ -543,39 +543,40 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         var tagName = el.tagName.toLowerCase();
         var oldValue;
 
-        if (tagName == 'textarea' || (tagName == 'input' && el.type == 'text')) {
+        if (isTextField())
+            setupTextFields();
+        else
+            setupOtherFields();
+
+
+        function isTextField() {
+            return tagName == 'textarea' || (tagName == 'input' && el.type == 'text');
+        }
+
+        function setupTextFields() {
             inspComp.events.on('keydown', function (type, event) {
                 var keyPressed = keyboard.getKeyPressed(event);
-                console.log(!keyPressed.cmdCtrl);
                 if (!keyPressed.cmdCtrl) {            
-                    if (!oldValue) oldValue = inspComp.data.get() || '';
+                    if (typeof oldValue == 'undefined') 
+                        oldValue = inspComp.data.get() || '';
+                    
                     debouncedModelChange(oldValue);
                 }
             });
+        }
 
-        } else {
+        function setupOtherFields() {
             inspComp.data.on('', function(msg, data) {
                 // Keep old value up to date to be used by the change event handler
                 if (typeof oldValue == 'undefined') oldValue = data.oldValue;
             });
             inspComp.events.on('change', function () {
-                var newValue = inspComp.data.get();
-                if (newValue === oldValue) return;
-
-                var cmd = modelChangedCommand.createWithUndo(hostObject, 'inspector', modelPath, newValue, oldValue);
-                var rootContent = hostObject.editor.get();
-
-                cmd.setComment('track model change');
-                rootContent.editor.storeCommand(cmd);
-
-                oldValue = undefined;
+                executeModelChange(oldValue);
             });
-
         }
 
         function executeModelChange(undoValue) {
             var newValue = inspComp.data.get();
-            console.log('executeModelChange', undoValue, newValue);
             if (newValue === undoValue) return;
 
             var cmd = modelChangedCommand.createWithUndo(hostObject, 'inspector', modelPath, newValue, undoValue);
