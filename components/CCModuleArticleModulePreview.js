@@ -11,10 +11,16 @@ var CCModuleArticleModulePreview = Component.createComponentClass('CCModuleArtic
         cls: 'cc-module-articlemodule-preview'
     },
     drag: {
-        allowedEffects: 'copy'
+        allowedEffects: 'copy',
+        meta: {
+            params: getMetaParams
+        }
     },
     data: {
-        set: CCModuleArticleModulePreview_set
+        set: CCModuleArticleModulePreview_set,
+        messages: {
+            '.styleGroup': {context: 'owner', subscriber: onStyleGroupChange}
+        }
     },
     model: undefined,
     events: undefined,
@@ -28,26 +34,20 @@ module.exports = CCModuleArticleModulePreview;
 
 function CCModuleArticleModulePreview_set(value) {
     var self = this;
-    value = parseData(value);
-    this.data._set(value);
-    this.model.set(value);
 
     var stylesPromise = window.CC.config.data.itemStyles;
     stylesPromise.then(function (dontUse, data) {
-        if (!data.linklist)
-            data.linklist = data.linkListGroup;
-
-        try { var styleId = data[value.type][value.styleKey].id; } catch(e) {}
-        value.styleId = styleId;
+        value = parseData(value, data);
         self.transfer.setState(_constructRelatedGroupState(value));
-
+        self.data._set(value);
+        self.model.set(value);
     }).error(function (error) {
         milo.util.logger.error('itemStyles config returned with an error.');
     });
     
 }
 
-function parseData(value) {
+function parseData(value, styleData) {
     var fields = value.fields = value.fields || {};
     var linkListGroupIds = fields['linkListGroups.linkListGroupId'];
     var linkListGroups = [];
@@ -65,12 +65,17 @@ function parseData(value) {
     var moduleId = linkListGroups.length ? linkListGroups[0].id : value._id;
     var moduleStyle = linkListGroups.length ? linkListGroups[0].style : fields.moduleStyle;
 
+    // Set state
+    if (!styleData.linklist) styleData.linklist = styleData.linkListGroup;
+    try { var styleObj = styleData[moduleType][moduleStyle]; } catch(e) {}
     return {
         id: moduleId,
         title: stripHtml(fields.title || fields.name || fields.headline),
         type: moduleType,
+        styleId: styleObj && styleObj.id,
         styleName: moduleStyle.replace(/_/g, ' '),
         styleKey: moduleStyle,
+        styleGroup: styleObj && styleObj.group_name,
         linkListGroups: linkListGroups
     };
 
@@ -84,10 +89,22 @@ function parseData(value) {
     }
 }
 
+function onStyleGroupChange(msg, data) {
+    this.dom.removeCssClasses(['single', 'triple', 'double']);
+    if (data.newValue)
+        this.dom.addCssClasses(data.newValue);
+}
+
 function stripHtml(text) {
     var tmp = document.createElement('div');
     tmp.innerHTML = text;
     return tmp.textContent || tmp.innerText || '';
+}
+
+function getMetaParams () {
+    return {
+        styleGroup: this.model.m('.styleGroup').get()
+    };
 }
 
 function _constructRelatedGroupState(value) {
@@ -102,6 +119,7 @@ function _constructRelatedGroupState(value) {
                 state: {
                     title: value.title,
                     styleName: value.styleKey,
+                    styleGroup: value.styleGroup,
                     tag: {
                         id: value.id,
                         name: value.type,
