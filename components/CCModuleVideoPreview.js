@@ -106,11 +106,20 @@ function CCModuleVideoPreview_get() {
 
 function CCModuleVideoPreview_set(value) {
     this.model.set(value);
+    CCModuleVideoPreview_setChannel.call(this, value.fields.channel);
     if (value && value.fields.thumbImage && value.fields.thumbImage.hostUrl)
        try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
     this.transfer.setState(_constructVideoState(value));
     value = _parseData(value);
     this.data._set(value);
+}
+
+function CCModuleVideoPreview_setChannel(newChannel) {
+    if (this._channel)
+        this.el.classList.remove(this._channel);
+
+    this._channel = newChannel;
+    this.el.classList.add(this._channel);
 }
 
 function _parseData(data) {
