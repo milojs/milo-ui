@@ -48,12 +48,13 @@ _.extendProto(CCModuleVideoPreview, {
 
 function CCModuleVideoPreview$init() {
     Component.prototype.init.apply(this, arguments);
-    this.on('stateready', _init);
+    this.on('stateready', onStateReady);
 }
 
-function _init() {
+function onStateReady() {
     var scope = this.container.scope;
-    scope.scratch && scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
+    if (scope.scratch)
+        scope.scratch && scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
 }
 
 
@@ -110,9 +111,9 @@ function CCModuleVideoPreview_set(value) {
     if (value && value.fields.thumbImage && value.fields.thumbImage.hostUrl)
        try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
     this.transfer.setState(_constructVideoState(value));
-    value = _parseData(value);
-    this.data._set(value);
-}
+        value = _parseData(value);
+        this.data._set(value);
+    }
 
 function CCModuleVideoPreview_setChannel(newChannel) {
     if (this._channel)
