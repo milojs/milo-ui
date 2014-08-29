@@ -17,12 +17,14 @@ var CCModuleArticleModulePreview = Component.createComponentClass('CCModuleArtic
         }
     },
     data: {
-        set: CCModuleArticleModulePreview_set,
+        set: CCModuleArticleModulePreview_set
+    },
+    model: {
         messages: {
-            '.styleGroup': {context: 'owner', subscriber: onStyleGroupChange}
+            '.styles': {context: 'owner', subscriber: onStyleGroupChange},
+            '.styles[*].group': {context: 'owner', subscriber: onStyleGroupChange}
         }
     },
-    model: undefined,
     events: undefined,
     transfer: undefined
 });
@@ -67,15 +69,22 @@ function parseData(value, styleData) {
 
     // Set state
     if (!styleData.linklist) styleData.linklist = styleData.linkListGroup;
-    try { var styleObj = styleData[moduleType][moduleStyle]; } catch(e) {}
+    try { var styleArr = styleData[moduleType][moduleStyle]; } catch(e) {}
+    styleArr = styleArr || [];
+    styleArr = styleArr.map(function (style) {
+        return {
+            group: style.group_name,
+            id: style.id,
+            name: style.jsp_name
+        };
+    });
     return {
         id: moduleId,
         title: stripHtml(fields.title || fields.name || fields.headline),
         type: moduleType,
-        styleId: styleObj && styleObj.id,
+        styles: styleArr,
         styleName: moduleStyle.replace(/_/g, ' '),
         styleKey: moduleStyle,
-        styleGroup: styleObj && styleObj.group_name,
         linkListGroups: linkListGroups
     };
 
@@ -90,9 +99,15 @@ function parseData(value, styleData) {
 }
 
 function onStyleGroupChange(msg, data) {
-    this.dom.removeCssClasses(['single', 'triple', 'double']);
-    if (data.newValue)
-        this.dom.addCssClasses(data.newValue);
+    if (! Array.isArray(data.newValue)) return;
+
+    var str = data.newValue.reduce(function (prev, style) {
+        var box = '<span class="cc-width ' + style.group + '">'
+                    + style.group.charAt(0).toUpperCase() + '</span>';
+        return prev + box;
+    }, '');
+
+    this.container.scope.width.el.innerHTML = str;
 }
 
 function stripHtml(text) {
@@ -103,7 +118,7 @@ function stripHtml(text) {
 
 function getMetaParams () {
     return {
-        styleGroup: this.model.m('.styleGroup').get()
+        styles: JSON.stringify(this.model.m('.styles').get())
     };
 }
 
@@ -119,7 +134,7 @@ function _constructRelatedGroupState(value) {
                 state: {
                     title: value.title,
                     styleName: value.styleKey,
-                    styleGroup: value.styleGroup,
+                    styles: value.styles,
                     tag: {
                         id: value.id,
                         name: value.type,
