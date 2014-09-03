@@ -66,7 +66,7 @@ module.exports = CCArticlePreviewList;
 
 _.extendProto(CCArticlePreviewList, {
     start: CCArticlePreviewList$start,
-    eachArticle: CCArticlePreviewList$eachArticle
+    eachListItem: CCArticlePreviewList$eachListItem
 });
 
 
@@ -83,7 +83,7 @@ function onChildrenBound() {
 }
 
 
-function CCArticlePreviewList$eachArticle(callback, thisArg) {
+function CCArticlePreviewList$eachListItem(callback, thisArg) {
     return this._list.list.each(callback, thisArg);
 }
 

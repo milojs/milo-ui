@@ -30,7 +30,7 @@ module.exports = CCPreviewList;
 
 _.extendProto(CCPreviewList, {
     start: CCPreviewList$start,
-    eachImage: CCPreviewList$eachImage
+    eachListItem: CCPreviewList$eachListItem
 });
 
 
@@ -49,7 +49,7 @@ function onChildrenBound() {
 }
 
 
-function CCPreviewList$eachImage(callback, thisArg) {
+function CCPreviewList$eachListItem(callback, thisArg) {
     return this._list.list.each(callback, thisArg);
 }
 
