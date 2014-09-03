@@ -114,15 +114,20 @@ function onAddedToScratch(event, msg, data) {
     milo.mail.postMessage('iconnotification', {options: options});
 }
 
+
 function cloneArticle(type, event) {
-    milo.mail.postMessage('clonearticle', {
-        assetType: 'article',
-        assetId: this.model.m('.id').get()
-    });
+    _postLoadMessage.call(this, 'clonearticle');
 }
 
+
 function previewArticle(type, event) {
-    milo.mail.postMessage('previewasset', {
+    _postLoadMessage.call(this, 'previewasset');
+}
+
+
+function _postLoadMessage(msg) {
+    milo.mail.postMessage(msg, {
+        editorApp: 'articleEditor',
         assetType: 'article',
         assetId: this.model.m('.id').get()
     });
