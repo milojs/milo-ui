@@ -102,10 +102,15 @@ function parseData(value, styleData) {
 function onStyleGroupChange(msg, data) {
     if (! Array.isArray(data.newValue)) return;
 
+    var done = [];
     var str = data.newValue.reduce(function (prev, style) {
-        var box = '<span class="cc-width ' + style.group + '">'
-                    + style.group.charAt(0).toUpperCase() + '</span>';
-        return prev + box;
+        if (done.indexOf(style.group) == -1) {
+            done.push(style.group);
+            var box = '<span class="cc-width ' + style.group + '">'
+                        + style.group.charAt(0).toUpperCase() + '</span>';
+            return prev + box;
+        }
+        return prev;
     }, '');
 
     this.container.scope.width.el.innerHTML = str;
