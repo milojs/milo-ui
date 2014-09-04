@@ -60,7 +60,7 @@ function parseData(value, styleData) {
             title: fields['linkListGroups.title'][index]
         });
     });
-    fields.moduleStyle = fields.moduleStyle || fields.galleryPreviewStyle || 
+    fields.moduleStyle = fields.moduleStyle || fields.galleryPreviewStyle || fields.pollPreviewStyle ||
         (fields['linkListGroups.linkListGroupStyle'] && fields['linkListGroups.linkListGroupStyle'][0]) || '';
 
     var moduleType = getModuleType(value._type);
@@ -78,6 +78,7 @@ function parseData(value, styleData) {
             name: style.jsp_name
         };
     });
+    
     return {
         id: moduleId,
         title: stripHtml(fields.title || fields.name || fields.headline),
