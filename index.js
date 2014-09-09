@@ -2,9 +2,9 @@
 
 
 module.exports = {
+    registry: require('./registry'),
     generator: require('./generator'),
     Form: require('./Form'),
     translate: require('./translate'),
-    registry: require('./registry'),
     ElementLock: require('./ElementLock')
 };

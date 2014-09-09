@@ -5,14 +5,10 @@ var doT = milo.util.doT
     , componentsRegistry = milo.registry.components
     , miloCount = milo.util.count
     , componentName = milo.util.componentName
+    , formRegistry = require('./registry')
     , itemTypes = require('./item_types');
 
-
-var DEFAULT_TEMPLATE = '{{# def.partials.formGroup }}\
-                            {{# def.partials.label }}\
-                            <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">\
-                            </{{= it.tagName}}>\
-                        </div>';
+var cachedItems = {};
 
 
 module.exports = formGenerator;
@@ -28,25 +24,6 @@ var dotDef = {
 };
 
 
-_.eachKey(itemTypes, function(itemType) {
-    var templateStr = getTemplate(itemType);
-    itemType.template = doT.compile(templateStr, dotDef);
-});
-
-
-function getTemplate(itemType) {
-    return itemType.template || DEFAULT_TEMPLATE;
-} 
-
-
-getItemsClasses = _.once(getItemsClasses);
-function getItemsClasses() {
-    _.eachKey(itemTypes, function(itemType) {
-        itemType.CompClass = componentsRegistry.get(itemType.compClass);
-    });
-}
-
-
 /*
  * Generates form HTML based on the schema.
  * It does not create components for the form DOM, milo.binder should be called separately on the form's element.
@@ -55,13 +32,22 @@ function getItemsClasses() {
  * @return {String}
  */
 function formGenerator(schema) {
-    getItemsClasses();
+    //getItemsClasses();
 
     var renderedItems = schema.items.map(renderItem);
     return renderedItems.join('');
 
     function renderItem(item) {
-        var itemType = itemTypes[item.type];
+        var itemType = cachedItems[item.type];
+
+        if (!itemType) {
+            var newItemType = formRegistry.get(item.type);
+            itemType = cachedItems[item.type] = {
+                CompClass: componentsRegistry.get(newItemType.compClass),
+                compClass: newItemType.compClass,
+                template: doT.compile(newItemType.template, dotDef)
+            }
+        }
 
         item.compName = item.compName || componentName();
         // item.CompClass = itemType.CompClass;

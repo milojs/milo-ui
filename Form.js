@@ -4,11 +4,10 @@ var formGenerator = require('./generator')
     , keyboard = require('../keyboard')
     , Component = milo.Component
     , componentsRegistry = milo.registry.components
-    , itemTypes = require('./item_types')
     , check = milo.util.check
     , FormError = milo.util.error.createClass('Form')
     , logger = milo.util.logger
-    , Promise = milo.util.promise
+    , formRegistry = require('./registry')
     , modelChangedCommand = require('../commands/model_changed')
     , ccCommon = require('cc-common')
     , REGEX = ccCommon.util.REGEX
@@ -386,39 +385,6 @@ function CCForm$destroy() {
 
 
 /**
- * modelPath translation rules for item types.
- * Default is "required"
- */
-var modelPathRules = {
-    group: 'prohibited',
-    wrapper: 'prohibited',
-    button: 'optional',
-    fabutton: 'optional',
-    hyperlink: 'optional',
-    text: 'optional',
-    droptarget: 'prohibited',
-    previewcropall: 'prohibited',
-    articlehistory: 'prohibited'
-};
-
-/**
- * Special processing functions for some types of items
- */
-var itemsFunctions = {
-    select: _processSelectSchema,
-    radio: _processRadioSchema,
-    combo: _processComboSchema,
-    supercombo: _processSuperComboSchema,
-    combolist: _processComboListSchema,
-    inputlist: _processInputListSchema,
-    textarea: _processTextareaSchema,
-    linklist: _processLinkListSchema,
-    relatedlist: _processRelatedListSchema
-    //linkedlist: _processLinkedList
-
-};
-
-/**
  * Predefined for validation functions
  */
 var validationFunctions = {
@@ -429,13 +395,13 @@ var validationFunctions = {
 };
 
 
-var _itemsSchemaRules = _.mapKeys(itemTypes, function(className, itemType) {
-    return {
-        // CompClass: componentsRegistry.get(className),
-        func: itemsFunctions[itemType] || doNothing,
-        modelPathRule: modelPathRules[itemType] || 'required'
-    };
-});
+// var _itemsSchemaRules = _.mapKeys(itemTypes, function(className, itemType) {
+//     return {
+//         // CompClass: componentsRegistry.get(className),
+//         func: itemsFunctions[itemType] || doNothing,
+//         modelPathRule: modelPathRules[itemType] || 'required'
+//     };
+// });
 
 function doNothing() {}
 
@@ -475,7 +441,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
     if (schema.messages)
         _processSchemaMessages.call(this, comp, schema.messages);
 
-    var itemRules = _itemsSchemaRules[schema.type];
+    var itemRule = schema.type && formRegistry.get(schema.type);
 
     if (viewPath) {
         formViewPaths[viewPath] = {
@@ -483,9 +449,9 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             component: comp
         };
 
-        if (itemRules) {
-            check(comp, itemTypes[schema.type].CompClass);
-            itemRules.func.call(this, comp, schema);
+        if (itemRule) {
+            //check(comp.constructor, itemTypes[schema.type].CompClass);
+            itemRule.itemFunction.call(this, comp, schema);
             _processItemTranslations.call(this, viewPath, schema);
         } else
             throw new FormError('unknown item type ' + schema.type);
@@ -507,7 +473,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         if (viewPath) {
             _addDataTranslation(translate, 'toModel', viewPath);
 
-            switch (itemRules.modelPathRule) {
+            switch (itemRule.modelPathRule) {
                 case 'prohibited':
                     if (modelPath)
                         throw new FormError('modelPath is prohibited for item type ' + schema.type);
@@ -713,103 +679,10 @@ function _processSchemaMessages(comp, messages) {
 }
 
 
-function _processSelectSchema(comp, schema) {
-    var options = schema.selectOptions;
-    setComponentOptions(comp, options, setComponentModel);
-}
 
-
-function _processRadioSchema(comp, schema) {
-    var options = schema.radioOptions;
-    setComponentOptions(comp, options, setComponentModel);
-}
-
-
-function _processComboSchema(comp, schema) {
-    var options = schema.comboOptions;
-    setComponentOptions(comp, options, setComponentModel);
-}
-
-
-function _processSuperComboSchema(comp, schema) {
-    var options = schema.comboOptions
-        , addItemPrompt = schema.addItemPrompt;
-
-    _.deferTicks(function() {
-        if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
-        setComponentOptions(comp, options, setComboOptions);
-    }, 2);
-}
-
-
-function _processComboListSchema(comp, schema) {
-    var options = schema.comboOptions
-        , addItemPrompt = schema.addItemPrompt;
-
-    _.deferTicks(function() {
-        if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
-        comp.setDataValidation(schema.dataValidation);
-        setComponentOptions(comp, options, setComboOptions);
-    }, 2);
-}
-
-
-function _processInputListSchema(comp, schema) {
-    comp.setAsync(schema.asyncHandler);
-    comp.setPlaceHolder(schema.placeHolder);
-}
-
-
-function _processLinkedList(comp, schema) {
-
-//    comp.setOnEdit(schema.onEdit);
-}
-
-function _processTextareaSchema(comp, schema) {
-    if (schema.autoresize)
-        _.deferMethod(comp, 'startAutoresize', schema.autoresize);
-}
-
-
-function _processLinkListSchema(comp, schema) {
-    comp.setHostComponent(this);
-}
-
-
-function _processRelatedListSchema(comp, schema) {
-    comp.setLinkDefaults(schema.defaultLinkData);
-}
-
-
-function setComponentOptions(comp, options, setModelFunc) {
-    if (options) {
-        if (Promise.isPromise(options)) {
-            setModelFunc(comp, [{ value: 0, label: 'loading...' }]);
-            options
-                .then(function(err, data) {
-                    setModelFunc(comp, data);
-                })
-                .error(function() {
-                    setModelFunc(comp, [{ value: 0, label: 'loading error' }]);
-                });
-        } else
-            setModelFunc(comp, options);
-    }
-}
-
-
-function setComponentModel(comp, data) {
-    comp.model.set(data);
-    // _.deferMethod(comp.model, 'set', data);
-    // doing it with defer makes channel not set when the article is opened
-}
-
-
-function setComboOptions(comp, data) {
-    comp.setOptions(data);
-}
-
-
+/**
+ * Validation functions
+ */
 function validateLatin1(data, callback) {
     var valid = typeof data == 'string' && REGEX.latin1.test(data);
 

@@ -1,38 +1,167 @@
 'use strict';
 
 
-var fs = require('fs');
+var fs = require('fs')
+    , Promise = milo.util.promise
+    , formRegistry = require('./registry');
 
 
-var itemTypes = {
-    group:          { compClass: 'MLGroup',             template: fs.readFileSync(__dirname + '/items/group.dot') },
-    wrapper:        { compClass: 'MLWrapper',           template: fs.readFileSync(__dirname + '/items/wrapper.dot') },
-    select:         { compClass: 'MLSelect',            template: fs.readFileSync(__dirname + '/items/select.dot') },
-    input:          { compClass: 'MLInput',             template: fs.readFileSync(__dirname + '/items/input.dot') },
-    inputlist:      { compClass: 'MLInputList' },
-    textarea:       { compClass: 'MLTextarea',          template: fs.readFileSync(__dirname + '/items/textarea.dot') },
-    button:         { compClass: 'MLButton',            template: fs.readFileSync(__dirname + '/items/button.dot') },
-    fabutton:       { compClass: 'MLButton',            template: fs.readFileSync(__dirname + '/items/fabutton.dot') },
-    radio:          { compClass: 'MLRadioGroup' },
-    hyperlink:      { compClass: 'MLHyperlink',         template: fs.readFileSync(__dirname + '/items/hyperlink.dot') },
-    checkbox:       { compClass: 'MLInput',             template: fs.readFileSync(__dirname + '/items/checkbox.dot') },
-    list:           { compClass: 'MLList',              template: fs.readFileSync(__dirname + '/items/list.dot') },
-    time:           { compClass: 'MLTime',              template: fs.readFileSync(__dirname + '/items/time.dot') },
-    date:           { compClass: 'MLDate',              template: fs.readFileSync(__dirname + '/items/date.dot') },
-    combo:          { compClass: 'MLCombo',             template: fs.readFileSync(__dirname + '/items/combo.dot') },
-    supercombo:     { compClass: 'MLSuperCombo' },
-    combolist:      { compClass: 'MLComboList' },
-    image:          { compClass: 'MLImage',             template: fs.readFileSync(__dirname + '/items/image.dot') },
-    previewimage:   { compClass: 'CCPreviewImage',      template: fs.readFileSync(__dirname + '/items/previewimage.dot') },
-    previewcropall: { compClass: 'CCPreviewCropAll',    template: fs.readFileSync(__dirname + '/items/previewcropall.dot') },
-    droptarget:     { compClass: 'MLDropTarget',        template: fs.readFileSync(__dirname + '/items/droptarget.dot') },
-    text:           { compClass: 'MLText',              template: fs.readFileSync(__dirname + '/items/text.dot') },
-    imagelist:      { compClass: 'CCPreviewList',       template: fs.readFileSync(__dirname + '/items/previewlist.dot') },
-    articlehistory: { compClass: 'CCArticleHistory' },
-    linklist:       { compClass: 'CCLinkList',          template: fs.readFileSync(__dirname + '/items/linklist.dot') },
-    relatedlist:    { compClass: 'CCRelatedList',       template: fs.readFileSync(__dirname + '/items/relatedlist.dot') },
-    imagegroupcaptionlist:     { compClass: 'CCImageGroupCaptionList',        template: fs.readFileSync(__dirname + '/items/imagegroupcaptionlist.dot') }
-};
+var group_dot = fs.readFileSync(__dirname + '/items/group.dot')
+    , wrapper_dot = fs.readFileSync(__dirname + '/items/wrapper.dot')
+    , select_dot = fs.readFileSync(__dirname + '/items/select.dot')
+    , input_dot = fs.readFileSync(__dirname + '/items/input.dot')
+    , textarea_dot = fs.readFileSync(__dirname + '/items/textarea.dot')
+    , button_dot = fs.readFileSync(__dirname + '/items/button.dot')
+    , fabutton_dot = fs.readFileSync(__dirname + '/items/fabutton.dot')
+    , hyperlink_dot = fs.readFileSync(__dirname + '/items/hyperlink.dot')
+    , checkbox_dot = fs.readFileSync(__dirname + '/items/checkbox.dot')
+    , list_dot = fs.readFileSync(__dirname + '/items/list.dot')
+    , time_dot = fs.readFileSync(__dirname + '/items/time.dot')
+    , date_dot = fs.readFileSync(__dirname + '/items/date.dot')
+    , combo_dot = fs.readFileSync(__dirname + '/items/combo.dot')
+    , image_dot = fs.readFileSync(__dirname + '/items/image.dot')
+    , previewimage_dot = fs.readFileSync(__dirname + '/items/previewimage.dot')
+    , previewcropall_dot = fs.readFileSync(__dirname + '/items/previewcropall.dot')
+    , droptarget_dot = fs.readFileSync(__dirname + '/items/droptarget.dot')
+    , text_dot = fs.readFileSync(__dirname + '/items/text.dot')
+    , previewlist_dot = fs.readFileSync(__dirname + '/items/previewlist.dot')
+    , linklist_dot = fs.readFileSync(__dirname + '/items/linklist.dot')
+    , relatedlist_dot = fs.readFileSync(__dirname + '/items/relatedlist.dot')
+    , imagegroupcaptionlist_dot = fs.readFileSync(__dirname + '/items/imagegroupcaptionlist.dot');
 
 
-module.exports = itemTypes;
+var DEFAULT_TEMPLATE = '{{# def.partials.formGroup }}\
+                            {{# def.partials.label }}\
+                            <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">\
+                            </{{= it.tagName}}>\
+                        </div>';
+function doNothing() { /* do nothing */ }
+
+formRegistry.setDefaults({
+    template: DEFAULT_TEMPLATE,
+    modelPathRule: 'required',
+    itemFunction: doNothing
+});
+
+
+formRegistry.add('group',                 { compClass: 'MLGroup',                 template: group_dot,                   modelPathRule: 'prohibited'                                        });
+formRegistry.add('wrapper',               { compClass: 'MLWrapper',               template: wrapper_dot,                 modelPathRule: 'prohibited'                                        });
+formRegistry.add('select',                { compClass: 'MLSelect',                template: select_dot,                                               itemFunction: processSelectSchema     });
+formRegistry.add('input',                 { compClass: 'MLInput',                 template: input_dot                                                                                       });
+formRegistry.add('inputlist',             { compClass: 'MLInputList',                                                                                 itemFunction: processInputListSchema  });
+formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                             itemFunction: processTextareaSchema   });
+formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                  modelPathRule: 'optional'                                          });
+formRegistry.add('fabutton',              { compClass: 'MLButton',                template: fabutton_dot,                modelPathRule: 'optional'                                          });
+formRegistry.add('radio',                 { compClass: 'MLRadioGroup',                                                                                itemFunction: processRadioSchema      });
+formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,               modelPathRule: 'optional'                                          });
+formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                    });
+formRegistry.add('list',                  { compClass: 'MLList',                  template: list_dot                                                                                        });
+formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot                                                                                        });
+formRegistry.add('date',                  { compClass: 'MLDate',                  template: date_dot                                                                                        });
+formRegistry.add('combo',                 { compClass: 'MLCombo',                 template: combo_dot,                                                itemFunction: processComboSchema      });
+formRegistry.add('supercombo',            { compClass: 'MLSuperCombo',                                                                                itemFunction: processSuperComboSchema });
+formRegistry.add('combolist',             { compClass: 'MLComboList',                                                                                 itemFunction: processComboListSchema  });
+formRegistry.add('image',                 { compClass: 'MLImage',                 template: image_dot                                                                                       });
+formRegistry.add('previewimage',          { compClass: 'CCPreviewImage',          template: previewimage_dot                                                                                });
+formRegistry.add('previewcropall',        { compClass: 'CCPreviewCropAll',        template: previewcropall_dot,          modelPathRule: 'prohibited'                                        });
+formRegistry.add('droptarget',            { compClass: 'MLDropTarget',            template: droptarget_dot,              modelPathRule: 'prohibited'                                        });
+formRegistry.add('text',                  { compClass: 'MLText',                  template: text_dot,                    modelPathRule: 'optional'                                          });
+formRegistry.add('imagelist',             { compClass: 'CCPreviewList',           template: previewlist_dot                                                                                 });
+formRegistry.add('articlehistory',        { compClass: 'CCArticleHistory',                                               modelPathRule: 'prohibited'                                        });
+formRegistry.add('linklist',              { compClass: 'CCLinkList',              template: linklist_dot,                                             itemFunction: processLinkListSchema   });
+formRegistry.add('relatedlist',           { compClass: 'CCRelatedList',           template: relatedlist_dot,                                          itemFunction: processRelatedListSchema});
+formRegistry.add('imagegroupcaptionlist', { compClass: 'CCImageGroupCaptionList', template: imagegroupcaptionlist_dot                                                                       });
+
+
+function processSelectSchema(comp, schema) {
+    var options = schema.selectOptions;
+    setComponentOptions(comp, options, setComponentModel);
+}
+
+
+function processRadioSchema(comp, schema) {
+    var options = schema.radioOptions;
+    setComponentOptions(comp, options, setComponentModel);
+}
+
+
+function processComboSchema(comp, schema) {
+    var options = schema.comboOptions;
+    setComponentOptions(comp, options, setComponentModel);
+}
+
+
+function processSuperComboSchema(comp, schema) {
+    var options = schema.comboOptions
+        , addItemPrompt = schema.addItemPrompt;
+
+    _.deferTicks(function() {
+        if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
+        setComponentOptions(comp, options, setComboOptions);
+    }, 2);
+}
+
+
+function processComboListSchema(comp, schema) {
+    var options = schema.comboOptions
+        , addItemPrompt = schema.addItemPrompt;
+
+    _.deferTicks(function() {
+        if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
+        comp.setDataValidation(schema.dataValidation);
+        setComponentOptions(comp, options, setComboOptions);
+    }, 2);
+}
+
+
+function processInputListSchema(comp, schema) {
+    comp.setAsync(schema.asyncHandler);
+    comp.setPlaceHolder(schema.placeHolder);
+}
+
+
+function processTextareaSchema(comp, schema) {
+    if (schema.autoresize)
+        _.deferMethod(comp, 'startAutoresize', schema.autoresize);
+}
+
+
+function processLinkListSchema(comp, schema) {
+    comp.setHostComponent(this);
+}
+
+
+function processRelatedListSchema(comp, schema) {
+    comp.setLinkDefaults(schema.defaultLinkData);
+}
+
+
+function setComponentOptions(comp, options, setModelFunc) {
+    if (options) {
+        if (Promise.isPromise(options)) {
+            setModelFunc(comp, [{ value: 0, label: 'loading...' }]);
+            options
+                .then(function(err, data) {
+                    setModelFunc(comp, data);
+                })
+                .error(function() {
+                    setModelFunc(comp, [{ value: 0, label: 'loading error' }]);
+                });
+        } else
+            setModelFunc(comp, options);
+    }
+}
+
+
+function setComponentModel(comp, data) {
+    comp.model.set(data);
+    // _.deferMethod(comp.model, 'set', data);
+    // doing it with defer makes channel not set when the article is opened
+}
+
+
+function setComboOptions(comp, data) {
+    comp.setOptions(data);
+}
+
+
