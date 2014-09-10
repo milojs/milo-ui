@@ -522,10 +522,10 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         function setupTextFields() {
             inspComp.events.on('keydown', function (type, event) {
                 var keyPressed = keyboard.getKeyPressed(event);
-                if (!keyPressed.cmdCtrl) {            
-                    if (typeof oldValue == 'undefined') 
+                if (!keyPressed.cmdCtrl) {
+                    if (typeof oldValue == 'undefined')
                         oldValue = inspComp.data.get() || '';
-                    
+
                     debouncedModelChange(oldValue);
                 }
             });
@@ -550,7 +550,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 
             cmd.setComment('track model change');
             rootContent.editor.storeCommand(cmd);
-            
+
             oldValue = undefined;
         }
     }
@@ -677,7 +677,6 @@ function _processSchemaMessages(comp, messages) {
         facet.onConfigMessages(facetMessages);
     });
 }
-
 
 
 /**

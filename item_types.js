@@ -47,7 +47,11 @@ formRegistry.setDefaults({
 formRegistry.add('group',                 { compClass: 'MLGroup',                 template: group_dot,                   modelPathRule: 'prohibited'                                        });
 formRegistry.add('wrapper',               { compClass: 'MLWrapper',               template: wrapper_dot,                 modelPathRule: 'prohibited'                                        });
 formRegistry.add('select',                { compClass: 'MLSelect',                template: select_dot,                                               itemFunction: processSelectSchema     });
-formRegistry.add('input',                 { compClass: 'MLInput',                 template: input_dot                                                                                       });
+formRegistry.add('input', {
+    compClass: 'MLInput',
+    template: input_dot,
+    itemFunction: processInputSchema
+});
 formRegistry.add('inputlist',             { compClass: 'MLInputList',                                                                                 itemFunction: processInputListSchema  });
 formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                             itemFunction: processTextareaSchema   });
 formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                  modelPathRule: 'optional'                                          });
@@ -136,6 +140,10 @@ function processRelatedListSchema(comp, schema) {
 }
 
 
+function processInputSchema(comp, schema) {
+    comp.setMaxLength(schema.maxLength);
+}
+
 function setComponentOptions(comp, options, setModelFunc) {
     if (options) {
         if (Promise.isPromise(options)) {
@@ -163,5 +171,3 @@ function setComponentModel(comp, data) {
 function setComboOptions(comp, data) {
     comp.setOptions(data);
 }
-
-
