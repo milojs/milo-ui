@@ -13,7 +13,7 @@ var CCColumnsPreview = Component.createComponentClass('CCColumnsPreview', {
     },
     data: {
         messages: {
-            '.colItems': {subscriber: onColsChanged, context:'owner'}
+            '.colItems': {subscriber: onColsChanged, context: 'owner'}
         }
     },
     dom: {
@@ -41,29 +41,33 @@ _.extendProto(CCColumnsPreview, {
     init: MLColumns$init
 });
 
-function onClick (msg, event){
+function onClick(msg, event) {
     var target = event.target;
-    if(isDelColBtn(target)){
-        console.log('ABOUT TO DELETE A COLUMN', this);
+    var colItem;
+
+    if (isDelColBtn(target)) {
+        colItem = Component.getContainingComponent(target)
+        this.container.scope.colItems.list.removeItem(colItem.item.index);
     }
 
 }
 
-function isDelColBtn(elem){
+function isDelColBtn(elem) {
     return elem.classList.contains('cc-del-col')
 }
 
 
-function onColsChanged(){
+function onColsChanged() {
     var self = this;
     _.defer(function () {
         var colList = self.container.scope.colItems.list;
         var colCount = colList.count()
         var columnClass = 'cc-col-span' + 12 / colCount;
 
-        colList.each(function (column) {
+        colList.each(function (column, index) {
             column.dom.removeCssClasses(['cc-col-span12', 'cc-col-span6', 'cc-col-span4', 'cc-col-span3']);
             column.dom.addCssClasses(columnClass);
+            column.data.set({name: index + 1});
         });
     });
 }
@@ -77,7 +81,7 @@ function MLColumns$init() {
     this.on('childrenbound', onChildrenBound);
 }
 
-function onChildrenBound () {
+function onChildrenBound() {
     this.off('childrenbound');
     this.template.render().binder();
 }
