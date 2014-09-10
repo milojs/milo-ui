@@ -92,6 +92,8 @@ function onListClickSubscriber(type, event) {
 
 
 function deleteItem(index) {
+    var a = this.model.get()[index];
+    this._hostComponent.broadcast('deletehyperlink', { url: this.model.get()[index].relatedUrl });
     this.model.splice(index, 1);
     _triggerExternalPropagation.call(this);
 }
@@ -114,6 +116,7 @@ function onListUpdated() {
     var listData = this.model.m.get();
     this.container.scope.list.list.each(function(comp, index) {
         var link = listData[index];
+        if (! link) return;
         comp.el.classList.toggle('external-links-auto', link.id ? true : false);
         comp.el.classList.toggle('external-links-manual', link.id ? false : true);
     });
