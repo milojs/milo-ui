@@ -72,7 +72,7 @@ function CCPreviewImage$setImageData(data) {
 
 
 function CCPreviewImage$setImageSrc(url) {
-    this.container.scope.image.el.src = url;
+    this.container.scope.image.el.src = url || '';
 }
 
 
