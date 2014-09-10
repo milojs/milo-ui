@@ -14,3 +14,5 @@ require('./CCArticleModulePreviewList');
 require('./CCLinkList');
 require('./CCRelatedList');
 require('./CCImageGroupCaptionList');
+require('./CCColumnsPreview');
+
