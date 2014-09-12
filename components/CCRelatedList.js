@@ -88,21 +88,16 @@ function onSaveButtonSubscriber() {
 
     async.series(newRelated.map(function(link, index) {
         return _.partial(getLinkMeta, link);
-    }), function (err, success) {
+    }), function (err, success) { // Error is only passed for numeric erorrs (getRelatedArticle)
         lock.unlock();
-        if (!err) return self.container.scope.input.data.set('');
+        self.container.scope.input.data.set('');
+        if (!err) return;
+
+        error('DIALOG_RELATED_ARTICLE_NOT_FOUND');
 
         self.container.scope.input.data.set(
             newRelated.splice(newRelated.indexOf(err)).join(' ')
         );
-
-        milo.mail.trigger('opendialog', {
-            name: 'cannotaddrelatedlink',
-            options: {
-                title: 'Error',
-                text: 'can\'t find link'
-            }
-        });
     });
 
     function getLinkMeta(urlOrId, callback) {
@@ -112,6 +107,7 @@ function onSaveButtonSubscriber() {
 
             milo.util.request.json(baseUrl + urlOrId, function (err, responseData) {
                 if (err) return callback(urlOrId);
+
                 addRelatedArticle.call(self, _.extend(responseData, self._defaultLink));
                 callback(null, urlOrId);
             });
@@ -119,8 +115,9 @@ function onSaveButtonSubscriber() {
             baseUrl += '/links/remotetitle';
 
             milo.util.request.post(baseUrl, {url: prependUrlProtocol(urlOrId)}, function (err, responseData) {
-                if (err) return callback(urlOrId);
+                if (err) responseData = '';
                 addRelatedLink.call(self, urlOrId, responseData);
+
                 callback(null, urlOrId);
             });
         }
@@ -140,18 +137,22 @@ function addRelatedLink(url, headline) {
 
 
 function addRelatedArticle(relatedData) {
-    if (relatedData.headline)
+    if (relatedData.headline != undefined)
         this.events.postMessage('cmgroup_additem', {
             itemData: relatedData
         });
-    else
-        milo.mail.trigger('opendialog', {
-            name: 'cannotaddrelatedlink',
-            options: {
-                title: 'Error',
-                text: text('DIALOG_LINKS_NO_DATA_FOUND')
-            }
-        });
+    else error('DIALOG_LINKS_NO_DATA_FOUND')
+}
+
+function error(msg) {
+    console.log('ERROR MSG', msg, 'text', text(msg));
+    milo.mail.trigger('opendialog', {
+        name: msg,
+        options: {
+            title: 'Error',
+            text: text(msg)
+        }
+    });
 }
 
 function createCommonRelatedData() {
@@ -172,6 +173,7 @@ function addStylesToList() {
         var scope = comp.container.scope;
         comp.el.classList.add(typeClass);
         scope.relatedUrl.el.href = scope.relatedUrl.el.innerHTML;
+        comp.el.classList.toggle('has-error', scope.headline.el.value.length == 0)
         scope.relatedId.el.href =  baseUrl + scope.relatedUrl.el.innerHTML;
     });
 }
@@ -179,4 +181,3 @@ function addStylesToList() {
 function isExternal(type) {
     return type == 10 || type == 2;
 }
-

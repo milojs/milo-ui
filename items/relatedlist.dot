@@ -26,5 +26,6 @@
 
         <input type="text" ml-bind="[data]:input" class="form-control ml-ui-input" placeHolder="Article ID or any website URL"/>
         <button ml-bind="[events]:saveBtn"  class="btn btn-default ml-ui-button"> Add </button>
+
     </{{= it.tagName}}>
 </div>
