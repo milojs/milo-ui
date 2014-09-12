@@ -145,7 +145,6 @@ function addRelatedArticle(relatedData) {
 }
 
 function error(msg) {
-    console.log('ERROR MSG', msg, 'text', text(msg));
     milo.mail.trigger('opendialog', {
         name: msg,
         options: {
