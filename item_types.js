@@ -30,28 +30,10 @@ var group_dot = fs.readFileSync(__dirname + '/items/group.dot')
     , imagegroupcaptionlist_dot = fs.readFileSync(__dirname + '/items/imagegroupcaptionlist.dot');
 
 
-var DEFAULT_TEMPLATE = '{{# def.partials.formGroup }}\
-                            {{# def.partials.label }}\
-                            <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">\
-                            </{{= it.tagName}}>\
-                        </div>';
-function doNothing() { /* do nothing */ }
-
-formRegistry.setDefaults({
-    template: DEFAULT_TEMPLATE,
-    modelPathRule: 'required',
-    itemFunction: doNothing
-});
-
-
 formRegistry.add('group',                 { compClass: 'MLGroup',                 template: group_dot,                   modelPathRule: 'prohibited'                                        });
 formRegistry.add('wrapper',               { compClass: 'MLWrapper',               template: wrapper_dot,                 modelPathRule: 'prohibited'                                        });
 formRegistry.add('select',                { compClass: 'MLSelect',                template: select_dot,                                               itemFunction: processSelectSchema     });
-formRegistry.add('input', {
-    compClass: 'MLInput',
-    template: input_dot,
-    itemFunction: processInputSchema
-});
+formRegistry.add('input',                 { compClass: 'MLInput',                 template: input_dot,                                                itemFunction: processInputSchema      });
 formRegistry.add('inputlist',             { compClass: 'MLInputList',                                                                                 itemFunction: processInputListSchema  });
 formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                             itemFunction: processTextareaSchema   });
 formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                  modelPathRule: 'optional'                                          });

@@ -8,11 +8,25 @@ var logger = milo.util.logger
 var formTypes = {};
 var defaults = {};
 
-module.exports = {
+var formRegistry = module.exports = {
     get: registry_get,
     add: registry_add,
     setDefaults: registry_setDefaults
 };
+
+
+var DEFAULT_TEMPLATE = '{{# def.partials.formGroup }}\
+                            {{# def.partials.label }}\
+                            <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">\
+                            </{{= it.tagName}}>\
+                        </div>';
+function doNothing() { /* do nothing */ }
+
+formRegistry.setDefaults({
+    template: DEFAULT_TEMPLATE,
+    modelPathRule: 'required',
+    itemFunction: doNothing
+});
 
 
 function registry_get(name) {
