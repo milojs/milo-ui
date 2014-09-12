@@ -43,9 +43,8 @@ var CCColumnsPreview = Component.createComponentClass('CCColumnsPreview', {
 componentsRegistry.add(CCColumnsPreview);
 module.exports = CCColumnsPreview;
 
-formRegistry.add('columns', {
-    compClass: 'CCColumnsPreview',
-    modelPathRule: 'required'
+formRegistry.add('columnspreview', {
+    compClass: 'CCColumnsPreview'
 });
 
 
