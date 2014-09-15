@@ -27,7 +27,7 @@ var articleStatusLabelCSS = {
 
 var activeState = 'article';
 milo.mail.on('changeactiveasset', function (msg, data) {
-    activeState = data.assetType;
+    activeState = data.asset && data.asset.type;
 });
 
 var CCModuleArticlePreview = Component.createComponentClass('CCModuleArticlePreview', {
