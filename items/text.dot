@@ -1,5 +1,6 @@
-<span ml-bind="MLText:{{= it.compName }}"{{? it.item.wrapCssClass}} class="{{= it.item.wrapCssClass }}"{{?}}>
+{{var tagName = it.item.tagName || 'span';}}
+<{{=tagName}} ml-bind="MLText:{{= it.compName }}"{{? it.item.wrapCssClass}} class="{{= it.item.wrapCssClass }}"{{?}}>
     {{? it.item.label }}
         {{= it.item.label}}
     {{?}}
-</span>
+</{{=tagName}}>
