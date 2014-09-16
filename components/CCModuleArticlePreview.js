@@ -1,6 +1,7 @@
 'use strict';
 
-var componentsRegistry = milo.registry.components
+var doT = milo.util.doT
+    , componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
 
@@ -17,6 +18,19 @@ var CMARTICLE_GROUP_TEMPLATE = '\
             </ul>\
         </div>\
     </div>';
+
+var CMARTICLE_CI_PAGE_ITEM_TEMPLATE = doT.compile('\
+    <div ml-bind="CIPageItem:newPageItem" class="">\
+        <div class="article article-small">\
+            <textarea ml-bind="PIHeader:header" style="">{{= it.title }}</textarea>\
+            <div class="articletext">\
+                <a href="#">\
+                    <img ml-bind="[data]:preview" src="{{= it.previewImg }}">\
+                </a>\
+                <textarea ml-bind="PIText:description">{{= it.previewText }}</textarea>\
+            </div>\
+        </div>\
+    </div>');
 
 var articleStatusLabelCSS = {
     'Live': 'label-success',
@@ -170,9 +184,29 @@ function CCModuleArticlePreview$destroy() {
 
 function _constructArticleState(value) {
     if (!value) return;
+
+    var templateData = {
+        title: value.title,
+        previewText: value.previewText,
+        previewImg: value.thumb && value.thumb.hostUrl || ''
+    };
+
     //todo create article item for channel
     return {
-
+        outerHTML: CMARTICLE_CI_PAGE_ITEM_TEMPLATE(templateData),
+        compClass: 'CIPageItem',
+        compName: milo.util.componentName(),
+        facetsStates: {
+            model: {
+                state: {
+                    title: value.title,
+                    previewText: value.previewText,
+                    prewviewImage: value.thumb && value.thumb.hostUrl || '',
+                    url: value.url,
+                    id: value.id
+                }
+            }
+        }
     };
 }
 
