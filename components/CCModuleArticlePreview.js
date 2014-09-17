@@ -3,10 +3,11 @@
 var fs = require('fs')
     , doT = milo.util.doT
     , componentsRegistry = milo.registry.components
-    , Component = componentsRegistry.get('Component');
+    , Component = componentsRegistry.get('Component')
+    , componentName = milo.util.componentName;
 
 
-var CMARTICLE_GROUP_TEMPLATE = fs.readFileSync(__dirname + '/article/relatedGroup.html');
+var CMARTICLE_GROUP_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/relatedGroup.dot'));
 var CMARTICLE_CI_PAGE_ITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/channelArticlePreview.dot'));
 
 var articleStatusLabelCSS = {
@@ -161,18 +162,20 @@ function CCModuleArticlePreview$destroy() {
 
 function _constructArticleState(value) {
     if (!value) return;
+    var compName = componentName();
 
     var templateData = {
         title: value.title,
         previewText: value.previewText,
-        previewImg: value.thumb && value.thumb.hostUrl || ''
+        previewImg: value.thumb && value.thumb.hostUrl || '',
+        compName: compName
     };
 
     //todo create article item for channel
     return {
         outerHTML: CMARTICLE_CI_PAGE_ITEM_TEMPLATE(templateData),
-        compClass: 'CIPageItem',
-        compName: milo.util.componentName(),
+        compClass: 'CIPageItemArticle',
+        compName: compName,
         facetsStates: {
             model: {
                 state: {
@@ -190,11 +193,16 @@ function _constructArticleState(value) {
 
 function _constructRelatedGroupState(value) {
     if (!value) return;
+    var compName = componentName();
+
+    var templateData = {
+        compName: compName
+    };
 
     return {
-        outerHTML: CMARTICLE_GROUP_TEMPLATE,
+        outerHTML: CMARTICLE_GROUP_TEMPLATE(templateData),
         compClass: 'CMRelatedGroup',
-        compName: milo.util.componentName(),
+        compName: compName,
         facetsStates: {
             model: {
                 state: {

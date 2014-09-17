@@ -1,4 +1,4 @@
-<div ml-bind="CMRelatedGroup:newRelated" class="cc-module-related-group">
+<div ml-bind="CMRelatedGroup:{{= it.compName }}" class="cc-module-related-group">
     <div class="relatedItemsTopBorder">&nbsp;</div>
     <div class="relatedItems">
         <h4 ml-bind="[data]:relatedCaption"></h4>

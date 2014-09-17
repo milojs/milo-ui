@@ -1,4 +1,4 @@
-<div ml-bind="CIPageItem:newPageItem">
+<div ml-bind="CIPageItemArticle:{{= it.compName }}">
     <div class="article article-small">
         <textarea ml-bind="PIHeader:header">{{= it.title }}</textarea>
         <div class="articletext">
