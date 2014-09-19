@@ -105,6 +105,7 @@ _.extend(CCForm, {
 });
 
 _.extendProto(CCForm, {
+    getHostObject: CCForm$getHostObject,
     isValid: CCForm$isValid,
     validateModel: CCForm$validateModel,
     getInvalidControls: CCForm$getInvalidControls,
@@ -130,6 +131,7 @@ _.extendProto(CCForm, {
  */
 function CCForm$$createForm(schema, hostObject, formData, template) {
     var form = _createFormComponent();
+    _.defineProperty(form, '_hostObject', hostObject);
     var formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations;
     _processFormSchema();
     _connectFormDataToModel();
@@ -227,6 +229,15 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
             };
         }
     }
+}
+
+
+/**
+ * Returns the form host object.
+ * @return {Component}
+ */
+function CCForm$getHostObject() {
+    return this._hostObject;
 }
 
 
