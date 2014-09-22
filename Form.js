@@ -489,7 +489,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                     break;
                 case 'required':
                     if (! (modelPath || notInModel))
-                        throw new FormError('modelPath is required for item type ' + schema.type + ' . Add "noModelPath: true" to override');
+                        throw new FormError('modelPath is required for item type ' + schema.type + ' . Add "notInModel: true" to override');
                     // falling through to 'optional'
                 case 'optional':
                     if (modelPath) {
