@@ -109,7 +109,8 @@ _.extendProto(CCForm, {
     isValid: CCForm$isValid,
     validateModel: CCForm$validateModel,
     getInvalidControls: CCForm$getInvalidControls,
-    getInvalidReason: CCForm$getInvalidReason,
+    getInvalidReasons: CCForm$getInvalidReasons,
+    getInvalidReasonsText: CCForm$getInvalidReasonsText,
     modelPathComponent: CCForm$modelPathComponent,
     modelPathSchema: CCForm$modelPathSchema,
     viewPathComponent: CCForm$viewPathComponent,
@@ -194,12 +195,12 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
     function _manageFormValidation() {
         form._invalidFormControls = {};
 
-        form.model.on('validated', createOnValidated(false));
-        form.data.on('validated', createOnValidated(true));
+        form.model.on('validated', createOnValidated(true));
+        form.data.on('validated', createOnValidated(false));
 
-        function createOnValidated(isToModel) {
-            var pathCompMethod = isToModel ? 'viewPathComponent' : 'modelPathComponent'
-                , pathSchemaMethod = isToModel ? 'viewPathSchema' : 'modelPathSchema';
+        function createOnValidated(isFromModel) {
+            var pathCompMethod = isFromModel ? 'modelPathComponent': 'viewPathComponent'
+                , pathSchemaMethod = isFromModel ? 'modelPathSchema': 'viewPathSchema';
 
             return function(msg, response) {
                 var component = form[pathCompMethod](response.path)
@@ -211,10 +212,11 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
                     var parentEl = component.el.parentNode;
                     parentEl.classList.toggle(FORM_VALIDATION_FAILED_CSS_CLASS, ! response.valid);
 
-                    if (response.valid) {
+                    var reason;
+                    if (response.valid)
                         delete form._invalidFormControls[modelPath];
-                    } else {
-                        var reason = {
+                    else {
+                        reason = {
                             label: label || '',
                             reason: response.reason,
                             reasonCode: response.reasonCode
@@ -223,6 +225,15 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
                             component: component,
                             reason: reason
                         };
+                    }
+
+                    if (isFromModel) {
+                        var data = _.clone(response);
+                        if (reason) {
+                            data.reason = reason; // a bit hacky, replacing string with object created above
+                            delete data.reasonCode;
+                        }
+                        form.postMessage('validation', data);
                     }
                 } else
                     logger.error('Form: component for path ' + response.path + ' not found');
@@ -315,19 +326,31 @@ function CCForm$getInvalidControls() {
 
 
 /**
- * Returns an array of strings with all reasons for the form being invalid
+ * Returns an array of objects with all reasons for the form being invalid
  *
- * @return {Array[String]}
+ * @return {Array[Object]}
  */
-function CCForm$getInvalidReason() {
+function CCForm$getInvalidReasons() {
     var invalidControls = this.getInvalidControls();
-    var reason = _.reduceKeys(invalidControls,
+    var reasons = _.reduceKeys(invalidControls,
         function(memo, invalidControl, compName) {
-            invalidControl.reason.modelPath = this.viewPathSchema(compName).modelPath;
             memo.push(invalidControl.reason);
             return memo;
         }, [], this);
-    return reason;
+    return reasons;
+}
+
+
+/**
+ * Returns a multiline string with all reasons for the form being invalid
+ *
+ * @return {String}
+ */
+function CCForm$getInvalidReasonsText() {
+    var reasons = this.getInvalidReasons();
+    return reasons.reduce(function(memo, reason) {
+        return memo + (reason.label || '') + ' - ' + reason.reason + '\n';
+    }, '');
 }
 
 
