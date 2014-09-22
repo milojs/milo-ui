@@ -460,7 +460,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 
         if (itemRule) {
             //check(comp.constructor, itemTypes[schema.type].CompClass);
-            itemRule.itemFunction.call(this, comp, schema);
+            itemRule.itemFunction && itemRule.itemFunction.call(this, comp, schema);
             _processItemTranslations.call(this, viewPath, schema);
         } else
             throw new FormError('unknown item type ' + schema.type);
@@ -652,7 +652,7 @@ function makeRegexValidator(validatorRegExp) {
  */
 function _processSchemaItems(comp, items, viewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations) {
     if (! comp.container)
-        throw new FormError('schema has items but component has no container facet');
+        return logger.warn('Form Warning: schema has items but component has no container facet');
 
     items.forEach(function(item) {
         var itemComp = comp.container.scope[item.compName]
@@ -665,7 +665,7 @@ function _processSchemaItems(comp, items, viewPath, formViewPaths, formModelPath
 
 
 /**
- * Subscribes to messages on facets of items' component as defiend in schema
+ * Subscribes to messages on facets of items' component as defined in schema
  */
 function _processSchemaMessages(comp, messages) {
     var hostObject = this;
