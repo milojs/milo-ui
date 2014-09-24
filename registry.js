@@ -20,12 +20,11 @@ var DEFAULT_TEMPLATE = '{{# def.partials.formGroup }}\
                             <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">\
                             </{{= it.tagName}}>\
                         </div>';
-function doNothing() { /* do nothing */ }
 
 formRegistry.setDefaults({
     template: DEFAULT_TEMPLATE,
     modelPathRule: 'required',
-    itemFunction: doNothing
+    itemFunction: null
 });
 
 
