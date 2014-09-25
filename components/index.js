@@ -15,4 +15,5 @@ require('./CCLinkList');
 require('./CCRelatedList');
 require('./CCImageGroupCaptionList');
 require('./CCColumnsPreview');
+require('./CCVariantsList');
 
