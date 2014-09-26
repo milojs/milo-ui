@@ -179,12 +179,13 @@ function _constructArticleState(value) {
         facetsStates: {
             model: {
                 state: {
-                    title: value.title,
+                    headline: value.title,
                     previewText: value.previewText,
-                    prewviewImage: value.thumb && value.thumb.hostUrl || '',
-                    url: value.url,
-                    assetId: value.id,
-                    assetType: 'article'
+                    image: {
+                        hostUrl: value.thumb && value.thumb.hostUrl || ''
+                    },
+                    itemId: value.id,
+                    itemType: 'article'
                 }
             }
         }

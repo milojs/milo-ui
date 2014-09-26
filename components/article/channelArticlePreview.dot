@@ -7,33 +7,5 @@
             </a>
             <textarea ml-bind="PIText:description">{{= it.previewText }}</textarea>
         </div>
-        <div class="article-icon-links-container">
-            <ul class="article-icon-links refresh cleared">
-                <li class="first">
-                    <a class="comments-link" href="#">
-                        <span class="icon"></span>
-                        <span class="linktext">
-                            <span class="readerCommentNo bold">(0)</span> comments
-                        </span>
-                    </a>
-                </li>
-                <li>
-                    <a class="videos-link" href="#">
-                        <span class="icon"></span>
-                        <span class="linktext">
-                            <span class="bold">1</span> video
-                        </span>
-                    </a>
-                </li>
-                <li class="gr3ox">
-                    <a class="js-sl share-link" href="#">
-                        <span class="icon"></span>
-                        <span class="linktext">
-                            <span class="bold">(0)</span> shares
-                        </span>
-                    </a>
-                </li>
-            </ul>
-        </div>
     </div>
 </div>

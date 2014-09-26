@@ -68,7 +68,9 @@ function onStateReady() {
     var scope = this.container.scope
         , imgComponent = scope.image;
 
-    imgComponent.events.on('error', onImageError);
+    if (imgComponent && imgComponent.events)
+        imgComponent.events.on('error', onImageError);
+
     if (scope.scratch)
         scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
 
