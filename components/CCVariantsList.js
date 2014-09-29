@@ -70,6 +70,8 @@ function onChildrenBound(msg, data) {
     addCountry.data.on('', { subscriber: onAddCountry, context: this });
 
     this._list = scope.variants;
+    this._list.on('deleteitem', { subscriber: onDeleteCountry, context: this });
+
     this._list.model.onMessages({
         '': { subscriber: onListChange, context: this }, // splice events
         '[*].excluded': {subscriber: onVariantExcluded, context: this }
@@ -80,6 +82,18 @@ function onChildrenBound(msg, data) {
 function onAddCountry(msg, data) {
     var country = _.clone(data.newValue);
     this._list.model.push(country);
+    this._article.postMessage('addvariant', { criteria: _getCriteria(country) });
+}
+
+
+function onDeleteCountry(msg, data) {
+    var country = data.itemData;
+    this._article.postMessage('removevariant', { criteria: _getCriteria(country) });
+}
+
+
+function _getCriteria(country) {
+    return { geo: country.value };
 }
 
 
@@ -94,6 +108,7 @@ function onVariantExcluded(msg, data) {
 
 
 function processVariantsListSchema(comp, schema) {
+    comp._article = this;
     // if (this.hasVariants()) {
     //     var variants = comp._variants = this.getSecondaryVariants();
     //     if (variants && variants.length) {
