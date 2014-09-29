@@ -2,6 +2,8 @@
 //TODO: Refactor as soon as possible, very similar to CCModuleImagePreview
 var componentsRegistry = milo.registry.components
     , moment = require('moment')
+    , fs = require('fs')
+    , doT = milo.util.doT
     , Component = componentsRegistry.get('Component');
 
 
