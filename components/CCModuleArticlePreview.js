@@ -45,8 +45,7 @@ module.exports = CCModuleArticlePreview;
 
 _.extendProto(CCModuleArticlePreview, {
     init: CCModuleArticlePreview$init,
-    destroy: CCModuleArticlePreview$destroy,
-    changeActiveState: CCModuleArticlePreview$changeActiveState
+    destroy: CCModuleArticlePreview$destroy
 });
 
 
@@ -65,10 +64,10 @@ function CCModuleArticlePreview$init() {
             { subscriber: cloneArticle, context: this });
     });
 
-    milo.mail.on('changeactiveasset', {subscriber: this.changeActiveState, context: this});
+    milo.mail.on('changeactiveasset', {subscriber: changeActiveState, context: this});
 }
 
-function CCModuleArticlePreview$changeActiveState() {
+function changeActiveState() {
     this.transfer.setActiveState(activeState);
 }
 

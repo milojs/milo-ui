@@ -5,9 +5,13 @@ var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
 
-var CMVIDEO_GROUP_TEMPLATE = '<div>this video\
-    </div>';
+var CMVIDEO_GROUP_TEMPLATE = '<div>this video</div>';
+var LISTITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/listItem.dot'));
 
+var activeState = 'article';
+milo.mail.on('changeactiveasset', function (msg, data) {
+    activeState = data.asset && data.asset.type;
+});
 
 var CCModuleVideoPreview = Component.createComponentClass('CCModuleVideoPreview', {
     dom: {
@@ -42,6 +46,7 @@ module.exports = CCModuleVideoPreview;
 
 _.extendProto(CCModuleVideoPreview, {
     init: CCModuleVideoPreview$init,
+    destroy: CCModuleVideoPreview$destroy,
     getMeta: CCModuleVideoPreview$getMeta
 });
 
@@ -49,12 +54,19 @@ _.extendProto(CCModuleVideoPreview, {
 function CCModuleVideoPreview$init() {
     Component.prototype.init.apply(this, arguments);
     this.on('stateready', onStateReady);
+    milo.mail.on('changeactiveasset', {subscriber: changeActiveState, context: this});
 }
+
 
 function onStateReady() {
     var scope = this.container.scope;
     if (scope.scratch)
         scope.scratch && scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
+}
+
+
+function changeActiveState() {
+    this.transfer.setActiveState(activeState);
 }
 
 
@@ -90,6 +102,12 @@ function onAddedToScratch(event, msg, data) {
 }
 
 
+function CCModuleVideoPreview$destroy() {
+    Component.prototype.destroy.apply(this, arguments);
+
+}
+
+
 function CCModuleVideoPreview$getMeta() {
     var model = this.model.get();
     return {
@@ -109,8 +127,10 @@ function CCModuleVideoPreview_set(value) {
     this.model.set(value);
     CCModuleVideoPreview_setChannel.call(this, value.fields.channel);
     if (value && value.fields.thumbImage && value.fields.thumbImage.hostUrl)
-       try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
-    this.transfer.setState(_constructVideoState(value));
+        try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
+        this.transfer.setStateWithKey('article', _constructVideoState(value));
+        this.transfer.setStateWithKey('linklist', _constructVideoLinkState(value));
+        this.transfer.setActiveState(activeState);
         value = _parseData(value);
         this.data._set(value);
     }
@@ -169,3 +189,25 @@ function _constructVideoState(value) {
         }
     };
 }
+
+
+function _constructVideoLinkState(value) {
+    if (!value) return;
+
+    var compName = milo.util.componentName();
+
+    return {
+        outerHTML: LISTITEM_TEMPLATE({compName: compName}),
+        compName: compName,
+        compClass: 'LELinkItem',
+        facetsStates: {
+            model: {
+                state: {
+                    videoId: value.fields.id,
+                    description: value.fields.headline
+                }
+            }
+        }
+    };
+}
+
