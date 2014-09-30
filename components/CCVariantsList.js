@@ -8,22 +8,28 @@ var componentsRegistry = milo.registry.components
     , countries = require('../../countries').toArray();
 
 
-var variantsTemplate = '<div> \
-                            <span>All regions</span> \
-                            <span ml-bind=":defaultVisible">Visible</span> \
-                            <span ml-bind=":defaultExcludedWrapper"> \
-                                <input ml-bind="MLInput:defaultExcluded" type="checkbox"> \
-                                Excluded \
-                            </span> \
+var variantsTemplate = '<div class="ml-ui-list cc-variants-all-regions"> \
+                            <div class="list-item"> \
+                                <span class="cc-variant-label">All regions</span> \
+                                <span class="cc-variant-excluded"> \
+                                    <span ml-bind="[dom]:defaultVisible">Visible</span> \
+                                    <span ml-bind="[dom]:defaultExcludedWrapper"> \
+                                        <input ml-bind="MLInput:defaultExcluded" type="checkbox"> \
+                                        Excluded \
+                                    </span> \
+                                </span> \
+                            </div> \
                         </div> \
-                        <ul ml-bind="MLList:variants"> \
-                            <li ml-bind="MLListItem:variant"> \
-                                <span class="cc-icon cc-delete-icon" ml-bind="[events]:deleteBtn"></span> \
-                                <span ml-bind="[data]:label"></span> \
-                                <input ml-bind="MLInput:excluded" type="checkbox"> \
-                                Excluded \
-                            </li> \
-                        </ul> \
+                        <div ml-bind="MLList:variants"> \
+                            <div ml-bind="MLListItem:variant" class="list-item"> \
+                                <span class="fa fa-trash-o cc-variant-icon" ml-bind="[events]:deleteBtn"></span> \
+                                <span ml-bind="[data]:label" class="cc-variant-label"></span> \
+                                <span class="cc-variant-excluded"> \
+                                    <input ml-bind="MLInput:excluded" type="checkbox"> \
+                                    Excluded \
+                                </span> \
+                            </div> \
+                        </div> \
                         <div ml-bind="MLSuperCombo:addCountry"></div>';
 
 
@@ -98,7 +104,12 @@ function _getCriteria(country) {
 
 
 function onListChange(msg, data) {
+    var count = this._list.model.m('.length').get()
+        , showVisible = count == 0
+        , scope = this.container.scope;
 
+    scope.defaultVisible.dom.toggle(showVisible);
+    scope.defaultExcludedWrapper.dom.toggle(!showVisible);
 }
 
 
