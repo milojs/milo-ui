@@ -98,12 +98,12 @@ function _getCriteria(country) {
 
 
 function onListChange(msg, data) {
-    // console.log('onListChange', msg, data);
+
 }
 
 
 function onVariantExcluded(msg, data) {
-    // console.log('onVariantExcluded', msg, data);
+
 }
 
 
