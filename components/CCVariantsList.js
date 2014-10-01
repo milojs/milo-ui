@@ -114,7 +114,7 @@ function onListChange(msg, data) {
 
 
 function onVariantExcluded(msg, data) {
-
+    // console.log('onVariantExcluded', data);
 }
 
 
