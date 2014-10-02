@@ -12,8 +12,8 @@ var variantsTemplate = '<div class="ml-ui-list cc-variants-all-regions"> \
                             <div class="list-item"> \
                                 <span class="cc-variant-label">All regions</span> \
                                 <span class="cc-variant-excluded"> \
-                                    <span ml-bind="[dom]:defaultVisible">Visible</span> \
-                                    <span ml-bind="[dom]:defaultExcludedWrapper"> \
+                                    <span ml-bind="[dom]:defaultVisible" class="cc-variant-status">Visible</span> \
+                                    <span ml-bind="[dom]:defaultExcludedWrapper" class="cc-variant-status"> \
                                         <input ml-bind="MLInput:defaultExcluded" type="checkbox"> \
                                         Excluded \
                                     </span> \
@@ -24,8 +24,8 @@ var variantsTemplate = '<div class="ml-ui-list cc-variants-all-regions"> \
                             <div ml-bind="MLListItem:variant" class="list-item"> \
                                 <span class="fa fa-trash-o cc-variant-icon" ml-bind="[events, dom]:deleteBtn"></span> \
                                 <span ml-bind="[data]:label" class="cc-variant-label"></span> \
-                                <span ml-bind="[dom]:visible" style="display:none;">Visible</span> \
-                                <span ml-bind="[dom]:excludedWrapper" class="cc-variant-excluded"> \
+                                <span ml-bind="[dom]:visible" style="display:none;" class="cc-variant-status">Visible</span> \
+                                <span ml-bind="[dom]:excludedWrapper" class="cc-variant-status"> \
                                     <input ml-bind="MLInput:excluded" type="checkbox"> \
                                     Excluded \
                                 </span> \
@@ -92,7 +92,7 @@ function onChildrenBound(msg, data) {
 
 function onAddCountry(msg, data) {
     // check number of live variants, show excluded option if live variants became more than one
-    toggleBasedExcludedCount.call(this);
+    toggleVariantsUI.call(this);
 
     var country = _.clone(data.newValue);
     this._list.model.push(country);
@@ -102,7 +102,7 @@ function onAddCountry(msg, data) {
 
 function onDeleteCountry(msg, data) {
     // check number of live variants, do not allow to delete if it is the last live variant
-    toggleBasedExcludedCount.call(this);
+    toggleVariantsUI.call(this);
 
     var country = data.itemData;
     this._article.postMessage('removevariant', { criteria: _getCriteria(country) });
@@ -115,47 +115,42 @@ function _getCriteria(country) {
 
 
 function onListChange(msg, data) {
-    // check number of live variants, show excluded option if live variants became more than one
-    toggleBasedExcludedCount.call(this);
-
     var count = this._list.model.m('.length').get()
         , showVisible = count == 0
         , scope = this.container.scope;
 
     scope.defaultVisible.dom.toggle(showVisible);
     scope.defaultExcludedWrapper.dom.toggle(!showVisible);
+
+    _.deferMethod(this, toggleVariantsUI);
 }
 
 
 function onVariantExcluded(msg, data) {
-    // check number of live variants, if only one live variant remains, then hide its excluded option
-    toggleBasedExcludedCount.call(this);
-
-    //console.log('onVariantExcluded', data);
+    toggleVariantsUI.call(this);
 }
 
 
-function toggleBasedExcludedCount() {
+function toggleVariantsUI() {
+    // check number of live variants, if only one live variant remains, then hide its excluded option
     var notExcludedCount = getCountOfNotExcludedVariants.call(this);
-    toggleAllNotExcludedWrapper.call(this, notExcludedCount > 1);
-    toggleAllNotExcludedDeleteBtn.call(this, notExcludedCount > 1);
+    toggleAllNotExcludedUI.call(this, notExcludedCount > 1);
 }
 
 
 function getCountOfNotExcludedVariants() {
-    var scope = this.container.scope
-        , qty = !scope.defaultExcluded.data.get();
-
-    this._list.walkScopeTree(function(comp){
-        if(comp.name == 'excluded')
-            qty += !comp.data.get();
+    var list = this._list.model.get()
+        , scope = this.container.scope
+        , count = !scope.defaultExcluded.data.get();
+    list && list.forEach(function(variantData){
+        count += !variantData.excluded;
     });
 
-    return qty;
+    return count;
 }
 
 
-function toggleAllNotExcludedWrapper(onOff) {
+function toggleAllNotExcludedUI(onOff) {
     var scope = this.container.scope
         , defaultExcluded = scope.defaultExcluded.data.get();
 
@@ -164,41 +159,19 @@ function toggleAllNotExcludedWrapper(onOff) {
         scope.defaultVisible.dom.toggle(!onOff);
     }
 
-    this._list.walkScopeTree(function(comp){
-        if(comp.name == 'excluded' && !comp.data.get()){
-            comp.scope.excludedWrapper.dom.toggle(onOff);
-            comp.scope.visible.dom.toggle(!onOff);
+    this._list.list.each(function(item){
+        var itemScope = item.container.scope 
+            , excluded = itemScope.excluded;
+
+        if (!excluded.data.get()){
+            itemScope.excludedWrapper.dom.toggle(onOff);
+            itemScope.visible.dom.toggle(!onOff);
+            itemScope.deleteBtn.dom.toggle(onOff);
         }
     });
 }
 
 
-function toggleAllNotExcludedDeleteBtn(onOff) {
-    this._list.walkScopeTree(function(comp){
-        if(comp.name == 'excluded' && !comp.data.get())
-            comp.scope.deleteBtn.dom.toggle(onOff);
-    });
-}
-
 function processVariantsListSchema(comp, schema) {
     comp._article = this;
-    // if (this.hasVariants()) {
-    //     var variants = comp._variants = this.getSecondaryVariants();
-    //     if (variants && variants.length) {
-    //         var listData = [];
-    //         variants.forEach(function(variant) {
-    //             var criteria = variant.getCriteria()
-    //                 , country = _.find(countries, function(c) {
-    //                     return criteria.geo == c.value;
-    //                 });
-    //             if (country) {
-    //                 var country = _.clone(country);
-    //                 country.excluded = variant.isExcluded();
-    //                 listData.push(country);
-    //             }
-    //         });
-
-    //         _.deferMethod(comp._list.model, 'set', listData);
-    //     }
-    // }
 }
