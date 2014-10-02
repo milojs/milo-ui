@@ -43,15 +43,15 @@ function formGenerator(schema) {
         if (!itemType) {
             var newItemType = formRegistry.get(item.type);
             itemType = cachedItems[item.type] = {
-                CompClass: componentsRegistry.get(newItemType.compClass),
+                CompClass: newItemType.compClass && componentsRegistry.get(newItemType.compClass),
                 compClass: newItemType.compClass,
                 template: doT.compile(newItemType.template, dotDef)
             }
         }
 
-        item.compName = item.compName || componentName();
-        // item.CompClass = itemType.CompClass;
-        var domFacetConfig = itemType.CompClass.getFacetConfig('dom')
+        item.compName = itemType.CompClass ? item.compName || componentName() : null;
+
+        var domFacetConfig = itemType.CompClass && itemType.CompClass.getFacetConfig('dom')
             , tagName = domFacetConfig && domFacetConfig.tagName || 'div';
 
         var template = itemType.template;

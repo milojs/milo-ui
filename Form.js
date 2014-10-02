@@ -678,6 +678,8 @@ function _processSchemaItems(comp, items, viewPath, formViewPaths, formModelPath
         return logger.warn('Form Warning: schema has items but component has no container facet');
 
     items.forEach(function(item) {
+        if (!item.compName) return; // No component, only markup
+
         var itemComp = comp.container.scope[item.compName]
             , compViewPath = viewPath + '.' + item.compName;
         if (! itemComp)

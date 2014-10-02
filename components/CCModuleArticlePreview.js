@@ -9,6 +9,7 @@ var fs = require('fs')
 
 var CMARTICLE_GROUP_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/relatedGroup.dot'));
 var CMARTICLE_CI_PAGE_ITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/channelArticlePreview.dot'));
+var LISTITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/listItem.dot'));
 
 var articleStatusLabelCSS = {
     'Live': 'label-success',
@@ -44,8 +45,7 @@ module.exports = CCModuleArticlePreview;
 
 _.extendProto(CCModuleArticlePreview, {
     init: CCModuleArticlePreview$init,
-    destroy: CCModuleArticlePreview$destroy,
-    changeActiveState: CCModuleArticlePreview$changeActiveState
+    destroy: CCModuleArticlePreview$destroy
 });
 
 
@@ -64,10 +64,10 @@ function CCModuleArticlePreview$init() {
             { subscriber: cloneArticle, context: this });
     });
 
-    milo.mail.on('changeactiveasset', {subscriber: this.changeActiveState, context: this});
+    milo.mail.on('changeactiveasset', {subscriber: changeActiveState, context: this});
 }
 
-function CCModuleArticlePreview$changeActiveState() {
+function changeActiveState() {
     this.transfer.setActiveState(activeState);
 }
 
@@ -133,6 +133,7 @@ function CCModuleArticlePreview_set(value) {
     this.model.set(value);
     this.transfer.setStateWithKey('channel', _constructArticleState(value));
     this.transfer.setStateWithKey('article', _constructRelatedGroupState(value));
+    this.transfer.setStateWithKey('linklist', _constructListEditorLinkState(value));
     this.transfer.setActiveState(activeState);
 }
 
@@ -236,4 +237,26 @@ function _constructRelatedGroupState(value) {
             voteFollow: false
         };
     }
+}
+
+function _constructListEditorLinkState(value) {
+    if (!value) return;
+
+    var compName = componentName();
+
+    return {
+        outerHTML: LISTITEM_TEMPLATE({compName: compName}),
+        compClass: 'LELinkItem',
+        compName: compName,
+        facetsStates: {
+            model: {
+                state: {
+                    articleId: +value.id,
+                    description: value.title,
+                    longDescription: value.previewText,
+                    status: 'Live'
+                }
+            }
+        }
+    };
 }

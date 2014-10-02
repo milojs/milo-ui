@@ -40,7 +40,7 @@ function CCModuleArticleModulePreview_set(value) {
     var stylesPromise = window.CC.config.data.itemStyles;
     stylesPromise.then(function (dontUse, data) {
         value = parseData(value, data);
-        self.transfer.setState(_constructRelatedGroupState(value));
+        self.transfer.setState(_constructModuleState(value));
         self.data._set(value);
         self.model.set(value);
     }).error(function (error) {
@@ -128,9 +128,12 @@ function getMetaParams () {
     };
 }
 
-function _constructRelatedGroupState(value) {
+function _constructModuleState(value) {
     if (!value) return;
 
+    var width = value.styles && value.styles.length == 1 && value.styles[0].group == 'single'
+                    ? 'floatRightMod'
+                    : 'fullWidthMod';
     return {
         outerHTML: CMARTICLEMODULE_GROUP_TEMPLATE,
         compClass: 'MIStandard',
@@ -147,6 +150,11 @@ function _constructRelatedGroupState(value) {
                         style: value.styleId
                     },
                     linkListGroups: value.linkListGroups
+                }
+            },
+            inspector: {
+                state: { //quoteLayout is a legacy name, should be 'layout' but requires a migration to fix.
+                    quoteLayout: width
                 }
             }
         }

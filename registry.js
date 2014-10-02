@@ -40,7 +40,7 @@ function registry_get(name) {
 function registry_add(name, newFormItem) {
     check(name, String);
     check(newFormItem, {
-        compClass: String,
+        compClass: Match.Optional(String),
         template: Match.Optional(String),
         modelPathRule: Match.Optional(String),
         itemFunction: Match.Optional(Function)
