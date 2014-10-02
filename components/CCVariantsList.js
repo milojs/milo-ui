@@ -72,7 +72,7 @@ function onChildrenBound(msg, data) {
     this.template.render().binder();
     var scope = this.container.scope
 
-    var addCountry = scope.addCountry;
+    var addCountry = this._addCountry = scope.addCountry;
     addCountry.setOptions(countries);
     addCountry.data.on('', { subscriber: onAddCountry, context: this });
 
@@ -94,9 +94,17 @@ function onAddCountry(msg, data) {
     // check number of live variants, show excluded option if live variants became more than one
     toggleVariantsUI.call(this);
 
-    var country = _.clone(data.newValue);
-    this._list.model.push(country);
-    this._article.postMessage('addvariant', { criteria: _getCriteria(country) });
+    var country = data.newValue
+        , countries = this._list.model.get()
+        , existingCountry = _.find(countries, function(c) {
+            return c.value == country.value;
+        });
+
+    if (!existingCountry) {
+        this._list.model.push(_.clone(country));
+        this._article.postMessage('addvariant', { criteria: _getCriteria(country) });
+        this._addCountry.data.set({ value: '', label: '' });
+    }
 }
 
 
