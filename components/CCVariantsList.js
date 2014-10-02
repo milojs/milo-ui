@@ -22,9 +22,10 @@ var variantsTemplate = '<div class="ml-ui-list cc-variants-all-regions"> \
                         </div> \
                         <div ml-bind="MLList:variants"> \
                             <div ml-bind="MLListItem:variant" class="list-item"> \
-                                <span class="fa fa-trash-o cc-variant-icon" ml-bind="[events]:deleteBtn"></span> \
+                                <span class="fa fa-trash-o cc-variant-icon" ml-bind="[events, dom]:deleteBtn"></span> \
                                 <span ml-bind="[data]:label" class="cc-variant-label"></span> \
-                                <span class="cc-variant-excluded"> \
+                                <span ml-bind="[dom]:visible" style="display:none;">Visible</span> \
+                                <span ml-bind="[dom]:excludedWrapper" class="cc-variant-excluded"> \
                                     <input ml-bind="MLInput:excluded" type="checkbox"> \
                                     Excluded \
                                 </span> \
@@ -82,10 +83,17 @@ function onChildrenBound(msg, data) {
         '': { subscriber: onListChange, context: this }, // splice events
         '[*].excluded': {subscriber: onVariantExcluded, context: this }
     });
+
+    this.data.onMessages({
+        '.defaultExcluded': {subscriber: onVariantExcluded, context: this }
+    });
 }
 
 
 function onAddCountry(msg, data) {
+    // check number of live variants, show excluded option if live variants became more than one
+    toggleBasedExcludedCount.call(this);
+
     var country = _.clone(data.newValue);
     this._list.model.push(country);
     this._article.postMessage('addvariant', { criteria: _getCriteria(country) });
@@ -93,6 +101,9 @@ function onAddCountry(msg, data) {
 
 
 function onDeleteCountry(msg, data) {
+    // check number of live variants, do not allow to delete if it is the last live variant
+    toggleBasedExcludedCount.call(this);
+
     var country = data.itemData;
     this._article.postMessage('removevariant', { criteria: _getCriteria(country) });
 }
@@ -104,6 +115,9 @@ function _getCriteria(country) {
 
 
 function onListChange(msg, data) {
+    // check number of live variants, show excluded option if live variants became more than one
+    toggleBasedExcludedCount.call(this);
+
     var count = this._list.model.m('.length').get()
         , showVisible = count == 0
         , scope = this.container.scope;
@@ -114,9 +128,57 @@ function onListChange(msg, data) {
 
 
 function onVariantExcluded(msg, data) {
-    // console.log('onVariantExcluded', data);
+    // check number of live variants, if only one live variant remains, then hide its excluded option
+    toggleBasedExcludedCount.call(this);
+
+    //console.log('onVariantExcluded', data);
 }
 
+
+function toggleBasedExcludedCount() {
+    var notExcludedCount = getCountOfNotExcludedVariants.call(this);
+    toggleAllNotExcludedWrapper.call(this, notExcludedCount > 1);
+    toggleAllNotExcludedDeleteBtn.call(this, notExcludedCount > 1);
+}
+
+
+function getCountOfNotExcludedVariants() {
+    var scope = this.container.scope
+        , qty = !scope.defaultExcluded.data.get();
+
+    this._list.walkScopeTree(function(comp){
+        if(comp.name == 'excluded')
+            qty += !comp.data.get();
+    });
+
+    return qty;
+}
+
+
+function toggleAllNotExcludedWrapper(onOff) {
+    var scope = this.container.scope
+        , defaultExcluded = scope.defaultExcluded.data.get();
+
+    if(!defaultExcluded) {
+        scope.defaultExcludedWrapper.dom.toggle(onOff);
+        scope.defaultVisible.dom.toggle(!onOff);
+    }
+
+    this._list.walkScopeTree(function(comp){
+        if(comp.name == 'excluded' && !comp.data.get()){
+            comp.scope.excludedWrapper.dom.toggle(onOff);
+            comp.scope.visible.dom.toggle(!onOff);
+        }
+    });
+}
+
+
+function toggleAllNotExcludedDeleteBtn(onOff) {
+    this._list.walkScopeTree(function(comp){
+        if(comp.name == 'excluded' && !comp.data.get())
+            comp.scope.deleteBtn.dom.toggle(onOff);
+    });
+}
 
 function processVariantsListSchema(comp, schema) {
     comp._article = this;
