@@ -14,6 +14,7 @@ function ElementLock(element, timeout) {
     element.insertBefore(blankDiv);
     var style = blankDiv.style;
     style.position = 'absolute';
+    style.zIndex = 20;
     style.top = style.left = 0;
     style.width = style.height = '100%';
     blankDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
