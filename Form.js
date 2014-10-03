@@ -115,6 +115,8 @@ _.extendProto(CCForm, {
     modelPathSchema: CCForm$modelPathSchema,
     viewPathComponent: CCForm$viewPathComponent,
     viewPathSchema: CCForm$viewPathSchema,
+    getModelPath: CCForm$getModelPath,
+    getViewPath: CCForm$getViewPath,
     destroy: CCForm$destroy
 });
 
@@ -227,14 +229,15 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
                         };
                     }
 
-                    if (isFromModel) {
-                        var data = _.clone(response);
-                        if (reason) {
-                            data.reason = reason; // a bit hacky, replacing string with object created above
-                            delete data.reasonCode;
-                        }
-                        form.postMessage('validation', data);
+                    var data = _.clone(response);
+
+                    if (!isFromModel) data.path = form.getModelPath(data.path);
+
+                    if (reason) {
+                        data.reason = reason; // a bit hacky, replacing string with object created above
+                        delete data.reasonCode;
                     }
+                    form.postMessage('validation', data);
                 } else
                     logger.error('Form: component for path ' + response.path + ' not found');
             };
@@ -399,6 +402,30 @@ function CCForm$viewPathComponent(viewPath) {
 function CCForm$viewPathSchema(viewPath) {
     var viewPathObj = this._formViewPaths[viewPath];
     return viewPathObj && viewPathObj.schema;
+}
+
+
+/**
+ * Converts view path of the component in the form to the model path of the connected data
+ *
+ * @param {string} viewPath view path of the component
+ * @return {string} model path of connected data
+ */
+function CCForm$getModelPath(viewPath) {
+    return this._modelPathTranslations[viewPath];
+}
+
+
+/**
+ * Converts model path of the connected data to view path of the component in the form
+ * 
+ * @param {string} modelPath model path of connected data
+ * @return {string} view path of the component
+ */
+function CCForm$getViewPath(modelPath) {
+    return _.findKey(this._modelPathTranslations, function(mPath, vPath) {
+        return mPath == modelPath;
+    });
 }
 
 
