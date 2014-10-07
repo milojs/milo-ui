@@ -29,5 +29,4 @@
         <button ml-bind="[events]:saveBtn"  class="btn btn-default ml-ui-button"> Add </button>
 
     </{{= it.tagName}}>
-    <label><span>Max URL length: 1000 characters.</span></label>
 </div>
