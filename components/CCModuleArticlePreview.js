@@ -156,9 +156,7 @@ function CCModuleArticlePreview_setChannel(newChannel) {
 
 function CCModuleArticlePreview$destroy() {
     Component.prototype.destroy.apply(this, arguments);
-    milo.mail.offMessages({
-        'changeactiveasset': { subscriber: this.changeActiveState, context: this}
-    });
+    milo.mail.off('changeactiveasset', { subscriber: changeActiveState, context: this });
 }
 
 function _constructArticleState(value) {
