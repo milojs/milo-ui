@@ -15,7 +15,7 @@ var variantsTemplate = '<div class="ml-ui-list cc-variants-all-regions"> \
                                     <span ml-bind="[dom]:defaultVisible" class="cc-variant-status">Visible</span> \
                                     <span ml-bind="[dom]:defaultExcludedWrapper" class="cc-variant-status"> \
                                         <input ml-bind="MLInput:defaultExcluded" type="checkbox"> \
-                                        Excluded \
+                                        Block \
                                     </span> \
                                 </span> \
                             </div> \
@@ -27,7 +27,7 @@ var variantsTemplate = '<div class="ml-ui-list cc-variants-all-regions"> \
                                 <span ml-bind="[dom]:visible" style="display:none;" class="cc-variant-status">Visible</span> \
                                 <span ml-bind="[dom]:excludedWrapper" class="cc-variant-status"> \
                                     <input ml-bind="MLInput:excluded" type="checkbox"> \
-                                    Excluded \
+                                    Block \
                                 </span> \
                             </div> \
                         </div> \
