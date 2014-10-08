@@ -126,6 +126,8 @@ function CCModuleVideoPreview_get() {
 
 
 function CCModuleVideoPreview_set(value) {
+    //if stillimage is not defined use thumb instead
+    value.fields.stillImage = value.fields.stillImage || _.deepClone(value.fields.thumbImage);
     this.model.set(value);
     CCModuleVideoPreview_setChannel.call(this, value.fields.channel);
     if (value && value.fields.thumbImage && value.fields.thumbImage.hostUrl)
