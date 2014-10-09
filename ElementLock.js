@@ -11,7 +11,7 @@ function ElementLock(element, timeout) {
 
     var blankDiv = document.createElement('div');
     this.blankDiv = blankDiv;
-    element.insertBefore(blankDiv);
+    element.appendChild(blankDiv);
     var style = blankDiv.style;
     style.position = 'absolute';
     style.zIndex = 20;
@@ -20,7 +20,7 @@ function ElementLock(element, timeout) {
     blankDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
 
     var spinner = document.createElement('div');
-    blankDiv.insertBefore(spinner);
+    blankDiv.appendChild(spinner);
     var spinnerStyle = spinner.style;
     spinner.className = 'cc-loading-spinner';
     spinnerStyle.position = 'absolute';
