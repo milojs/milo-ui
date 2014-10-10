@@ -15,6 +15,10 @@
                     <input type="checkbox" ml-bind="[data]:voteFollow" class="ml-ui-input"/>
                     <span>No follow</span>
                 </label>
+                <label class="cc-external-partners-link">
+                    <input type="checkbox" ml-bind="[events]:isMoney" class="ml-ui-input"/>
+                    <span>Partner</span>
+                </label>
             </div>
             <div class="cc-relatedlist-actions">
                 <button ml-bind="[events]:upBtn" class="btn btn-default">&#x25B2;</button>

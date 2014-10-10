@@ -22,6 +22,10 @@ var CCRelatedList = Component.createComponentClass('CCRelatedList', {
             '**': {
                 subscriber: _.debounce(addStylesToList, 75),
                 context: 'owner'
+            },
+            '[*].relatedArticleTypeId': {
+                subscriber: updatePartnersView,
+                context: 'owner'
             }
         }
     }
@@ -51,12 +55,22 @@ function onChildrenBound() {
     saveBtn.events.on('click', { subscriber: onSaveButtonSubscriber, context: this });
 
     this.events.on('click', { subscriber: onListClickSubscriber, context: this });
+    this.events.on('change', { subscriber: onListChangeSubscriber, context: this });
+}
+
+function updatePartnersView(path, data) {
+    var list = this.list;
+    _.defer(function () {
+        var getIndex = parseInt(path.match(/\[([0-9])\]/)[1], 10);
+
+        var isMoney = list.item(getIndex).container.scope.isMoney.el;
+        isMoney.checked = data.newValue == '11';
+    });
 }
 
 
 function onListClickSubscriber(type, event) {
-    var elm = event.target;
-    var comp = Component.getComponent(elm);
+    var comp = Component.getComponent(event.target);
     if (!comp) return;
     var parent = comp.getScopeParent('Item');
     if (parent) {
@@ -73,6 +87,21 @@ function onListClickSubscriber(type, event) {
             case 'deleteBtn':
                 this.events.postMessage('cmgroup_removeitemat', { index: index });
                 break;
+        }
+    }
+}
+
+function onListChangeSubscriber(type, event) {
+    var el = event.target;
+    var comp = Component.getComponent(el);
+    if (!comp) return;
+    var parent = comp.getScopeParent('Item');
+    if (parent) {
+        var index = parent.item.index;
+        if (comp.name == 'isMoney') {
+            var data = parent.data.get();
+            data.relatedArticleTypeId = (el.checked) ? '11' : '2';
+            parent.data.set(data);
         }
     }
 }
@@ -178,5 +207,5 @@ function addStylesToList() {
 }
 
 function isExternal(type) {
-    return type == 10 || type == 2;
+    return type == 10 || type == 2 || type == 11;
 }
