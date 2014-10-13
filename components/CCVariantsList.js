@@ -130,6 +130,13 @@ function onListChange(msg, data) {
     scope.defaultVisible.dom.toggle(showVisible);
     scope.defaultExcludedWrapper.dom.toggle(!showVisible);
 
+    if (data.type == 'splice' && data.addedCount == 1) {
+        var idx = data.index
+            , country = data.newValue[idx];
+        if (!country.mainCountry)
+            this._list.model.m('[$1].excluded', idx).set(true);
+    }
+
     _.deferMethod(this, toggleVariantsUI);
 }
 
@@ -158,13 +165,13 @@ function getCountOfNotExcludedVariants() {
 }
 
 
-function toggleAllNotExcludedUI(onOff) {
+function toggleAllNotExcludedUI(hasNotExcluded) {
     var scope = this.container.scope
         , defaultExcluded = scope.defaultExcluded.data.get();
 
     if(!defaultExcluded) {
-        scope.defaultExcludedWrapper.dom.toggle(onOff);
-        scope.defaultVisible.dom.toggle(!onOff);
+        scope.defaultExcludedWrapper.dom.toggle(hasNotExcluded);
+        scope.defaultVisible.dom.toggle(!hasNotExcluded);
     }
 
     this._list.list.each(function(item){
@@ -172,10 +179,12 @@ function toggleAllNotExcludedUI(onOff) {
             , excluded = itemScope.excluded;
 
         if (!excluded.data.get()){
-            itemScope.excludedWrapper.dom.toggle(onOff);
-            itemScope.visible.dom.toggle(!onOff);
-            itemScope.deleteBtn.dom.toggle(onOff);
+            itemScope.excludedWrapper.dom.toggle(hasNotExcluded);
+            itemScope.visible.dom.toggle(!hasNotExcluded);
+            itemScope.deleteBtn.dom.toggle(hasNotExcluded);
         }
+        var mainCountry = item.model.m('.mainCountry').get();
+        if (!mainCountry) itemScope.excluded.el.disabled = true;
     });
 }
 
