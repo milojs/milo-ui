@@ -125,7 +125,7 @@ function processRelatedListSchema(comp, schema) {
 
 
 function processInputSchema(comp, schema) {
-    comp.setMaxLength(schema.maxLength);
+    if (_.isNumeric(schema.maxLength)) comp.setMaxLength(schema.maxLength);
 }
 
 function setComponentOptions(comp, options, setModelFunc) {
