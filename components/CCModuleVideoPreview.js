@@ -127,6 +127,7 @@ function CCModuleVideoPreview_get() {
 
 function CCModuleVideoPreview_set(value) {
     //if stillimage is not defined use thumb instead
+    value = _transformData(value);
     value.fields.stillImage = value.fields.stillImage || _.deepClone(value.fields.thumbImage);
     this.model.set(value);
     CCModuleVideoPreview_setChannel.call(this, value.fields.channel);
@@ -145,6 +146,12 @@ function CCModuleVideoPreview_setChannel(newChannel) {
 
     this._channel = newChannel;
     this.el.classList.add(this._channel);
+}
+
+function _transformData(data) {
+    var result = {};
+    result.fields = data._source;
+    return result;
 }
 
 function _parseData(data) {

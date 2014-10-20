@@ -46,11 +46,11 @@ function CCModuleArticleModulePreview_set(value) {
     }).error(function (error) {
         milo.util.logger.error('itemStyles config returned with an error.');
     });
-    
+
 }
 
 function parseData(value, styleData) {
-    var fields = value.fields = value.fields || {};
+    var fields = value._source = value._source || {};
     var linkListGroupIds = fields['linkListGroups.linkListGroupId'];
     var linkListGroups = [];
     linkListGroupIds && linkListGroupIds.forEach(function (groupId, index) {
@@ -78,7 +78,7 @@ function parseData(value, styleData) {
             name: style.jsp_name
         };
     });
-    
+
     return {
         id: moduleId,
         title: stripHtml(fields.title || fields.name || fields.headline),
