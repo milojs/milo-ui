@@ -21,11 +21,15 @@ var CCModuleArticleModulePreview = Component.createComponentClass('CCModuleArtic
     },
     model: {
         messages: {
-            '.styles': {context: 'owner', subscriber: onStyleGroupChange},
-            '.styles[*].group': {context: 'owner', subscriber: onStyleGroupChange}
+            '.styles': { context: 'owner', subscriber: onStyleGroupChange },
+            '.styles[*].group': { context: 'owner', subscriber: onStyleGroupChange }
         }
     },
-    events: undefined,
+    events: {
+        messages: {
+            'dblclick': { context: 'owner', subscriber: onModuleClick }
+        }
+    },
     transfer: undefined
 });
 
@@ -48,6 +52,7 @@ function CCModuleArticleModulePreview_set(value) {
     });
 
 }
+
 
 function parseData(value, styleData) {
     var fields = value._source = value._source || {};
@@ -99,6 +104,7 @@ function parseData(value, styleData) {
     }
 }
 
+
 function onStyleGroupChange(msg, data) {
     if (! Array.isArray(data.newValue)) return;
 
@@ -116,17 +122,55 @@ function onStyleGroupChange(msg, data) {
     this.container.scope.width.el.innerHTML = str;
 }
 
+
 function stripHtml(text) {
     var tmp = document.createElement('div');
     tmp.innerHTML = text;
     return tmp.textContent || tmp.innerText || '';
 }
 
+
 function getMetaParams () {
     return {
         styles: JSON.stringify(this.model.m('.styles').get())
     };
 }
+
+
+var editorTypes = {
+    //'standardModule': 'moduleEditor',
+    //'gallery': 'moduleEditor',
+    'module': 'moduleEditor',
+    'linkList': 'listEditor',
+    'poll': 'pollEditor'
+};
+function onModuleClick(moduleData) {
+    var state = this.transfer.getState();
+    var id = state.facetsStates.model.state.tag.id;
+    var type = state.facetsStates.model.state.tag.name;
+    type = type == 'linkListGroup' ? 'linkList' : type;
+    var app = editorTypes[type];
+
+    if (!app
+        || (app == 'pollEditor' && !CC.config.urlToggles.polls)
+        || (app == 'listEditor' && !CC.config.urlToggles.lists)) {
+        milo.mail.postMessage('opendialog', {
+            name: 'wrong_editor_' + type,
+            options: {
+                title: 'Unable to edit',
+                text: 'There is no editor for the module type: ' + type
+            }
+        });
+        return;
+    }
+
+    milo.mail.postMessage('loadasset', {
+        editorApp: app,
+        assetType: type.toLowerCase(),
+        assetId: +id
+    });
+}
+
 
 function _constructModuleState(value) {
     if (!value) return;
