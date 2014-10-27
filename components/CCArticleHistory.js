@@ -86,14 +86,15 @@ var articleStatusLabelCSS = {
 };
 
 function fetchHistory (articleID, currentArticleId) {
+    if (! articleID) return;
     var self = this;
 
     this.container.scope.list.data.set([]);
     this.model.set([]);
     this._currentArticleId = articleID;
 
-    milo.util.request.json(window.CC.config.apiHost + '/article/listVersions/' + articleID, function(err, res) {
-        if (err) logger.error('Cannot load versions list', err);
+    milo.util.request.json(window.CC.config.apiHost + '/assets/article/' + articleID + '/versions', function(err, res) {
+        if (err) return logger.error('Cannot load versions list', err);
         var list = mergeWpsCCVersions(res);
         var list = Array.isArray(list) ? list : [];
 
@@ -104,31 +105,34 @@ function fetchHistory (articleID, currentArticleId) {
             var editorToolComp = item.container.scope.editorTool;
 
             statusComp.el.classList.add(articleStatusLabelCSS[status]);
-            item.el.classList.toggle('active', currentArticleId == list[index].id);
+            item.el.classList.toggle('active', currentArticleId == list[index].id || (index == 0 && currentArticleId == 'latest'));
 
             if (list[index].editorTool != 'CC') editorToolComp.el.classList.add('label', 'label-warning');
         });
+
         self.model.set(list);
     });
 }
 
 
 function mergeWpsCCVersions(res) {
-    var wpsVersions = (res.wpsVersions && res.wpsVersions.data) || []
-        , ccVersions = res.ccVersions || [];
+    var ccVersions = res.ccVersions || [];
+
+    var wpsVersions = JSON.parse(res.wpsVersions);
+    wpsVersions = wpsVersions.data || [];
 
     ccVersions = transformCCVersions(ccVersions);
-    wpsVersions = transformWPSVersions(wpsVersions); 
+    wpsVersions = transformWPSVersions(wpsVersions);
 
     var combined = wpsVersions.concat(ccVersions);
     combined.sort(function(a, b) {
         return new Date(b.createdDate) - new Date(a.createdDate);
     });
-    
+
     combined.forEach(function(version) {
         version.createdDate = moment(version.createdDate).format('MMM DD, YYYY HH:mm');
     });
-    
+
     return combined;
 
     function transformCCVersions(ccVersions) {
@@ -154,7 +158,7 @@ function mergeWpsCCVersions(res) {
 function showLocalHistory(articleStorageId) {
     var ids = articleStorage.getVersionIds(articleStorageId)
         , versions = articleStorage.getVersionMetas(articleStorageId);
-    
+
     var list = ids && ids.reverse().map(function(id, index) {
             var version = versions[id]
                 , isOpenedVersion = index == ids.length - 1
@@ -177,7 +181,7 @@ function showLocalHistory(articleStorageId) {
 function fromNow(date) {
     var period = Math.floor((new Date - new Date(date)) / 1000);
     if (period == 0)
-        return 'just now'; 
+        return 'just now';
     else if (period > 0 && period < 60) {
         var S = period > 1 ? 's' : '';
         return (period) + ' second' + S + ' ago';
