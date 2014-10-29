@@ -277,15 +277,17 @@ function CCForm$validateModel(callback) {
     var validations = []
         , self = this;
 
-    _.eachKey(this._dataValidations.toModel, function(validators, viewPath) {
-        var modelPath = this._modelPathTranslations[viewPath]
-            , data = this.model.m(modelPath).get();
+    _.eachKey(this._dataValidations.fromModel, function(validators, modelPath) {
+        var data = this.model.m(modelPath).get();
+        validators = Array.isArray(validators) ? validators : [validators];
 
-        validations.push({
-            viewPath: viewPath,
-            data: data,
-            validators: validators
-        });
+        if (validators && validators.length) {
+            validations.push({
+                modelPath: modelPath,
+                data: data,
+                validators: validators
+            });
+        }
     }, this);
 
 
@@ -303,10 +305,10 @@ function CCForm$validateModel(callback) {
                 },
             // post validation result of item to form
             function(valid) {
-                lastResponse.path = validation.viewPath;
+                lastResponse.path = validation.modelPath;
                 lastResponse.valid = valid;
-                self.data.postMessage('validated', lastResponse);
-                if (! valid) allValid = false;
+                self.model.postMessage('validated', lastResponse);
+                if (!valid) allValid = false;
                 nextValidation(null);
             });
         },
