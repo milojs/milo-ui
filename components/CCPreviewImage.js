@@ -3,7 +3,12 @@
 var componentRegistry = milo.registry.components
     , Component = milo.Component
     , MLImage = componentRegistry.get('MLImage')
+    , ccCommon = require('cc-common')
+    , imagesConfig = ccCommon.config.images
+    , DragDrop = milo.util.dragDrop
     , PREVIEW_IMAGE_CHANGE_MESSAGE = 'previewimagechange';
+
+var IMAGE_LOADING_CLASS = 'cc-image-loading';
 
 var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
     model: {
@@ -39,6 +44,192 @@ var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
 module.exports = CCPreviewImage;
 
 componentRegistry.add(CCPreviewImage);
+
+
+_.extend(CCPreviewImage, {
+    onPreviewImageDrop: CCPreviewImage$$onPreviewImageDrop,
+    onPreviewImageClick: CCPreviewImage$$onPreviewImageClick,
+    onCropAllDrop: CCPreviewImage$$onCropAllDrop
+});
+
+
+function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
+    event.target.parentNode.classList.add(IMAGE_LOADING_CLASS);
+    var dt = new DragDrop(event);
+    var cropType = _getPreviewImageCropType.call(this, imageType);
+    var transferState = dt.getComponentState();
+
+    var droppedImage = getDroppedImageComponent(transferState);
+
+    if (droppedImage) {
+        var previewImage = this;
+        var targetWidth = cropType.width;
+        var targetHeight = cropType.height;
+
+        droppedImage.croppable.autoCropImageToFit(targetWidth, targetHeight, { imageType: imageType }, function (err, settings, wpsImage){
+            droppedImage.croppable.applyCropDetails(settings, wpsImage);
+            _applyCropToInspectorImage(droppedImage.model.get(), previewImage);
+            _cropLinkedTypes.call(previewImage, previewImage, imageType, settings);
+
+            event.target.parentNode.classList.remove(IMAGE_LOADING_CLASS);
+        });
+    } else
+        logger.error('CMArticle onPreviewImageDrop: no image dropped');
+}
+
+
+function getDroppedImageComponent(state) {
+    try { var imageModel = state.facetsStates.container.scope.img0.facetsStates.model} catch(e) {}
+    if (!imageModel) return;
+
+    return Component.createFromState(_constructCroppableImageState(imageModel), undefined, true);
+}
+
+
+function CCPreviewImage$$onPreviewImageClick(imageType, msg, event) {
+    var cropType = _getPreviewImageCropType.call(this, imageType);
+    var previewImage = this;
+    previewImage.croppable.showImageEditor([cropType], function(err, cropResponses) {
+        var imageData = previewImage.getImageData();
+        _applyCropToInspectorImage(imageData, previewImage);
+        _cropAnyLinkedTypes.call(previewImage, previewImage, imageType, cropResponses);
+    });
+}
+
+
+function CCPreviewImage$$onCropAllDrop(imageTypes, msg, event) {
+    var CCForm = componentRegistry.get('CCForm');
+    var dt = new DragDrop(event)
+        , cropTypes = imageTypes.map(_getPreviewImageCropType, this)
+        , transferState = dt.getComponentState();
+
+    var droppedImage = getDroppedImageComponent(transferState);
+
+    if (droppedImage) {
+        var self = this;
+        droppedImage.croppable.showImageEditor(cropTypes, function(err, cropResponses) {
+            var transferItem = droppedImage.model.m('.transferItem').get();
+            var form = self.getScopeParentWithClass(CCForm);
+
+            imageTypes.forEach(function(imageType, index) {
+                var cropType = cropTypes[index];
+                var cropResponse = cropResponses[cropType.name];
+                if (!cropResponse) return;
+
+                var modelPath = imagesConfig(imageType).inspectorModelPath;
+                var inspectorImage = form.modelPathComponent(modelPath);
+
+                _setPreviewImageAfterCrop(inspectorImage, cropResponse, transferItem, imageType);
+                _cropAnyLinkedTypes.call(self, droppedImage, imageType, cropResponses);
+            });
+        });
+    } else
+        logger.error('CMArticle onPreviewImageDrop: no image dropped');
+
+    // imageGroup.destroy();
+}
+
+
+function _setPreviewImageAfterCrop(previewImage, cropResponse, transferItem, imageType) {
+    if (! cropResponse) return logger.warn('CMArticle onCropAllDrop: No crop response found for:', imageType);
+
+    var imageData = {
+        wpsImage: _.omitKeys(cropResponse.wpsImage),
+        crop: {
+            settings: cropResponse.settings
+        },
+        transferItem: transferItem
+    };
+    previewImage.setImageData(imageData);
+    previewImage.setImageSrc(imageData.wpsImage.hostUrl);
+}
+
+
+function _cropLinkedTypes(image, imageType, settings) {
+    var CCForm = componentRegistry.get('CCForm');
+    var form = this.getScopeParentWithClass(CCForm);
+
+    var imageTypeConfig = imagesConfig(imageType);
+    var linkedImageTypes = imageTypeConfig.linkedImageTypes;
+    if (linkedImageTypes) {
+        linkedImageTypes.forEach(function(linkedImageType) {
+            var linkedImageTypeConfig = imagesConfig(linkedImageType);
+            var size = { h: linkedImageTypeConfig.height, w: linkedImageTypeConfig.width};
+
+            var modelPath = imagesConfig(linkedImageType).inspectorModelPath;
+            var linkedImage = form.modelPathComponent(modelPath)
+                , imageModel = image.croppable.getImageData();
+
+            linkedImage.setImageData({
+                transferItem: imageModel.transferItem,
+                wpsImage: imageModel.wpsImage
+            });
+
+            linkedImage.croppable.cropImage(settings.coords, size, { imageType: linkedImageType }, function(err, coords, wpsImage) {
+                var imageModel = linkedImage.model.get();
+                var imageData = {
+                    transferItem: imageModel.transferItem,
+                    wpsImage: wpsImage,
+                    crop: { settings: settings }
+                };
+
+                _applyCropToInspectorImage(imageData, linkedImage);
+            });
+        });
+    }
+}
+
+
+function _cropAnyLinkedTypes(image, imageType, cropResponses) {
+    var imageTypeConfig = imagesConfig(imageType);
+    var cropResponse = cropResponses[imageTypeConfig.label];
+    var settings = cropResponse.settings;
+
+    _cropLinkedTypes.call(this, image, imageType, settings);
+}
+
+
+function _constructCroppableImageState(modelState) {
+    return {
+        compClass: 'Component',
+        compName: 'img0',
+        extraFacets: ['croppable'],
+        outerHTML: '<div></div>',
+        facetsStates: {
+            model: modelState
+        }
+    }
+}
+
+
+function _applyCropToInspectorImage(imageData, inspectorImage) {
+    inspectorImage.setImageData(imageData);
+    inspectorImage.setImageSrc(imageData.wpsImage.hostUrl);
+}
+
+
+function _getPreviewImageCropType(imageType) {
+    var CCForm = componentRegistry.get('CCForm');
+    var form = this.getScopeParentWithClass(CCForm);
+    if (! form) throw new Error('CMArticle _getPreviewImageCropType: no form found');
+
+    var imageTypeConfig = imagesConfig(imageType);
+    var modelPath = imageTypeConfig.inspectorModelPath;
+    var inspectorImage = form.modelPathComponent(modelPath);
+
+    var cropType = imageTypeConfig.cropSettings();
+
+    var cropData = inspectorImage.croppable.getCropData();
+    if (cropData && cropData.settings) {
+        _.extend(cropType, cropData.settings);
+    }
+
+    var wpsImage = inspectorImage.croppable.getWpsImage();
+    if (wpsImage) {
+        cropType.description = wpsImage.description;
+    }
+    return cropType;
+}
 
 
 _.extendProto(CCPreviewImage, {
