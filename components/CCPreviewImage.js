@@ -90,7 +90,7 @@ function CCPreviewImage$$onPreviewImageClick(imageType, msg, event) {
     var cropType = _getPreviewImageCropType.call(this, imageType);
     var previewImage = this;
     previewImage.croppable.showImageEditor([cropType], function(err, cropResponses) {
-        var imageData = previewImage.getImageData();
+        var imageData = previewImage.croppable.getImageData();
         _applyCropToInspectorImage(imageData, previewImage);
         _cropAnyLinkedTypes.call(previewImage, previewImage, imageType, cropResponses);
     });
@@ -140,7 +140,7 @@ function _setPreviewImageAfterCrop(previewImage, cropResponse, transferItem, ima
         },
         transferItem: transferItem
     };
-    previewImage.setImageData(imageData);
+    previewImage.croppable.setImageData(imageData);
     previewImage.setImageSrc(imageData.wpsImage.hostUrl);
 }
 
@@ -160,7 +160,7 @@ function _cropLinkedTypes(image, imageType, settings) {
             var linkedImage = form.modelPathComponent(modelPath)
                 , imageModel = image.croppable.getImageData();
 
-            linkedImage.setImageData({
+            linkedImage.croppable.setImageData({
                 transferItem: imageModel.transferItem,
                 wpsImage: imageModel.wpsImage
             });
@@ -203,7 +203,7 @@ function _constructCroppableImageState(modelState) {
 
 
 function _applyCropToInspectorImage(imageData, inspectorImage) {
-    inspectorImage.setImageData(imageData);
+    inspectorImage.croppable.setImageData(imageData);
     inspectorImage.setImageSrc(imageData.wpsImage.hostUrl);
 }
 
@@ -233,33 +233,8 @@ function _getPreviewImageCropType(imageType) {
 
 
 _.extendProto(CCPreviewImage, {
-    setImageData: CCPreviewImage$setImageData,
-    getImageData: CCPreviewImage$getImageData,
-    setImageSrc: CCPreviewImage$setImageSrc,
-    setSize: CCPreviewImage$setSize,
-    getSize: CCPreviewImage$getSize
+    setImageSrc: CCPreviewImage$setImageSrc
 });
-
-function CCPreviewImage$setSize() {
-    //noop - just to satisfy Croppable interface
-}
-
-function CCPreviewImage$getSize() {
-    //noop - just to satisfy Croppable interface
-}
-
-
-function CCPreviewImage$getImageData() {
-    var modelRootPath = this.croppable.config.modelRootPath;
-    return this.model.m(modelRootPath).get();
-}
-
-
-function CCPreviewImage$setImageData(data) {
-    var modelRootPath = this.croppable.config.modelRootPath;
-    this.model.m(modelRootPath).set(data);
-    this.setImageSrc(data.url);
-}
 
 
 function CCPreviewImage$setImageSrc(url) {
