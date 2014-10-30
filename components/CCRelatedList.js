@@ -202,7 +202,8 @@ function addStylesToList() {
         comp.el.classList.add(typeClass);
         scope.relatedUrl.el.href = scope.relatedUrl.el.innerHTML;
         comp.el.classList.toggle('has-error', scope.headline.el.value.length == 0);
-        scope.headline.startAutoresize({ minHeight: 30, maxHeight: 60 });
+        if (!scope.headline.isAutoresized())
+            scope.headline.startAutoresize({ minHeight: 24, maxHeight: 84 });
         scope.relatedId.el.href =  baseUrl + scope.relatedUrl.el.innerHTML;
     });
 }
