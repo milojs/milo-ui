@@ -19,7 +19,7 @@ var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
     drop: {
         allow: {
             components: {
-                'CMImageGroup': true
+                'CMImageGroup': canAcceptDroppedImage
             }
         },
         messages: {
@@ -51,6 +51,11 @@ _.extend(CCPreviewImage, {
     onPreviewImageClick: CCPreviewImage$$onPreviewImageClick,
     onCropAllDrop: CCPreviewImage$$onCropAllDrop
 });
+
+
+function canAcceptDroppedImage(info, dt) {
+    return !info.params.imageFromArticle;
+}
 
 
 function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
