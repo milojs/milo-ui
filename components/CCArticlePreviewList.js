@@ -134,6 +134,7 @@ function _parseMultiple(multiple) {
 }
 
 function _parseData(data) {
+    data.fields = data._source;
     var result = {};
 
     // Set the data in the search result
