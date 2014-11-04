@@ -52,7 +52,10 @@ function CCRelatedList$setLinkDefaults(defaultLink) {
 
 function onChildrenBound() {
     var saveBtn = this.container.scope.saveBtn;
-    saveBtn.events.on('click', { subscriber: onSaveButtonSubscriber, context: this });
+    saveBtn.events.on('click', { subscriber: onSaveButtonClick, context: this });
+
+    var input = this.container.scope.input;
+    input.events.on('keypress', { subscriber: onInputKey, context: this })
 
     this.events.on('click', { subscriber: onListClickSubscriber, context: this });
     this.events.on('change', { subscriber: onListChangeSubscriber, context: this });
@@ -107,7 +110,12 @@ function onListChangeSubscriber(type, event) {
 }
 
 
-function onSaveButtonSubscriber() {
+function onInputKey(msg, event) {
+    if (event.keyCode == 13) onSaveButtonClick.call(this);
+}
+
+
+function onSaveButtonClick() {
     var newRelated = this.container.scope.input.data.get()
         .split(' ').filter(function(value) {
             return value != '';
@@ -201,7 +209,9 @@ function addStylesToList() {
         var scope = comp.container.scope;
         comp.el.classList.add(typeClass);
         scope.relatedUrl.el.href = scope.relatedUrl.el.innerHTML;
-        comp.el.classList.toggle('has-error', scope.headline.el.value.length == 0)
+        comp.el.classList.toggle('has-error', scope.headline.el.value.length == 0);
+        if (!scope.headline.isAutoresized())
+            scope.headline.startAutoresize({ minHeight: 24, maxHeight: 84 });
         scope.relatedId.el.href =  baseUrl + scope.relatedUrl.el.innerHTML;
     });
 }

@@ -56,17 +56,11 @@ function CCModuleArticleModulePreview_set(value) {
 
 function parseData(value, styleData) {
     var fields = value._source = value._source || {};
-    var linkListGroupIds = fields['linkListGroups.linkListGroupId'];
-    var linkListGroups = [];
-    linkListGroupIds && linkListGroupIds.forEach(function (groupId, index) {
-        linkListGroups.push({
-            id: groupId,
-            style: fields['linkListGroups.linkListGroupStyle'][index],
-            title: fields['linkListGroups.title'][index]
-        });
-    });
+    // var linkListGroupIds = fields['linkListGroups.linkListGroupId'];
+    var linkListGroups = fields.linkListGroups ? fields.linkListGroups.map(mapGroup) : [];
+
     fields.moduleStyle = fields.moduleStyle || fields.galleryPreviewStyle || fields.pollPreviewStyle || fields.path
-        || (fields['linkListGroups.linkListGroupStyle'] && fields['linkListGroups.linkListGroupStyle'][0]) || '';
+        || (linkListGroups[0] && linkListGroups.style) || '';
 
     var moduleType = getModuleType(value._type);
     var moduleId = linkListGroups.length ? linkListGroups[0].id : value._id;
@@ -102,6 +96,15 @@ function parseData(value, styleData) {
         else
             return moduleType;
     }
+}
+
+
+function mapGroup(group) {
+    return {
+        id: group.linkListGroupId,
+        style: group.linkListGroupStyle,
+        title: group.title
+    };
 }
 
 

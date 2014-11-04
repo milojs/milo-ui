@@ -3,7 +3,7 @@
     <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">
 
         <div ml-bind="[item]:result" class="cc-relatedlinks-item">
-            <input type="text" ml-bind="[data]:headline" class="ml-ui-input form-control" maxlength="256" />
+            <textarea ml-bind="MLTextarea:headline" class="form-control" maxlength="256"></textarea>
             <a ml-bind="[data]:relatedUrl" class="cc-relatedlist-url" target="_blank"></a>
             <a ml-bind="[data]:relatedId" class="cc-relatedlist-id" target="_blank"></a>
             <div class="cc-relatedlist-options">
@@ -28,7 +28,7 @@
             <input type="hidden" ml-bind="[data]:relatedArticleTypeId">
         </div>
 
-        <input type="text" ml-bind="[data]:input" class="form-control ml-ui-input" placeHolder="Article ID or any website URL" maxlength="1000" />
+        <input type="text" ml-bind="[data, events]:input" class="form-control ml-ui-input" placeHolder="Article ID or any website URL" maxlength="1000" />
 
         <button ml-bind="[events]:saveBtn"  class="btn btn-default ml-ui-button"> Add </button>
 

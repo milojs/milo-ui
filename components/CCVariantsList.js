@@ -65,6 +65,7 @@ _.extendProto(CCVariantsList, {
 function CCVariantsList$init() {
     Component.prototype.init.apply(this, arguments);
     this.once('childrenbound', onChildrenBound);
+    this.once('stateready', onStateReady);
 }
 
 
@@ -87,6 +88,11 @@ function onChildrenBound(msg, data) {
     this.data.onMessages({
         '.defaultExcluded': {subscriber: onVariantExcluded, context: this }
     });
+}
+
+
+function onStateReady(msg, data) {
+    toggleVariantsUI.call(this);
 }
 
 
