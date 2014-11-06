@@ -92,8 +92,8 @@ function onListClickSubscriber(type, event) {
 
 
 function deleteItem(index) {
-    var a = this.model.get()[index];
-    this._hostComponent.broadcast('deletehyperlink', { url: this.model.get()[index].relatedUrl });
+    var link = this.model.get()[index];
+    this._hostComponent.broadcast('deletehyperlink', { id: link.id });
     this.model.splice(index, 1);
     _triggerExternalPropagation.call(this);
 }
