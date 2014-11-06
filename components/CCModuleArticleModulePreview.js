@@ -1,10 +1,42 @@
 'use strict';
 
-var componentsRegistry = milo.registry.components
+var fs = require('fs')
+    , doT = milo.util.doT
+    , logger = milo.util.logger
+    , componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component');
 
 
-var CMARTICLEMODULE_GROUP_TEMPLATE = '<div><div class="cc-modulePreview-content" ml-bind=":modulePreview">article module</div></div>';
+var CMARTICLEMODULE_GROUP_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/modules/articleModulePreview.dot'))();
+
+var channelModuleTypes = {
+    'standardModule': {
+        compClass: 'CIPageItemStandardModule',
+        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelStandardModulePreview.dot'))
+    },
+    'gallery': {
+        compClass: 'CIPageItemGallery',
+        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelGalleryPreview.dot'))
+    },
+    'module': {
+        compClass: 'CIPageItemModule',
+        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelModulePreview.dot'))
+    },
+    'linkListGroup': {
+        compClass: 'CIPageItemLinkListGroup',
+        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelLinkListGroupPreview.dot'))
+    },
+    'poll': {
+        compClass: 'CIPageItemPoll',
+        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelPollPreview.dot'))
+    }
+};
+
+var activeState = 'article';
+milo.mail.on('changeactiveasset', function (msg, data) {
+    activeState = data.asset && data.asset.type;
+});
+
 
 var CCModuleArticleModulePreview = Component.createComponentClass('CCModuleArticleModulePreview', {
     dom: {
@@ -35,7 +67,29 @@ var CCModuleArticleModulePreview = Component.createComponentClass('CCModuleArtic
 
 componentsRegistry.add(CCModuleArticleModulePreview);
 
+_.extendProto(CCModuleArticleModulePreview, {
+    init: CCModuleArticleModulePreview$init,
+    destroy: CCModuleArticleModulePreview$destroy
+});
+
+
 module.exports = CCModuleArticleModulePreview;
+
+function CCModuleArticleModulePreview$init() {
+    Component.prototype.init.apply(this, arguments);
+    milo.mail.on('changeactiveasset', {subscriber: changeActiveState, context: this});
+}
+
+
+function CCModuleArticleModulePreview$destroy() {
+    Component.prototype.init.apply(this, arguments);
+    milo.mail.off('changeactiveasset', { subscriber: changeActiveState, context: this });
+}
+
+
+function changeActiveState() {
+    this.transfer.setActiveState(activeState);
+}
 
 
 function CCModuleArticleModulePreview_set(value) {
@@ -44,7 +98,9 @@ function CCModuleArticleModulePreview_set(value) {
     var stylesPromise = window.CC.config.data.itemStyles;
     stylesPromise.then(function (dontUse, data) {
         value = parseData(value, data);
-        self.transfer.setState(_constructModuleState(value));
+        self.transfer.setStateWithKey('article', _makeModuleStateForArticle(value));
+        self.transfer.setStateWithKey('channel', _makeArticleStateForChannel(value));
+        self.transfer.setActiveState(activeState);
         self.data._set(value);
         self.model.set(value);
     }).error(function (error) {
@@ -175,7 +231,7 @@ function onModuleClick(moduleData) {
 }
 
 
-function _constructModuleState(value) {
+function _makeModuleStateForArticle(value) {
     if (!value) return;
 
     var width = value.styles && value.styles.length == 1 && value.styles[0].group == 'single'
@@ -206,4 +262,32 @@ function _constructModuleState(value) {
             }
         }
     };
+}
+
+function _makeArticleStateForChannel(value) {
+    if (!value) return;
+    var channelModuleConfig = getChannelConfig(value.type);
+    if (!channelModuleConfig) return logger.log(value.type, 'not supported');
+    var compName = milo.util.componentName();
+
+    return {
+        outerHTML: channelModuleConfig.template({compName: compName}),
+        compClass: channelModuleConfig.compClass,
+        compName: compName,
+        facetsStates: {
+            model: {
+                state: {
+                    id: value.id,
+                    type: value.type,
+                    title: value.title,
+                    styleName: value.styleKey,
+                    styles: value.styles
+                }
+            }
+        }
+    };
+}
+
+function getChannelConfig(type) {
+    return channelModuleTypes[type] || '';
 }
