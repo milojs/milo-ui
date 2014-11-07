@@ -81,11 +81,14 @@ function processComboSchema(comp, schema) {
 
 function processSuperComboSchema(comp, schema) {
     var options = schema.comboOptions
+        , optionsURL = schema.comboOptionsURL
         , addItemPrompt = schema.addItemPrompt;
 
     _.deferTicks(function() {
         if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
         setComponentOptions(comp, options, setComboOptions);
+        if(optionsURL)
+            comp.initOptionsURL(optionsURL);
     }, 2);
 }
 
