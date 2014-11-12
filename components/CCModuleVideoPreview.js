@@ -132,13 +132,24 @@ function CCModuleVideoPreview_set(value) {
     this.model.set(value);
     CCModuleVideoPreview_setChannel.call(this, value.fields.channel);
     if (value && value.fields.thumbImage && value.fields.thumbImage.hostUrl)
-        try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
-        this.transfer.setStateWithKey('article', _constructVideoState(value));
-        this.transfer.setStateWithKey('linklist', _constructVideoLinkState(value));
-        this.transfer.setActiveState(activeState);
-        value = _parseData(value);
-        this.data._set(value);
+        if (value && value.fields.thumbImage && value.fields.thumbImage.hostUrl) {
+            try {
+                this.container.scope.image.el.src = value.fields.thumbImage.hostUrl;
+            } catch (e) {
+            }
+        }
+    if (value && value.fields.status.toLowerCase().match(/(spiked|raw|held)/)) {
+        this.drag.disable();
+    } else {
+        this.drag.enable();
     }
+    try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
+    this.transfer.setStateWithKey('article', _constructVideoState(value));
+    this.transfer.setStateWithKey('linklist', _constructVideoLinkState(value));
+    this.transfer.setActiveState(activeState);
+    value = _parseData(value);
+    this.data._set(value);
+}
 
 function CCModuleVideoPreview_setChannel(newChannel) {
     if (this._channel)
