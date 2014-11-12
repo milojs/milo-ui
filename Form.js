@@ -552,7 +552,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 
                         if (! notInModel) {
                             _addModelPathTranslation(viewPath, modelPath, modelPattern);
-                            _addDataTranslation(translate, 'fromModel', modelPath);
+                            _addDataTranslation.call(this, translate, 'fromModel', modelPath);
                             _addDataValidation.call(this, validate, 'toModel', viewPath);
                             _addDataValidation.call(this, validate, 'fromModel', modelPath);
                         }
@@ -627,11 +627,19 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 
     function _addDataTranslation(translate, direction, path) {
         var translateFunc = translate && translate[direction];
-        if (! translateFunc) return;
-        if (typeof translateFunc == 'function')
+        if (!translateFunc) return;
+        if (typeof translateFunc == 'function') {
+            if (translate.context) {
+                if (translate.context == 'host')
+                    var context = this;
+                else
+                    throw new FormError('Incorrect translator context: ' + translate.context);
+                translateFunc = translateFunc.bind(context);
+            }
             dataTranslations[direction][path] = translateFunc;
-        else
+        } else {
             throw new FormError(direction + ' translator for ' + path + ' should be function');
+        }
     }
 
     function _addDataValidation(validate, direction, path) {
