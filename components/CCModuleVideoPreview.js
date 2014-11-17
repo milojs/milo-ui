@@ -131,18 +131,18 @@ function CCModuleVideoPreview_set(value) {
     value.fields.stillImage = value.fields.stillImage || _.deepClone(value.fields.thumbImage);
     this.model.set(value);
     CCModuleVideoPreview_setChannel.call(this, value.fields.channel);
-    if (value && value.fields.thumbImage && value.fields.thumbImage.hostUrl)
-        if (value && value.fields.thumbImage && value.fields.thumbImage.hostUrl) {
-            try {
-                this.container.scope.image.el.src = value.fields.thumbImage.hostUrl;
-            } catch (e) {
-            }
+
+    try { var hostUrl = value.fields.thumbImage.hostUrl } catch(e) {}
+    if (hostUrl) {
+        try {
+            this.container.scope.image.el.src = hostUrl;
+        } catch (e) {
         }
-    if (value && value.fields.status.toLowerCase().match(/(spiked|raw|held)/)) {
-        this.drag.disable();
-    } else {
-        this.drag.enable();
     }
+
+    try { var isLive = value.fields.status.toLowerCase() == 'live'; } catch(e){}
+    this.drag[isLive ? 'enable' : 'disable']();
+
     try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
     this.transfer.setStateWithKey('article', _constructVideoState(value));
     this.transfer.setStateWithKey('linklist', _constructVideoLinkState(value));
