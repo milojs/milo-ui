@@ -99,7 +99,7 @@ function CCModuleArticleModulePreview_set(value) {
     stylesPromise.then(function (dontUse, data) {
         value = parseData(value, data);
         self.transfer.setStateWithKey('article', _makeModuleStateForArticle(value));
-        self.transfer.setStateWithKey('channel', _makeArticleStateForChannel(value));
+        self.transfer.setStateWithKey('channel', _makeModuleStateForChannel(value));
         self.transfer.setActiveState(activeState);
         self.data._set(value);
         self.model.set(value);
@@ -264,7 +264,7 @@ function _makeModuleStateForArticle(value) {
     };
 }
 
-function _makeArticleStateForChannel(value) {
+function _makeModuleStateForChannel(value) {
     if (!value) return;
     var channelModuleConfig = getChannelConfig(value.type);
     if (!channelModuleConfig) return logger.log(value.type, 'not supported');
@@ -277,11 +277,11 @@ function _makeArticleStateForChannel(value) {
         facetsStates: {
             model: {
                 state: {
-                    id: value.id,
-                    type: value.type,
-                    title: value.title,
-                    styleName: value.styleKey,
-                    styles: value.styles
+                    itemId: value.id,
+                    itemType: value.type,
+                    itemStyle: value.styleKey,
+                    styles: value.styles,
+                    title: value.title
                 }
             }
         }
