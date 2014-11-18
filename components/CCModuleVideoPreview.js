@@ -138,7 +138,9 @@ function CCModuleVideoPreview_get() {
 function CCModuleVideoPreview_set(value) {
     //if stillimage is not defined use thumb instead
     value = _transformData(value);
-    value.fields.stillImage = value.fields.stillImage || _.deepClone(value.fields.thumbImage);
+    value.fields.stillImage = value.fields.stillImage
+                                || (value.fields.thumbImage && _.deepClone(value.fields.thumbImage))
+                                || {hostUrl: 'undefined'};
 
     try { var isLive = value.fields.status.toLowerCase() == 'live'; } catch(e){}
     value.isLive = !!isLive;
@@ -146,14 +148,11 @@ function CCModuleVideoPreview_set(value) {
     this.model.set(value);
     CCModuleVideoPreview_setChannel.call(this, value.fields.channel);
 
-    try { var hostUrl = value.fields.thumbImage.hostUrl } catch(e) {}
-    if (hostUrl) {
-        try {
-            this.container.scope.image.el.src = hostUrl;
-        } catch (e) {}
-    }
+    try {
+        var hostUrl = value.fields.thumbImage.hostUrl;
+        this.container.scope.image.el.src = hostUrl;
+    } catch (e) {}
 
-    try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
     this.transfer.setStateWithKey('article', _constructVideoState(value));
     this.transfer.setStateWithKey('linklist', _constructVideoLinkState(value));
     this.transfer.setActiveState(activeState);

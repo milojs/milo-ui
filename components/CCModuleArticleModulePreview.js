@@ -134,6 +134,8 @@ function parseData(value, styleData) {
         };
     });
 
+    try { var isLive = fields.status.toLowerCase() == 'live'; } catch(e){}
+
     return {
         id: moduleId,
         title: stripHtml(fields.title || fields.name || fields.headline),
@@ -141,6 +143,7 @@ function parseData(value, styleData) {
         styles: styleArr,
         styleName: moduleStyle.replace(/_/g, ' '),
         styleKey: moduleStyle,
+        isLive: !!isLive,
         linkListGroups: linkListGroups
     };
 
@@ -191,7 +194,8 @@ function stripHtml(text) {
 
 function getMetaParams () {
     return {
-        styles: JSON.stringify(this.model.m('.styles').get())
+        styles: JSON.stringify(this.model.m('.styles').get()),
+        isLive: this.model.m('.isLive').get()
     };
 }
 
