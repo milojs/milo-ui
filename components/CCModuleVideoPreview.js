@@ -20,7 +20,10 @@ var CCModuleVideoPreview = Component.createComponentClass('CCModuleVideoPreview'
         cls: ['cc-module-video-preview', 'media', 'video']
     },
     drag: {
-        allowedEffects: 'copy'
+        allowedEffects: 'copy',
+        meta: {
+            params: getMetaParams
+        }
     },
     data: {
         get: CCModuleVideoPreview_get,
@@ -104,6 +107,13 @@ function onAddedToScratch(event, msg, data) {
 }
 
 
+function getMetaParams() {
+    return {
+        isLive: this.model.m('.isLive').get()
+    }
+}
+
+
 function CCModuleVideoPreview$destroy() {
     Component.prototype.destroy.apply(this, arguments);
 
@@ -129,6 +139,10 @@ function CCModuleVideoPreview_set(value) {
     //if stillimage is not defined use thumb instead
     value = _transformData(value);
     value.fields.stillImage = value.fields.stillImage || _.deepClone(value.fields.thumbImage);
+
+    try { var isLive = value.fields.status.toLowerCase() == 'live'; } catch(e){}
+    value.isLive = !!isLive;
+
     this.model.set(value);
     CCModuleVideoPreview_setChannel.call(this, value.fields.channel);
 
@@ -136,12 +150,8 @@ function CCModuleVideoPreview_set(value) {
     if (hostUrl) {
         try {
             this.container.scope.image.el.src = hostUrl;
-        } catch (e) {
-        }
+        } catch (e) {}
     }
-
-    try { var isLive = value.fields.status.toLowerCase() == 'live'; } catch(e){}
-    this.drag[isLive ? 'enable' : 'disable']();
 
     try { this.container.scope.image.el.src = value.fields.thumbImage.hostUrl; } catch(e) {}
     this.transfer.setStateWithKey('article', _constructVideoState(value));
