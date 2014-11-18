@@ -148,10 +148,8 @@ function CCModuleVideoPreview_set(value) {
     this.model.set(value);
     CCModuleVideoPreview_setChannel.call(this, value.fields.channel);
 
-    try {
-        var hostUrl = value.fields.thumbImage.hostUrl;
-        this.container.scope.image.el.src = hostUrl;
-    } catch (e) {}
+    try { var hostUrl = value.fields.thumbImage.hostUrl; } catch (e) {}
+    try { this.container.scope.image.el.src = hostUrl; } catch (e) {}
 
     this.transfer.setStateWithKey('article', _constructVideoState(value));
     this.transfer.setStateWithKey('linklist', _constructVideoLinkState(value));
