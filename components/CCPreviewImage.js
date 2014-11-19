@@ -4,7 +4,7 @@ var componentRegistry = milo.registry.components
     , Component = milo.Component
     , MLImage = componentRegistry.get('MLImage')
     , ccCommon = require('cc-common')
-    , imagesConfig = ccCommon.config.images
+    , imagesConfig = require('../../config/images')
     , DragDrop = milo.util.dragDrop
     , PREVIEW_IMAGE_CHANGE_MESSAGE = 'previewimagechange';
 
