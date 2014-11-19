@@ -49,8 +49,33 @@ componentRegistry.add(CCPreviewImage);
 _.extend(CCPreviewImage, {
     onPreviewImageDrop: CCPreviewImage$$onPreviewImageDrop,
     onPreviewImageClick: CCPreviewImage$$onPreviewImageClick,
-    onCropAllDrop: CCPreviewImage$$onCropAllDrop
+    onCropAllDrop: CCPreviewImage$$onCropAllDrop,
+    translate: {
+        fromModel: imageFromModel,
+        toModel: imageToModel
+    }
 });
+
+
+function imageFromModel(modelValue) {
+    var src;
+    try {
+        src = modelValue.wpsImage.hostUrl;
+    }
+    catch (e) {
+        src = '';
+    }
+    return {
+        src: src,
+        croppable: modelValue
+    };
+}
+
+
+function imageToModel(viewValue) {
+    var data = viewValue && viewValue.croppable;
+    return data;
+}
 
 
 function canAcceptDroppedImage(info, dt) {
