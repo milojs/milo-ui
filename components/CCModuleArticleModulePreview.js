@@ -98,7 +98,7 @@ function CCModuleArticleModulePreview_set(value) {
     var stylesPromise = window.CC.config.data.itemStyles;
     stylesPromise.then(function (dontUse, data) {
         value = parseData(value, data);
-        self.transfer.setStateWithKey('article', _makeModuleStateForArticle(value));
+        self.transfer.setStateWithKey('article', _makeModuleStateForArticle(value), true);
         self.transfer.setStateWithKey('channel', _makeModuleStateForChannel(value));
         self.transfer.setActiveState(activeState);
         self.data._set(value);
