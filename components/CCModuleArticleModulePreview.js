@@ -82,7 +82,7 @@ function CCModuleArticleModulePreview$init() {
 
 
 function CCModuleArticleModulePreview$destroy() {
-    Component.prototype.init.apply(this, arguments);
+    Component.prototype.destroy.apply(this, arguments);
     milo.mail.off('changeactiveasset', { subscriber: changeActiveState, context: this });
 }
 
