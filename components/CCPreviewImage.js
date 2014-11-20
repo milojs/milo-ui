@@ -171,7 +171,7 @@ function _setPreviewImageAfterCrop(previewImage, cropResponse, transferItem, ima
         transferItem: transferItem
     };
     previewImage.croppable.setImageData(imageData);
-    previewImage.setImageSrc(imageData.wpsImage.hostUrl);
+    previewImage.model.m('.src').set(imageData.wpsImage.hostUrl);
 }
 
 
@@ -234,7 +234,7 @@ function _constructCroppableImageState(modelState) {
 
 function _applyCropToInspectorImage(imageData, inspectorImage) {
     inspectorImage.croppable.setImageData(imageData);
-    inspectorImage.setImageSrc(imageData.wpsImage.hostUrl);
+    inspectorImage.model.m('.src').set(imageData.wpsImage.hostUrl);
 }
 
 
@@ -263,8 +263,18 @@ function _getPreviewImageCropType(imageType) {
 
 
 _.extendProto(CCPreviewImage, {
+    init: CCPreviewImage$init,
     setImageSrc: CCPreviewImage$setImageSrc
 });
+
+
+function CCPreviewImage$init() {
+    MLImage.prototype.init.apply(this, arguments);
+
+    var imgEls = this.el.getElementsByTagName('img');
+    if (imgEls.length)
+        this._imageElement = imgEls[0];
+}
 
 
 function CCPreviewImage$setImageSrc(url) {
