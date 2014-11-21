@@ -532,7 +532,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             , validate = schema.validate;
 
         if (viewPath) {
-            _addDataTranslation(translate, 'toModel', viewPath);
+            _addDataTranslation.call(this, translate, 'toModel', viewPath);
 
             switch (itemRule.modelPathRule) {
                 case 'prohibited':
