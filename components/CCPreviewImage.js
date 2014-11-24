@@ -13,6 +13,7 @@ var IMAGE_LOADING_CLASS = 'cc-image-loading';
 var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
     model: {
         messages: {
+            '.croppable.wpsImage.hostUrl': { subscriber: updateSrc, context: 'owner' },
             '**': { subscriber: onModelChange, context: 'owner' }
         }
     },
@@ -279,6 +280,12 @@ function CCPreviewImage$init() {
 
 function CCPreviewImage$setImageSrc(url) {
     this.container.scope.image.el.src = url || '';
+}
+
+
+function updateSrc(msg, data) {
+    var src = data.newValue;
+    if (src) this.setImageSrc(src);
 }
 
 
