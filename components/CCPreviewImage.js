@@ -6,6 +6,7 @@ var componentRegistry = milo.registry.components
     , ccCommon = require('cc-common')
     , imagesConfig = require('../../config/images')
     , DragDrop = milo.util.dragDrop
+    , logger = milo.util.logger
     , PREVIEW_IMAGE_CHANGE_MESSAGE = 'previewimagechange';
 
 var IMAGE_LOADING_CLASS = 'cc-image-loading';
@@ -98,11 +99,12 @@ function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
         var targetHeight = cropType.height;
 
         droppedImage.croppable.autoCropImageToFit(targetWidth, targetHeight, { imageType: imageType }, function (err, settings, wpsImage){
+            event.target.parentNode.classList.remove(IMAGE_LOADING_CLASS);
+            if (err) return logger.error('Error cropping image: ', err);
+
             droppedImage.croppable.applyCropDetails(settings, wpsImage);
             _applyCropToInspectorImage(droppedImage.model.get(), previewImage);
             _cropLinkedTypes.call(previewImage, previewImage, imageType, settings);
-
-            event.target.parentNode.classList.remove(IMAGE_LOADING_CLASS);
         });
     } else
         logger.error('CMArticle onPreviewImageDrop: no image dropped');
@@ -121,6 +123,7 @@ function CCPreviewImage$$onPreviewImageClick(imageType, msg, event) {
     var cropType = _getPreviewImageCropType.call(this, imageType);
     var previewImage = this;
     previewImage.croppable.showImageEditor([cropType], function(err, cropResponses) {
+        if (err) return logger.error('Error cropping image: ', err);
         var imageData = previewImage.croppable.getImageData();
         _applyCropToInspectorImage(imageData, previewImage);
         _cropAnyLinkedTypes.call(previewImage, previewImage, imageType, cropResponses);
