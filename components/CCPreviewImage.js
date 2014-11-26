@@ -200,6 +200,8 @@ function _cropLinkedTypes(image, imageType, settings) {
             });
 
             linkedImage.croppable.cropImage(settings.coords, size, { imageType: linkedImageType }, function(err, coords, wpsImage) {
+                if (err) return logger.error('Error cropping linked image: ', imageType, err);
+
                 var imageModel = linkedImage.model.get();
                 var imageData = {
                     transferItem: imageModel.transferItem,
