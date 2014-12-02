@@ -15,7 +15,7 @@
                     <input type="checkbox" ml-bind="[data]:voteFollow" class="ml-ui-input"/>
                     <span>No follow</span>
                 </label>
-                <label class="cc-external-partners-link">
+                <label>
                     <input type="checkbox" ml-bind="[events]:isMoney" class="ml-ui-input"/>
                     <span>Partner</span>
                 </label>
