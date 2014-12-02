@@ -3,7 +3,7 @@
     <input type="{{= it.item.inputType || 'text' }}"
             {{? it.item.inputName }}name="{{= it.item.inputName }}"{{?}}
             ml-bind="MLInput:{{= it.compName }}"
-            placeholder="{{? it.item.placeholder }}{{= it.item.placeholder}}{{?}}"
+            {{? it.item.placeholder }}placeholder="{{= it.item.placeholder}}"{{?}}
             {{? it.disabled }}disabled {{?}}
             class="form-control">
 </div>

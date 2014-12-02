@@ -3,6 +3,6 @@
     <textarea ml-bind="MLTextarea:{{= it.compName }}"
         {{? it.disabled }}disabled {{?}}
         class="form-control"
-        placeholder="{{? it.item.placeholder }}{{= it.item.placeholder}}{{?}}"
+        {{? it.item.placeholder }}placeholder="{{= it.item.placeholder}}"{{?}}
         {{? it.item.autoresize }}rows="{{= it.item.autoresize.minLines }}"{{?}}></textarea>
 </div>
