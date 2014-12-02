@@ -67,8 +67,7 @@ function updatePartnersView(path, data) {
         var getIndex = parseInt(path.match(/\[([0-9])\]/)[1], 10);
 
         var isMoney = list.item(getIndex).container.scope.isMoney.el;
-
-        isMoney.checked = isPartner(data.newValue);
+        isMoney.checked = data.newValue == '11';
     });
 }
 
@@ -104,16 +103,10 @@ function onListChangeSubscriber(type, event) {
         var index = parent.item.index;
         if (comp.name == 'isMoney') {
             var data = parent.data.get();
-            data.relatedArticleTypeId = changeRelatedId(data.relatedArticleTypeId, el.checked);
+            data.relatedArticleTypeId = (el.checked) ? '11' : '2';
             parent.data.set(data);
         }
     }
-}
-
-function changeRelatedId(linkId, isPartner) {
-    if (isExternal(linkId))
-        return isPartner ? '12' : '2';
-    return isPartner ? '11' : '1';
 }
 
 
@@ -223,10 +216,6 @@ function addStylesToList() {
     });
 }
 
-function isPartner(type) {
-    return type == 11 || type == 12;
-}
-
 function isExternal(type) {
-    return type == 10 || type == 2 || type == 12;
+    return type == 10 || type == 2 || type == 11;
 }
