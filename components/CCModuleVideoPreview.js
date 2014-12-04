@@ -217,6 +217,9 @@ function _constructVideoState(value) {
                     width: value.fields.stillImage && value.fields.stillImage.width,
                     height: value.fields.stillImage && value.fields.stillImage.height,
                     headline: value.fields.headline,
+                    titleEndDate: value.fields.titleEndDate,
+                    modifiedDate: value.fields.modifiedDate,
+                    createdDate: value.fields.createdDate,
                     tag: {
                         id: undefined,
                         name: 'video',
