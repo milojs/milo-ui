@@ -146,7 +146,13 @@ function CCModuleVideoPreview_set(value) {
     value.isLive = !!isLive;
 
     this.model.set(value);
-    CCModuleVideoPreview_setChannel.call(this, value.fields.channel);
+
+    var mainChannel;
+    try{ mainChannel = value.fields.channelFrontUrl.match(/[^/]+/)[0]; } catch(e){}
+    if(! mainChannel)
+        mainChannel = 'news';
+
+    CCModuleVideoPreview_setChannel.call(this, mainChannel);
 
     try { var hostUrl = value.fields.thumbImage.hostUrl; } catch (e) {}
     try { this.container.scope.image.el.src = hostUrl; } catch (e) {}
