@@ -151,6 +151,12 @@ function CCModuleVideoPreview_set(value) {
     try { var hostUrl = value.fields.thumbImage.hostUrl; } catch (e) {}
     try { this.container.scope.image.el.src = hostUrl; } catch (e) {}
 
+    var expireDate = value.fields.titleEndDate;
+    if (expireDate) {
+        this.el.classList.toggle('cc-preview-expires', expireDate);
+        this.el.classList.toggle('cc-preview-expires-warning', moment.utc(expireDate).diff(moment.utc(), 'days', true) <= 1);
+    }
+
     this.transfer.setStateWithKey('article', _constructVideoState(value));
     this.transfer.setStateWithKey('linklist', _constructVideoLinkState(value));
     this.transfer.setActiveState(activeState);
@@ -176,11 +182,14 @@ function _parseData(data) {
     var result = {};
     result = data.fields;
     result.createdDate = _dateHelper(data.fields.createdDate);
+    result.titleEndDate = _dateHelper(data.fields.titleEndDate, true);
     return result;
 }
 
-function _dateHelper(date) {
+function _dateHelper(date, isRelative) {
     if(!date) return null;
+    if (isRelative)
+        return date && moment.utc(date).fromNow();
     date = _.toDate(date);
     return date && moment(date).format('MMM DD, YYYY HH:mm');
 }
