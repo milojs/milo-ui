@@ -18,7 +18,7 @@ var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                             <div class="row"> \
                                 <span class="user col-md-6" ml-bind="[data]:user"></span> \
                                 <span class="col-md-6 text-right"> \
-                                    <span ml-bind="[data]:editorTool"></span> \
+                                    <span ml-bind="[data]:editorTool" class="editor-tool"></span> \
                                 </span> \
                             </div> \
                         </li> \
