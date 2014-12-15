@@ -152,10 +152,9 @@ function CCModuleVideoPreview_set(value) {
     try { this.container.scope.image.el.src = hostUrl; } catch (e) {}
 
     var expireDate = value.fields.titleEndDate;
-    if (expireDate) {
-        this.el.classList.toggle('cc-preview-expires', expireDate);
+    this.el.classList.toggle('cc-preview-expires', expireDate);
+    if (expireDate)
         this.el.classList.toggle('cc-preview-expires-warning', moment.utc(expireDate).diff(moment.utc(), 'days', true) <= 1);
-    }
 
     this.transfer.setStateWithKey('article', _constructVideoState(value));
     this.transfer.setStateWithKey('linklist', _constructVideoLinkState(value));
