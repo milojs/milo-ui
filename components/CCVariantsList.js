@@ -8,7 +8,8 @@ var componentsRegistry = milo.registry.components
     , countries = require('../../countries').toArray();
 
 
-var variantsTemplate = '<div class="ml-ui-list cc-variants-all-regions"> \
+var variantsTemplate = '<div ml-bind="MLSuperCombo:addCountry"></div> \
+                        <div class="ml-ui-list cc-variants-all-regions"> \
                             <div class="list-item"> \
                                 <span class="cc-variant-label">All regions</span> \
                                 <span class="cc-variant-excluded"> \
@@ -30,8 +31,7 @@ var variantsTemplate = '<div class="ml-ui-list cc-variants-all-regions"> \
                                     Block \
                                 </span> \
                             </div> \
-                        </div> \
-                        <div ml-bind="MLSuperCombo:addCountry"></div>';
+                        </div>';
 
 
 var CCVariantsList = Component.createComponentClass('CCVariantsList', {
@@ -181,7 +181,7 @@ function toggleAllNotExcludedUI(hasNotExcluded) {
     }
 
     this._list.list.each(function(item){
-        var itemScope = item.container.scope 
+        var itemScope = item.container.scope
             , excluded = itemScope.excluded;
 
         if (!excluded.data.get()){
