@@ -27,7 +27,7 @@ var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
         messages: {
             'dragenter': {context: 'owner', subscriber: CCPreviewImage_onDragEnter},
             'dragover': {context: 'owner', subscriber: CCPreviewImage_onDragOver},
-            'dragleave': CCPreviewImage_leaveImage,
+            'dragleave': {context: 'owner', subscriber: CCPreviewImage_leaveImage},
             'drop': {context: 'owner', subscriber: CCPreviewImage_onDrop}
         }
     },
@@ -303,6 +303,7 @@ function onModelChange(path, data) {
 
 function CCPreviewImage_onDragEnter(eventType, event) {
     event.preventDefault();
+    this.el.classList.add('cc-drop-method-replace');
 }
 
 
@@ -312,7 +313,7 @@ function CCPreviewImage_onDragOver(eventType, event) {
 
 
 function CCPreviewImage_leaveImage(eventType, event) {
-
+    this.el.classList.remove('cc-drop-method-replace');
 }
 
 
