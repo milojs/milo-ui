@@ -144,7 +144,8 @@ function parseData(value, styleData) {
         styleName: moduleStyle.replace(/_/g, ' '),
         styleKey: moduleStyle,
         isLive: !!isLive,
-        linkListGroups: linkListGroups
+        linkListGroups: linkListGroups,
+        linkListId: linkListGroups.length ? value._id : null
     };
 
     function getModuleType(moduleType) {
@@ -209,9 +210,12 @@ var editorTypes = {
 };
 function onModuleClick(moduleData) {
     var state = this.transfer.getState();
-    var id = state.facetsStates.model.state.tag.id;
     var type = state.facetsStates.model.state.tag.name;
-    type = type == 'linkListGroup' ? 'linkList' : type;
+    var id = state.facetsStates.model.state.tag.id;
+    if (type == 'linkListGroup') {
+        type = 'linkList';
+        id = +this.model.m('.linkListId').get();
+    }
     var app = editorTypes[type];
 
     if (!app
