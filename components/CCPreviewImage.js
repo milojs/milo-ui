@@ -318,5 +318,5 @@ function CCPreviewImage_leaveImage(eventType, event) {
 
 
 function CCPreviewImage_onDrop(eventType, event) {
-
+    this.el.classList.remove('cc-drop-method-replace');
 }
