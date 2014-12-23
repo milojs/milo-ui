@@ -22,7 +22,9 @@
     </ul>
     <input placeholder="url" type="text" ml-bind="[data]:url" class="form-control ml-ui-input">
     <input placeholder="headline" type="text" ml-bind="[data]:headline" class="form-control ml-ui-input">
-    <button ml-bind="[events]:saveBtn"  class="btn btn-default ml-ui-button"> Add </button>
-    <button ml-bind="[events, dom]:cancelBtn"  class="btn btn-default ml-ui-button cc-hidden"> Cancel </button>
+    <div class="group-extra-options">
+        <button ml-bind="[events, dom]:cancelBtn"  class="btn btn-link ml-ui-button cc-hidden"> Cancel </button>
+        <button ml-bind="[events]:saveBtn"  class="btn btn-default ml-ui-button"> Add </button>
+    </div>
 </{{= it.tagName}}>
 </div>
