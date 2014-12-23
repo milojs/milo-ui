@@ -231,7 +231,10 @@ function addExternalLink() {
 }
 
 function updateLinks() {
-    this.container.scope.list.list.each(function (comp, index) {
+    var listComp = this.container.scope.list;
+    if (!listComp || !listComp.list) return;
+
+    listComp.list.each(function (comp, index) {
         var scope = comp.container.scope;
         scope.relatedUrl.el.href = scope.relatedUrl.el.innerHTML;
     });
