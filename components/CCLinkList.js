@@ -19,7 +19,11 @@ var CCLinkList = Component.createComponentClass('CCLinkList', {
     },
     model: {
         messages: {
-            '*': { subscriber: _.debounce(onListUpdated, 20), context: 'owner' }
+            '*': { subscriber: _.debounce(onListUpdated, 20), context: 'owner' },
+            '**': {
+                subscriber: _.debounce(updateLinks, 75),
+                context: 'owner'
+            }
         }
     }
 });
@@ -224,6 +228,13 @@ function addExternalLink() {
     }
     externalLinksModel.push(externalLink);
     _triggerExternalPropagation.call(this);
+}
+
+function updateLinks() {
+    this.container.scope.list.list.each(function (comp, index) {
+        var scope = comp.container.scope;
+        scope.relatedUrl.el.href = scope.relatedUrl.el.innerHTML;
+    });
 }
 
 

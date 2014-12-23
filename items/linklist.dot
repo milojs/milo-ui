@@ -5,7 +5,8 @@
         <li ml-bind="[item]:result" class="linklist-item">
             <div style="clear:both;">
                 <span class="linklist-wrap">
-                    <span ml-bind="[data]:headline"></span> (<span ml-bind="[data]:relatedUrl"></span>)
+                    <span ml-bind="[data]:headline"></span>
+                    <div><a ml-bind="[data]:relatedUrl" class="cc-url-link" target="_blank"></a></div>
                 </span>
 
                 <div class="cc-external-links-auto-action">
