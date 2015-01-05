@@ -205,6 +205,7 @@ var editorTypes = {
     //'standardModule': 'moduleEditor',
     //'gallery': 'moduleEditor',
     'module': 'moduleEditor',
+    'gallery': 'listEditor',
     'linkList': 'listEditor',
     'poll': 'pollEditor'
 };
