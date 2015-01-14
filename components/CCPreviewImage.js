@@ -102,6 +102,8 @@ function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
             event.target.parentNode.classList.remove(IMAGE_LOADING_CLASS);
             if (err) return logger.error('Error cropping image: ', err);
 
+            droppedImage.croppable.imageModel('.wpsImage').del(); // remove old wpsImage so it doesnt interfere with applyCropDetails
+
             droppedImage.croppable.applyCropDetails(settings, wpsImage);
             _applyCropToInspectorImage(droppedImage.model.get(), previewImage);
             _cropLinkedTypes.call(previewImage, previewImage, imageType, settings);
