@@ -59,6 +59,7 @@ formRegistry.add('linklist',              { compClass: 'CCLinkList',            
 formRegistry.add('relatedlist',           { compClass: 'CCRelatedList',           template: relatedlist_dot,                                          itemFunction: processRelatedListSchema });
 formRegistry.add('imagegroupcaptionlist', { compClass: 'CCImageGroupCaptionList', template: imagegroupcaptionlist_dot                                                                        });
 formRegistry.add('clear',                 {                                       template: clear_dot                                                                                        });
+formRegistry.add('contextradio',          { compClass: 'MLContextRadioGroup',                                                                         itemFunction: processRadioSchema       });
 
 
 function processSelectSchema(comp, schema) {
