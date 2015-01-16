@@ -178,13 +178,15 @@ function _constructArticleState(value) {
         facetsStates: {
             model: {
                 state: {
-                    headline: value.title,
-                    previewText: value.previewText,
-                    image: {
-                        hostUrl: value.thumb && value.thumb.hostUrl || ''
-                    },
-                    itemId: value.id,
-                    itemType: 'article'
+                    wpsData: {
+                        headline: value.title,
+                        previewText: value.previewText,
+                        image: {
+                            hostUrl: value.thumb && value.thumb.hostUrl || ''
+                        },
+                        itemId: value.id,
+                        itemType: 'article'
+                    }
                 }
             }
         }

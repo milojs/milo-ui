@@ -286,11 +286,13 @@ function _makeModuleStateForChannel(value) {
         facetsStates: {
             model: {
                 state: {
-                    itemId: value.id,
-                    itemType: value.type,
-                    itemStyle: value.styleKey,
-                    styles: value.styles,
-                    title: value.title
+                    wpsData: {
+                        itemId: value.id,
+                        itemType: value.type,
+                        itemStyle: value.styleKey,
+                        title: value.title
+                    },
+                    styles: value.styles
                 }
             }
         }
