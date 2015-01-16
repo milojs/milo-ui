@@ -10,7 +10,7 @@ var PREVIEWLIST_CHANGE_MESSAGE = 'ccpreviewlistchange';
 var CCPreviewList = Component.createComponentClass('CCPreviewList', {
     container: undefined,
     dom: {
-        cls: 'cc-preview-list',
+        cls: ['cc-preview-list', 'cc-clearfix'],
         tagName: 'div'
     },
     model: undefined,
