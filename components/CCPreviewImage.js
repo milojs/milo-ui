@@ -7,6 +7,8 @@ var componentRegistry = milo.registry.components
     , imagesConfig = require('../../config/images')
     , DragDrop = milo.util.dragDrop
     , logger = milo.util.logger
+    , check = milo.util.check
+    , Match = check.Match
     , PREVIEW_IMAGE_CHANGE_MESSAGE = 'previewimagechange';
 
 var IMAGE_LOADING_CLASS = 'cc-image-loading';
@@ -48,6 +50,14 @@ module.exports = CCPreviewImage;
 componentRegistry.add(CCPreviewImage);
 
 
+_.extendProto(CCPreviewImage, {
+    init: CCPreviewImage$init,
+    setImageSrc: CCPreviewImage$setImageSrc
+    processFormSchema: CCPreviewImage$processFormSchema,
+    setOptions: CCPreviewImage$setOptions
+});
+
+
 _.extend(CCPreviewImage, {
     onPreviewImageDrop: CCPreviewImage$$onPreviewImageDrop,
     onPreviewImageClick: CCPreviewImage$$onPreviewImageClick,
@@ -82,6 +92,54 @@ function imageToModel(viewValue) {
 
 function canAcceptDroppedImage(info, dt) {
     return !info.params.imageFromArticle;
+}
+
+
+function CCPreviewImage$init() {
+    MLImage.prototype.init.apply(this, arguments);
+
+    var imgEls = this.el.getElementsByTagName('img');
+    if (imgEls.length)
+        this._imageElement = imgEls[0];
+
+    this._subscriptions = { croppable: false, dragdrop: false };
+}
+
+
+function CCPreviewImage$setImageSrc(url) {
+    this.container.scope.image.el.src = url || '';
+}
+
+
+function CCPreviewImage$processFormSchema(schema) {
+    if (schema.options) this.setOptions(schema.options);
+}
+
+
+/**
+ * Sets options for preview image
+ * @param {Object} options see check below
+ */
+function CCPreviewImage$setOptions(options) {
+    check(options, {
+        imageType: String,
+        croppable: Match.Optional(Boolean),
+        dragdrop: Match.Optional(Boolean)
+    });
+    this._imageType = options.imageType;
+    var self = this;
+    _subscribe('croppable', 'events', 'click', CCPreviewImage$$onPreviewImageClick);
+    _subscribe('dragdrop', 'drop', 'drop', CCPreviewImage$$onPreviewImageDrop);
+
+
+    function _subscribe(optKey, facet, event, subscriber) {
+        var opt = options[optKey];
+        if (self._subscriptions[optKey] != opt) {
+            self[facet][opt ? 'on' : 'off'](event,
+                { subscriber: _.partial(subscriber, imageType), context: self });
+            self._subscriptions[optKey] = opt;
+        }
+    }
 }
 
 
@@ -267,26 +325,6 @@ function _getPreviewImageCropType(imageType) {
         cropType.description = wpsImage.description;
     }
     return cropType;
-}
-
-
-_.extendProto(CCPreviewImage, {
-    init: CCPreviewImage$init,
-    setImageSrc: CCPreviewImage$setImageSrc
-});
-
-
-function CCPreviewImage$init() {
-    MLImage.prototype.init.apply(this, arguments);
-
-    var imgEls = this.el.getElementsByTagName('img');
-    if (imgEls.length)
-        this._imageElement = imgEls[0];
-}
-
-
-function CCPreviewImage$setImageSrc(url) {
-    this.container.scope.image.el.src = url || '';
 }
 
 
