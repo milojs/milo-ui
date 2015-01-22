@@ -52,7 +52,7 @@ componentRegistry.add(CCPreviewImage);
 
 _.extendProto(CCPreviewImage, {
     init: CCPreviewImage$init,
-    setImageSrc: CCPreviewImage$setImageSrc
+    setImageSrc: CCPreviewImage$setImageSrc,
     processFormSchema: CCPreviewImage$processFormSchema,
     setOptions: CCPreviewImage$setOptions
 });
