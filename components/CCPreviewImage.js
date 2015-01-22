@@ -126,7 +126,7 @@ function CCPreviewImage$setOptions(options) {
         croppable: Match.Optional(Boolean),
         dragdrop: Match.Optional(Boolean)
     });
-    this._imageType = options.imageType;
+    var imageType = this._imageType = options.imageType;
     var self = this;
     _subscribe('croppable', 'events', 'click', CCPreviewImage$$onPreviewImageClick);
     _subscribe('dragdrop', 'drop', 'drop', CCPreviewImage$$onPreviewImageDrop);
@@ -182,7 +182,7 @@ function getDroppedImageComponent(state) {
 function CCPreviewImage$$onPreviewImageClick(imageType, msg, event) {
     var cropType = _getPreviewImageCropType.call(this, imageType);
     var previewImage = this;
-    previewImage.croppable.showImageEditor([cropType], function(err, cropResponses) {
+    this.croppable.showImageEditor([cropType], function(err, cropResponses) {
         if (err) return logger.error('Error cropping image: ', err);
         var imageData = previewImage.croppable.getImageData();
         _applyCropToInspectorImage(imageData, previewImage);
@@ -204,6 +204,7 @@ function CCPreviewImage$$onCropAllDrop(imageTypes, msg, event) {
         droppedImage.croppable.showImageEditor(cropTypes, function(err, cropResponses) {
             var transferItem = droppedImage.model.m('.transferItem').get();
             var form = self.getScopeParentWithClass(CCForm);
+            if (!form) return;
 
             imageTypes.forEach(function(imageType, index) {
                 var cropType = cropTypes[index];
@@ -305,22 +306,15 @@ function _applyCropToInspectorImage(imageData, inspectorImage) {
 
 
 function _getPreviewImageCropType(imageType) {
-    var CCForm = componentRegistry.get('CCForm');
-    var form = this.getScopeParentWithClass(CCForm);
-    if (! form) throw new Error('CMArticle _getPreviewImageCropType: no form found');
-
     var imageTypeConfig = imagesConfig(imageType);
-    var modelPath = imageTypeConfig.inspectorModelPath;
-    var inspectorImage = form.modelPathComponent(modelPath);
-
     var cropType = imageTypeConfig.cropSettings();
 
-    var cropData = inspectorImage.croppable.getCropData();
+    var cropData = this.croppable.getCropData();
     if (cropData && cropData.settings) {
         _.extend(cropType, cropData.settings);
     }
 
-    var wpsImage = inspectorImage.croppable.getWpsImage();
+    var wpsImage = this.croppable.getWpsImage();
     if (wpsImage) {
         cropType.description = wpsImage.description;
     }
