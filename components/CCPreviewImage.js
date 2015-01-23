@@ -146,7 +146,7 @@ function CCPreviewImage$setOptions(options) {
 function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
     event.target.parentNode.classList.add(IMAGE_LOADING_CLASS);
     var dt = new DragDrop(event);
-    var cropType = _getPreviewImageCropType.call(this, imageType);
+    var cropType = _getPreviewImageCropType(imageType, this);
     var transferState = dt.getComponentState();
 
     var droppedImage = getDroppedImageComponent(transferState);
@@ -180,7 +180,7 @@ function getDroppedImageComponent(state) {
 
 
 function CCPreviewImage$$onPreviewImageClick(imageType, msg, event) {
-    var cropType = _getPreviewImageCropType.call(this, imageType);
+    var cropType = _getPreviewImageCropType(imageType, this);
     var previewImage = this;
     this.croppable.showImageEditor([cropType], function(err, cropResponses) {
         if (err) return logger.error('Error cropping image: ', err);
@@ -194,7 +194,7 @@ function CCPreviewImage$$onPreviewImageClick(imageType, msg, event) {
 function CCPreviewImage$$onCropAllDrop(imageTypes, msg, event) {
     var CCForm = componentRegistry.get('CCForm');
     var dt = new DragDrop(event)
-        , cropTypes = imageTypes.map(_getPreviewImageCropType, this)
+        , cropTypes = _getPreviewImageCropTypes.call(this, imageTypes)
         , transferState = dt.getComponentState();
 
     var droppedImage = getDroppedImageComponent(transferState);
@@ -305,20 +305,38 @@ function _applyCropToInspectorImage(imageData, inspectorImage) {
 }
 
 
-function _getPreviewImageCropType(imageType) {
+function _getPreviewImageCropType(imageType, previewImage) {
     var imageTypeConfig = imagesConfig(imageType);
     var cropType = imageTypeConfig.cropSettings();
 
-    var cropData = this.croppable.getCropData();
+    var cropData = previewImage.croppable.getCropData();
     if (cropData && cropData.settings) {
         _.extend(cropType, cropData.settings);
     }
 
-    var wpsImage = this.croppable.getWpsImage();
+    var wpsImage = previewImage.croppable.getWpsImage();
     if (wpsImage) {
         cropType.description = wpsImage.description;
     }
     return cropType;
+}
+
+
+function _getPreviewImageCropTypes(imageTypes) {
+    return imageTypes.map(function(imageType) {
+        var previewImage = _getPreviewImageComponent.call(this, imageType);
+        return _getPreviewImageCropType(imageType, previewImage);
+    }, this);
+}
+
+
+function _getPreviewImageComponent(imageType) {
+    var CCForm = componentRegistry.get('CCForm');
+    var form = this.getScopeParentWithClass(CCForm);
+    if (! form) throw new Error('CMArticle _getPreviewImageCropType: no form found');
+    var imageTypeConfig = imagesConfig(imageType);
+    var modelPath = imageTypeConfig.inspectorModelPath;
+    return form.modelPathComponent(modelPath);
 }
 
 
