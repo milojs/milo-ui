@@ -121,12 +121,13 @@ function CCPreviewImage$processFormSchema(schema) {
  * @param {Object} options see check below
  */
 function CCPreviewImage$setOptions(options) {
+    options.imageType = options.imageType || this._imageType
     check(options, {
         imageType: String,
         croppable: Match.Optional(Boolean),
         dragdrop: Match.Optional(Boolean)
     });
-    var imageType = this._imageType = options.imageType;
+    this._imageType = options.imageType;
     var self = this;
     _subscribe('croppable', 'events', 'click', CCPreviewImage$$onPreviewImageClick);
     _subscribe('dragdrop', 'drop', 'drop', CCPreviewImage$$onPreviewImageDrop);
@@ -136,7 +137,7 @@ function CCPreviewImage$setOptions(options) {
         var opt = options[optKey];
         if (self._subscriptions[optKey] != opt) {
             self[facet][opt ? 'on' : 'off'](event,
-                { subscriber: _.partial(subscriber, imageType), context: self });
+                { subscriber: _.partial(subscriber, self._imageType), context: self });
             self._subscriptions[optKey] = opt;
         }
     }
