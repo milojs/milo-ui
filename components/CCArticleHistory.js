@@ -4,8 +4,10 @@ var componentsRegistry = milo.registry.components
     , Component = componentsRegistry.get('Component')
     , articleStorage = require('../../storage/article')
     , logger = milo.util.logger
-    , moment = require('moment');
+    , moment = require('moment')
+    , SaveCommunicationsServerInterface = window.top.CC.autosave.SaveCommunicationsServerInterface;
 
+var USING_ELASTICSEARCH_SAVE_HISTORY = window.top.CC.config.urlToggles.elasticsearchHistory;
 
 var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                         <li class="list-group-item" ml-bind="[item]:item"> \
@@ -155,9 +157,37 @@ function mergeWpsCCVersions(res) {
 }
 
 
-function showLocalHistory(articleStorageId) {
-    var ids = articleStorage.getVersionIds(articleStorageId)
-        , versions = articleStorage.getVersionMetas(articleStorageId);
+function showLocalHistory(editingSessionId) {
+
+    var saveComminicationServerInterface = new SaveCommunicationsServerInterface(),
+        self = this;
+
+    if (USING_ELASTICSEARCH_SAVE_HISTORY) {
+        var serverData = saveComminicationServerInterface.editingSessionsIdGet('article', editingSessionId).then(function(serverData) {
+            var code = serverData[0];
+            var data = serverData[1];
+
+            var list = data && data.states && data.states.map(function(item) {
+                return {
+                    id: item.href,
+                    editingSessionId: editingSessionId,
+                    storage: 'local',
+                    createdDate: fromNow(item.timeEdited),
+                    user: item.status
+                };
+            }).reverse();
+
+            self.container.scope.list.data.set(list);
+            self.model.set(list);
+
+        });
+        return;
+    }
+
+
+    // ===== OLD CODE ======================================================
+    var ids = articleStorage.getVersionIds(editingSessionId)
+        , versions = articleStorage.getVersionMetas(editingSessionId);
 
     var list = ids && ids.reverse().map(function(id, index) {
             var version = versions[id]
@@ -175,6 +205,9 @@ function showLocalHistory(articleStorageId) {
 
     this.container.scope.list.data.set(list);
     this.model.set(list);
+    // ===== /OLD CODE =====================================================
+
+
 }
 
 
