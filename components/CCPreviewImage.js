@@ -17,7 +17,7 @@ var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
     model: {
         messages: {
             '.croppable.wpsImage.hostUrl': { subscriber: updateSrc, context: 'owner' },
-            '**': { subscriber: onModelChange, context: 'owner' }
+            '.src': { subscriber: onModelChange, context: 'owner' }
         }
     },
     drop: {
@@ -107,7 +107,7 @@ function CCPreviewImage$init() {
 
 
 function CCPreviewImage$setImageSrc(url) {
-    this.container.scope.image.el.src = url || '';
+    this.model.m('.src').set(url);
 }
 
 
@@ -186,7 +186,7 @@ function CCPreviewImage$$onPreviewImageClick(imageType, msg, event) {
     var cropType = _getPreviewImageCropType(imageType, this);
     if (this._fixedAspect === false) {
         cropType = _.deepClone(cropType);
-        delete cropType.height;
+        // cropType.allowAspectOverride = true;
     }
     var previewImage = this;
     this.croppable.showImageEditor([cropType], function(err, cropResponses) {
@@ -349,13 +349,13 @@ function _getPreviewImageComponent(imageType) {
 
 function updateSrc(msg, data) {
     var src = data.newValue;
-    if (src) this.setImageSrc(src);
+    this.setImageSrc(src);
 }
 
 
 function onModelChange(path, data) {
-    var src = this.model.m('.src').get();
-    if (src) this.setImageSrc(src);
+    var src = data.newValue;
+    this.container.scope.image.el.src = src || '';
     this.data.dispatchSourceMessage(this.data.config.event);
 }
 
