@@ -125,9 +125,11 @@ function CCPreviewImage$setOptions(options) {
     check(options, {
         imageType: String,
         croppable: Match.Optional(Boolean),
+        fixedAspect: Match.Optional(Boolean),
         dragdrop: Match.Optional(Boolean)
     });
     this._imageType = options.imageType;
+    if (this._fixedAspect != undefined) this._fixedAspect = options._fixedAspect;
     var self = this;
     _subscribe('croppable', 'events', 'click', CCPreviewImage$$onPreviewImageClick);
     _subscribe('dragdrop', 'drop', 'drop', CCPreviewImage$$onPreviewImageDrop);
@@ -182,6 +184,10 @@ function getDroppedImageComponent(state) {
 
 function CCPreviewImage$$onPreviewImageClick(imageType, msg, event) {
     var cropType = _getPreviewImageCropType(imageType, this);
+    if (this._fixedAspect === false) {
+        cropType = _.deepClone(cropType);
+        delete cropType.height;
+    }
     var previewImage = this;
     this.croppable.showImageEditor([cropType], function(err, cropResponses) {
         if (err) return logger.error('Error cropping image: ', err);
