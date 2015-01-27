@@ -5,9 +5,12 @@ var componentsRegistry = milo.registry.components
     , articleStorage = require('../../storage/article')
     , logger = milo.util.logger
     , moment = require('moment')
-    , SaveCommunicationsServerInterface = window.top.CC.autosave.SaveCommunicationsServerInterface;
+    , SaveCommunicationsServerInterface = window.top ? window.top.CC.autosave.SaveCommunicationsServerInterface : window.CC.autosave.SaveCommunicationsServerInterface;
 
-var USING_ELASTICSEARCH_SAVE_HISTORY = window.top.CC.config.urlToggles.elasticsearchHistory;
+var USING_ELASTICSEARCH_SAVE_HISTORY = (function() {
+    var win = window.top ? window.top : window;
+    return win & win.CC && win.CC.config && win.CC.config.urlToggles && win.CC.config.urlToggles.elasticsearchHistory;
+}());
 
 var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                         <li class="list-group-item" ml-bind="[item]:item"> \
