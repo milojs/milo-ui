@@ -9,7 +9,7 @@ var componentsRegistry = milo.registry.components
 
 var USING_ELASTICSEARCH_SAVE_HISTORY = (function() {
     var win = window.top ? window.top : window;
-    return win & win.CC && win.CC.config && win.CC.config.urlToggles && win.CC.config.urlToggles.elasticsearchHistory;
+    return win && win.CC && win.CC.config && win.CC.config.urlToggles && win.CC.config.urlToggles.elasticsearchHistory;
 }());
 
 var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
