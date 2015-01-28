@@ -5,7 +5,7 @@ var componentsRegistry = milo.registry.components
     , articleStorage = require('../../storage/article')
     , logger = milo.util.logger
     , moment = require('moment')
-    , SaveCommunicationsServerInterface = window.CC.autosave.SaveCommunicationsServerInterface;
+    , SaveCommunicationsServerInterface = window.CC.autosave && window.CC.autosave.SaveCommunicationsServerInterface;
 
 var USING_ELASTICSEARCH_SAVE_HISTORY = window.CC.config.urlToggles && window.CC.config.urlToggles.elasticsearchHistory;
 
