@@ -203,14 +203,13 @@ function getMetaParams () {
 
 var editorTypes = {
     //'standardModule': 'moduleEditor',
-    //'gallery': 'moduleEditor',
     'module': 'moduleEditor',
     'gallery': 'listEditor',
     'linkList': 'listEditor',
     'poll': 'pollEditor'
 };
 function onModuleClick(moduleData) {
-    var state = this.transfer.getState();
+    var state = this.transfer.getStateWithKey('article');
     var type = state.facetsStates.model.state.tag.name;
     var id = state.facetsStates.model.state.tag.id;
     if (type == 'linkListGroup') {
