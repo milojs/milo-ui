@@ -5,7 +5,7 @@ var componentsRegistry = milo.registry.components
     , _ = require('mol-proto');
 
 
-var ELEMENT_CSS_CLASS = 'btn btn-default ml-radio-group-option';
+var ELEMENT_CSS_CLASS = 'ml-radio-group-option';
 
 var CCContextRadioGroup = MLRadioGroup.createComponentClass('CCContextRadioGroup', {
     dom: {
