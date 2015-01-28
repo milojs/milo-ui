@@ -7,10 +7,7 @@ var componentsRegistry = milo.registry.components
     , moment = require('moment')
     , SaveCommunicationsServerInterface = (window.CC && window.CC.autosave) ? window.CC.autosave.SaveCommunicationsServerInterface : window.top.CC.autosave.SaveCommunicationsServerInterface;
 
-var USING_ELASTICSEARCH_SAVE_HISTORY = (function() {
-    var win = window.top ? window.top : window;
-    return win && win.CC && win.CC.config && win.CC.config.urlToggles && win.CC.config.urlToggles.elasticsearchHistory;
-}());
+var USING_ELASTICSEARCH_SAVE_HISTORY = window.CC.config.urlToggles && window.CC.config.urlToggles.elasticsearchHistory;
 
 var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
                         <li class="list-group-item" ml-bind="[item]:item"> \
