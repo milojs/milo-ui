@@ -170,8 +170,10 @@ function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
             _applyCropToInspectorImage(droppedImage.model.get(), previewImage);
             _cropLinkedTypes.call(previewImage, previewImage, imageType, settings);
         });
-    } else
+    } else {
         logger.error('CMArticle onPreviewImageDrop: no image dropped');
+        event.target.parentNode.classList.remove(IMAGE_LOADING_CLASS);
+    }
 }
 
 
