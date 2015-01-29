@@ -17,7 +17,7 @@
                 </label>
                 <label>
                     <input type="checkbox" ml-bind="[events]:isMoney" class="ml-ui-input"/>
-                    <span>Partner</span>
+                    <span>Partner (This Is Money only)</span>
                 </label>
             </div>
             <div class="cc-relatedlist-actions">
