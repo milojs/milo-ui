@@ -171,7 +171,7 @@ function onSaveButtonClick() {
 
 function addRelatedLink(url, headline) {
     var relatedData = createCommonRelatedData.call(this);
-    relatedData.relatedUrl = url.match(/^http:\/\//) ? url : 'http://' + url;
+    relatedData.relatedUrl = url.match(/^https?:\/\//) ? url : 'http://' + url;
     relatedData.relatedArticleTypeId = 2;
     relatedData.voteFollow = true;
     relatedData.newWindow = true;
