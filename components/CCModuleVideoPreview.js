@@ -17,7 +17,7 @@ milo.mail.on('changeactiveasset', function (msg, data) {
 
 var CCModuleVideoPreview = Component.createComponentClass('CCModuleVideoPreview', {
     dom: {
-        cls: ['cc-module-video-preview', 'media', 'video']
+        cls: ['cc-module-video-preview', 'media']
     },
     drag: {
         allowedEffects: 'copy',
