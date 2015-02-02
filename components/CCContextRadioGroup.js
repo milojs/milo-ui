@@ -1,8 +1,7 @@
 'use strict';
 
 var componentsRegistry = milo.registry.components
-    , MLRadioGroup = componentsRegistry.get('MLRadioGroup')
-    , _ = require('mol-proto');
+    , MLRadioGroup = componentsRegistry.get('MLRadioGroup');
 
 
 var ELEMENT_CSS_CLASS = 'ml-radio-group-option';
