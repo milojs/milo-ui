@@ -181,7 +181,7 @@ function _constructArticleState(value) {
                     wpsData: {
                         headline: value.title,
                         previewText: value.previewText,
-                        itemId: value.id,
+                        itemId: parseInt(value.id),
                         itemType: 'article'
                     }
                 }
