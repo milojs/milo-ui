@@ -4,18 +4,14 @@ var componentsRegistry = milo.registry.components
     , moment = require('moment')
     , fs = require('fs')
     , doT = milo.util.doT
-    , Component = componentsRegistry.get('Component');
+    , CCStatesContainer = componentsRegistry.get('CCStatesContainer');
 
 
 var CMVIDEO_GROUP_TEMPLATE = '<div>this video</div>';
 var LISTITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/listItem.dot'));
 
-var activeState = 'article';
-milo.mail.on('changeactiveasset', function (msg, data) {
-    activeState = data.asset && data.asset.type;
-});
 
-var CCModuleVideoPreview = Component.createComponentClass('CCModuleVideoPreview', {
+var CCModuleVideoPreview = CCStatesContainer.createComponentClass('CCModuleVideoPreview', {
     dom: {
         cls: ['cc-module-video-preview', 'media']
     },
@@ -32,7 +28,6 @@ var CCModuleVideoPreview = Component.createComponentClass('CCModuleVideoPreview'
     },
     model: undefined,
     events: undefined,
-    transfer: undefined,
     container: undefined,
     bigImagePreview: {
         modelPaths: {
@@ -51,15 +46,13 @@ module.exports = CCModuleVideoPreview;
 
 _.extendProto(CCModuleVideoPreview, {
     init: CCModuleVideoPreview$init,
-    destroy: CCModuleVideoPreview$destroy,
     getMeta: CCModuleVideoPreview$getMeta
 });
 
 
 function CCModuleVideoPreview$init() {
-    Component.prototype.init.apply(this, arguments);
+    CCStatesContainer.prototype.init.apply(this, arguments);
     this.on('stateready', onStateReady);
-    milo.mail.on('changeactiveasset', {subscriber: changeActiveState, context: this});
 }
 
 
@@ -67,11 +60,6 @@ function onStateReady() {
     var scope = this.container.scope;
     if (scope.scratch)
         scope.scratch && scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
-}
-
-
-function changeActiveState() {
-    this.transfer.setActiveState(activeState);
 }
 
 
@@ -111,12 +99,6 @@ function getMetaParams() {
     return {
         isLive: this.model.m('.isLive').get()
     }
-}
-
-
-function CCModuleVideoPreview$destroy() {
-    Component.prototype.destroy.apply(this, arguments);
-
 }
 
 
@@ -162,9 +144,9 @@ function CCModuleVideoPreview_set(value) {
     if (expireDate)
         this.el.classList.toggle('cc-preview-expires-warning', moment.utc(expireDate).diff(moment.utc(), 'days', true) <= 1);
 
-    this.transfer.setStateWithKey('article', _constructVideoState(value));
-    this.transfer.setStateWithKey('linklist', _constructVideoLinkState(value));
-    this.transfer.setActiveState(activeState);
+    this.transfer.setStateWithKey('articleEditor', _constructVideoState(value), true);
+    this.transfer.setStateWithKey('linklistEditor', _constructVideoLinkState(value));
+    this.setActiveState();
     value = _parseData(value);
     this.data._set(value);
 }

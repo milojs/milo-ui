@@ -3,7 +3,7 @@
 var fs = require('fs')
     , doT = milo.util.doT
     , componentsRegistry = milo.registry.components
-    , Component = componentsRegistry.get('Component')
+    , CCStatesContainer = componentsRegistry.get('CCStatesContainer')
     , componentName = milo.util.componentName;
 
 
@@ -18,12 +18,8 @@ var articleStatusLabelCSS = {
     'Spiked': 'label-danger'
 };
 
-var activeState = 'article';
-milo.mail.on('changeactiveasset', function (msg, data) {
-    activeState = data.asset && data.asset.type;
-});
 
-var CCModuleArticlePreview = Component.createComponentClass('CCModuleArticlePreview', {
+var CCModuleArticlePreview = CCStatesContainer.createComponentClass('CCModuleArticlePreview', {
     dom: {
         cls: 'cc-module-article-preview'
     },
@@ -34,8 +30,7 @@ var CCModuleArticlePreview = Component.createComponentClass('CCModuleArticlePrev
         set: CCModuleArticlePreview_set
     },
     model: undefined,
-    events: undefined,
-    transfer: undefined
+    events: undefined
 });
 
 componentsRegistry.add(CCModuleArticlePreview);
@@ -44,32 +39,29 @@ module.exports = CCModuleArticlePreview;
 
 
 _.extendProto(CCModuleArticlePreview, {
-    init: CCModuleArticlePreview$init,
-    destroy: CCModuleArticlePreview$destroy
+    init: CCModuleArticlePreview$init
 });
 
 
 function CCModuleArticlePreview$init() {
-    Component.prototype.init.apply(this, arguments);
-    this.once('stateready', function() {
-        var scope = this.container.scope
-            , imgData = this.data.path('.thumb.hostUrl')
-            , isLogoImage = imgData && imgData.get() == 'http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png';
-        scope.thumb.el.classList[isLogoImage ? 'add' : 'remove']('cc-hidden');
-        scope.scratchBtn.events.on('click',
-            { subscriber: sendToScratch, context: this });
-        if (scope.previewBtn) scope.previewBtn.events.on('click',
-            { subscriber: previewArticle, context: this });
-        if (scope.previewBtn) scope.cloneBtn.events.on('click',
-            { subscriber: cloneArticle, context: this });
-    });
-
-    milo.mail.on('changeactiveasset', {subscriber: changeActiveState, context: this});
+    CCStatesContainer.prototype.init.apply(this, arguments);
+    this.once('stateready', onStateReady);
 }
 
-function changeActiveState() {
-    this.transfer.setActiveState(activeState);
+
+function onStateReady() {
+    var scope = this.container.scope
+        , imgData = this.data.path('.thumb.hostUrl')
+        , isLogoImage = imgData && imgData.get() == 'http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png';
+    scope.thumb.el.classList[isLogoImage ? 'add' : 'remove']('cc-hidden');
+    scope.scratchBtn.events.on('click',
+        { subscriber: sendToScratch, context: this });
+    if (scope.previewBtn) scope.previewBtn.events.on('click',
+        { subscriber: previewArticle, context: this });
+    if (scope.previewBtn) scope.cloneBtn.events.on('click',
+        { subscriber: cloneArticle, context: this });
 }
+
 
 function sendToScratch(type, event) {
     event.stopPropagation();
@@ -131,10 +123,10 @@ function CCModuleArticlePreview_set(value) {
     this.data._set(value);
     setStatusColor.call(this);
     this.model.set(value);
-    this.transfer.setStateWithKey('channel', _constructArticleState(value));
-    this.transfer.setStateWithKey('article', _constructRelatedGroupState(value));
-    this.transfer.setStateWithKey('linklist', _constructListEditorLinkState(value));
-    this.transfer.setActiveState(activeState);
+    this.transfer.setStateWithKey('articleEditor', _constructRelatedGroupState(value), true);
+    this.transfer.setStateWithKey('channelEditor', _constructArticleState(value));
+    this.transfer.setStateWithKey('linklistEditor', _constructListEditorLinkState(value));
+    this.setActiveState();
 }
 
 function setStatusColor() {
@@ -154,10 +146,6 @@ function CCModuleArticlePreview_setChannel(newChannel) {
     this.el.classList.add(this._channel);
 }
 
-function CCModuleArticlePreview$destroy() {
-    Component.prototype.destroy.apply(this, arguments);
-    milo.mail.off('changeactiveasset', { subscriber: changeActiveState, context: this });
-}
 
 function _constructArticleState(value) {
     if (!value) return;

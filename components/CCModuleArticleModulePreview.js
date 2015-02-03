@@ -4,7 +4,7 @@ var fs = require('fs')
     , doT = milo.util.doT
     , logger = milo.util.logger
     , componentsRegistry = milo.registry.components
-    , Component = componentsRegistry.get('Component');
+    , CCStatesContainer = componentsRegistry.get('CCStatesContainer');
 
 
 var CMARTICLEMODULE_GROUP_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/modules/articleModulePreview.dot'))();
@@ -32,13 +32,8 @@ var channelModuleTypes = {
     }
 };
 
-var activeState = 'article';
-milo.mail.on('changeactiveasset', function (msg, data) {
-    activeState = data.asset && data.asset.type;
-});
 
-
-var CCModuleArticleModulePreview = Component.createComponentClass('CCModuleArticleModulePreview', {
+var CCModuleArticleModulePreview = CCStatesContainer.createComponentClass('CCModuleArticleModulePreview', {
     dom: {
         cls: 'cc-module-articlemodule-preview'
     },
@@ -61,35 +56,13 @@ var CCModuleArticleModulePreview = Component.createComponentClass('CCModuleArtic
         messages: {
             'dblclick': { context: 'owner', subscriber: onModuleClick }
         }
-    },
-    transfer: undefined
+    }
 });
 
 componentsRegistry.add(CCModuleArticleModulePreview);
 
-_.extendProto(CCModuleArticleModulePreview, {
-    init: CCModuleArticleModulePreview$init,
-    destroy: CCModuleArticleModulePreview$destroy
-});
-
 
 module.exports = CCModuleArticleModulePreview;
-
-function CCModuleArticleModulePreview$init() {
-    Component.prototype.init.apply(this, arguments);
-    milo.mail.on('changeactiveasset', {subscriber: changeActiveState, context: this});
-}
-
-
-function CCModuleArticleModulePreview$destroy() {
-    Component.prototype.destroy.apply(this, arguments);
-    milo.mail.off('changeactiveasset', { subscriber: changeActiveState, context: this });
-}
-
-
-function changeActiveState() {
-    this.transfer.setActiveState(activeState);
-}
 
 
 function CCModuleArticleModulePreview_set(value) {
@@ -98,9 +71,9 @@ function CCModuleArticleModulePreview_set(value) {
     var stylesPromise = window.CC.config.data.itemStyles;
     stylesPromise.then(function (dontUse, data) {
         value = parseData(value, data);
-        self.transfer.setStateWithKey('article', _makeModuleStateForArticle(value), true);
-        self.transfer.setStateWithKey('channel', _makeModuleStateForChannel(value));
-        self.transfer.setActiveState(activeState);
+        self.transfer.setStateWithKey('articleEditor', _makeModuleStateForArticle(value), true);
+        self.transfer.setStateWithKey('channelEditor', _makeModuleStateForChannel(value));
+        self.setActiveState();
         self.data._set(value);
         self.model.set(value);
     }).error(function (error) {

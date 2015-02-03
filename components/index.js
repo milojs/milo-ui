@@ -4,6 +4,7 @@ require('./CCPreviewImage');
 require('./CCPreviewCropAll');
 require('./CCArticleHistory');
 
+require('./CCStatesContainer');
 require('./CCModuleImagePreview');
 require('./CCModuleArticlePreview');
 require('./CCArticlePreviewList');
