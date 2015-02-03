@@ -162,13 +162,18 @@ function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
 
         droppedImage.croppable.autoCropImageToFit(targetWidth, targetHeight, { imageType: imageType }, function (err, settings, wpsImage){
             event.target.parentNode.classList.remove(IMAGE_LOADING_CLASS);
-            if (err) return logger.error('Error cropping image: ', err);
-
-            droppedImage.croppable.imageModel('.wpsImage').del(); // remove old wpsImage so it doesnt interfere with applyCropDetails
-
-            droppedImage.croppable.applyCropDetails(settings, wpsImage);
-            _applyCropToInspectorImage(droppedImage.model.get(), previewImage);
-            _cropLinkedTypes.call(previewImage, previewImage, imageType, settings);
+            if (err) {
+                return logger.error('Error cropping image: ', err);
+            }
+            droppedImage.croppable.getImageModel().del(); // remove old wpsImage so it doesn't interfere with new crop (of scratched images)
+            droppedImage.croppable.applyCropDetails(settings, wpsImage, null, function(err) {
+                if (err) {
+                    return logger.error("Failed to apply crop details on drop: " + err);
+                }
+                var imageData = droppedImage.croppable.getImageData()
+                _applyCropToInspectorImage(imageData, previewImage);
+                _cropLinkedTypes.call(previewImage, previewImage, imageType, settings);
+            });
         });
     } else {
         logger.error('CMArticle onPreviewImageDrop: no image dropped');
@@ -227,7 +232,7 @@ function CCPreviewImage$$onCropAllDrop(imageTypes, msg, event) {
                 _setPreviewImageAfterCrop(inspectorImage, cropResponse, transferItem, imageType);
                 _cropAnyLinkedTypes.call(self, droppedImage, imageType, cropResponses);
             });
-        });
+        })
     } else
         logger.error('CMArticle onPreviewImageDrop: no image dropped');
 
@@ -310,6 +315,7 @@ function _constructCroppableImageState(modelState) {
 
 
 function _applyCropToInspectorImage(imageData, inspectorImage) {
+    if (!imageData.wpsImage) throw new Error("No wpsImage data in provided imageData");
     inspectorImage.croppable.setImageData(imageData);
     if (! imageData.wpsImage) return;
     inspectorImage.model.m('.src').set(imageData.wpsImage.hostUrl);
