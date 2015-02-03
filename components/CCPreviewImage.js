@@ -311,7 +311,6 @@ function _constructCroppableImageState(modelState) {
 
 function _applyCropToInspectorImage(imageData, inspectorImage) {
     inspectorImage.croppable.setImageData(imageData);
-    console.log(_.deepClone(imageData));
     if (! imageData.wpsImage) return;
     inspectorImage.model.m('.src').set(imageData.wpsImage.hostUrl);
 }
