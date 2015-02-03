@@ -229,7 +229,7 @@ function _makeModuleStateForArticle(value) {
                     styleName: value.styleKey,
                     styles: value.styles,
                     tag: {
-                        id: value.id,
+                        id: +value.id,
                         name: value.type,
                         style: value.styleId
                     },
@@ -259,7 +259,7 @@ function _makeModuleStateForChannel(value) {
             model: {
                 state: {
                     wpsData: {
-                        itemId: value.id,
+                        itemId: +value.id,
                         itemType: value.type,
                         itemStyle: value.styleKey,
                         title: value.title

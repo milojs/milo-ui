@@ -169,7 +169,7 @@ function _constructArticleState(value) {
                     wpsData: {
                         headline: value.title,
                         previewText: value.previewText,
-                        itemId: parseInt(value.id),
+                        itemId: +value.id,
                         itemType: 'article'
                     }
                 }
@@ -216,7 +216,7 @@ function _constructRelatedGroupState(value) {
             newWindow: false,
             previewLink: false,
             relatedArticleTypeId: 1,
-            relatedId: Number(value.id),
+            relatedId: +value.id,
             relatedUrl: value.url,
             target: null,
             voteFollow: false
