@@ -112,8 +112,8 @@ function onListChangeSubscriber(type, event) {
 
 function changeRelatedId(linkId, isPartner) {
     if (isExternal(linkId))
-        return isPartner ? '12' : '2';
-    return isPartner ? '11' : '1';
+        return isPartner ? '11' : '2';
+    return isPartner ? '12' : '1';
 }
 
 
@@ -228,5 +228,6 @@ function isPartner(type) {
 }
 
 function isExternal(type) {
-    return type == 10 || type == 2 || type == 12;
+    return type == 2 || type == 10 || type == 11;
 }
+
