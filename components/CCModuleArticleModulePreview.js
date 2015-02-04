@@ -1,36 +1,8 @@
 'use strict';
 
-var fs = require('fs')
-    , doT = milo.util.doT
-    , logger = milo.util.logger
+var logger = milo.util.logger
     , componentsRegistry = milo.registry.components
     , CCStatesContainer = componentsRegistry.get('CCStatesContainer');
-
-
-var CMARTICLEMODULE_GROUP_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/modules/articleModulePreview.dot'))();
-
-var channelModuleTypes = {
-    'standardModule': {
-        compClass: 'CIPageItemStandardModule',
-        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelStandardModulePreview.dot'))
-    },
-    'gallery': {
-        compClass: 'CIPageItemGallery',
-        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelGalleryPreview.dot'))
-    },
-    'module': {
-        compClass: 'CIPageItemModule',
-        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelModulePreview.dot'))
-    },
-    'linkListGroup': {
-        compClass: 'CIPageItemLinkListGroup',
-        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelLinkListGroupPreview.dot'))
-    },
-    'poll': {
-        compClass: 'CIPageItemPoll',
-        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelPollPreview.dot'))
-    }
-};
 
 
 var CCModuleArticleModulePreview = CCStatesContainer.createComponentClass('CCModuleArticleModulePreview', {
@@ -42,9 +14,6 @@ var CCModuleArticleModulePreview = CCStatesContainer.createComponentClass('CCMod
         meta: {
             params: getMetaParams
         }
-    },
-    data: {
-        set: CCModuleArticleModulePreview_set
     },
     model: {
         messages: {
@@ -65,21 +34,20 @@ componentsRegistry.add(CCModuleArticleModulePreview);
 module.exports = CCModuleArticleModulePreview;
 
 
-function CCModuleArticleModulePreview_set(value) {
-    var self = this;
+_.extendProto(CCModuleArticleModulePreview, {
+    dataFacetSet: CCModuleArticleModulePreview$dataFacetSet
+});
 
+
+function CCModuleArticleModulePreview$dataFacetSet(value) {
+    var self = this;
     var stylesPromise = window.CC.config.data.itemStyles;
     stylesPromise.then(function (dontUse, data) {
         value = parseData(value, data);
-        self.transfer.setStateWithKey('articleEditor', _makeModuleStateForArticle(value), true);
-        self.transfer.setStateWithKey('channelEditor', _makeModuleStateForChannel(value));
-        self.setActiveState();
-        self.data._set(value);
-        self.model.set(value);
+        CCStatesContainer.prototype.dataFacetSet.call(self, value);
     }).error(function (error) {
         milo.util.logger.error('itemStyles config returned with an error.');
     });
-
 }
 
 
@@ -109,7 +77,7 @@ function parseData(value, styleData) {
 
     try { var isLive = fields.status.toLowerCase() == 'live'; } catch(e){}
 
-    return {
+    var data = {
         id: moduleId,
         title: stripHtml(fields.title || fields.name || fields.headline),
         type: moduleType,
@@ -120,6 +88,12 @@ function parseData(value, styleData) {
         linkListGroups: linkListGroups,
         linkListId: linkListGroups.length ? value._id : null
     };
+    data.cc_transfer = {
+        itemType: 'module',
+        itemData: _.clone(data)
+    };
+    return data;
+
 
     function getModuleType(moduleType) {
         if (moduleType == 'linklist')
@@ -209,68 +183,4 @@ function onModuleClick(moduleData) {
         assetType: type.toLowerCase(),
         assetId: +id
     });
-}
-
-
-function _makeModuleStateForArticle(value) {
-    if (!value) return;
-
-    var width = value.styles && value.styles.length == 1 && value.styles[0].group == 'single'
-                    ? 'floatRightMod'
-                    : 'fullWidthMod';
-    return {
-        outerHTML: CMARTICLEMODULE_GROUP_TEMPLATE,
-        compClass: 'MIStandard',
-        compName: milo.util.componentName(),
-        facetsStates: {
-            model: {
-                state: {
-                    title: value.title,
-                    styleName: value.styleKey,
-                    styles: value.styles,
-                    tag: {
-                        id: +value.id,
-                        name: value.type,
-                        style: value.styleId
-                    },
-                    linkListGroups: value.linkListGroups
-                }
-            },
-            inspector: {
-                state: { //quoteLayout is a legacy name, should be 'layout' but requires a migration to fix.
-                    quoteLayout: width
-                }
-            }
-        }
-    };
-}
-
-function _makeModuleStateForChannel(value) {
-    if (!value) return;
-    var channelModuleConfig = getChannelConfig(value.type);
-    if (!channelModuleConfig) return logger.log(value.type, 'not supported');
-    var compName = milo.util.componentName();
-
-    return {
-        outerHTML: channelModuleConfig.template({compName: compName}),
-        compClass: channelModuleConfig.compClass,
-        compName: compName,
-        facetsStates: {
-            model: {
-                state: {
-                    wpsData: {
-                        itemId: +value.id,
-                        itemType: value.type,
-                        itemStyle: value.styleKey,
-                        title: value.title
-                    },
-                    styles: value.styles
-                }
-            }
-        }
-    };
-}
-
-function getChannelConfig(type) {
-    return channelModuleTypes[type] || '';
 }

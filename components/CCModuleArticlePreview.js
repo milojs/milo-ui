@@ -1,15 +1,9 @@
 'use strict';
 
-var fs = require('fs')
-    , doT = milo.util.doT
-    , componentsRegistry = milo.registry.components
+var componentsRegistry = milo.registry.components
     , CCStatesContainer = componentsRegistry.get('CCStatesContainer')
     , componentName = milo.util.componentName;
 
-
-var CMARTICLE_GROUP_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/relatedGroup.dot'));
-var CMARTICLE_CI_PAGE_ITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/channelArticlePreview.dot'));
-var LISTITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/listItem.dot'));
 
 var articleStatusLabelCSS = {
     'Live': 'label-success',
@@ -26,10 +20,6 @@ var CCModuleArticlePreview = CCStatesContainer.createComponentClass('CCModuleArt
     drag: {
         allowedEffects: 'copy'
     },
-    data: {
-        set: CCModuleArticlePreview_set
-    },
-    model: undefined,
     events: undefined
 });
 
@@ -39,7 +29,8 @@ module.exports = CCModuleArticlePreview;
 
 
 _.extendProto(CCModuleArticlePreview, {
-    init: CCModuleArticlePreview$init
+    init: CCModuleArticlePreview$init,
+    dataFacetSet: CCModuleArticlePreview$dataFacetSet
 });
 
 
@@ -118,16 +109,12 @@ function _postLoadMessage(msg) {
 }
 
 
-function CCModuleArticlePreview_set(value) {
+function CCModuleArticlePreview$dataFacetSet(value) {
     CCModuleArticlePreview_setChannel.call(this, value.channel);
-    this.data._set(value);
     setStatusColor.call(this);
-    this.model.set(value);
-    this.transfer.setStateWithKey('articleEditor', _constructRelatedGroupState(value), true);
-    this.transfer.setStateWithKey('channelEditor', _constructArticleState(value));
-    this.transfer.setStateWithKey('linklistEditor', _constructListEditorLinkState(value));
-    this.setActiveState();
+    CCStatesContainer.prototype.dataFacetSet.apply(this, arguments);
 }
+
 
 function setStatusColor() {
     var statusPath = this.container.scope.status;
@@ -144,104 +131,4 @@ function CCModuleArticlePreview_setChannel(newChannel) {
 
     this._channel = newChannel;
     this.el.classList.add(this._channel);
-}
-
-
-function _constructArticleState(value) {
-    if (!value) return;
-    var compName = componentName();
-
-    var templateData = {
-        title: value.title,
-        previewText: value.previewText,
-        previewImg: value.thumb && value.thumb.hostUrl || '',
-        compName: compName
-    };
-
-    //todo create article item for channel
-    return {
-        outerHTML: CMARTICLE_CI_PAGE_ITEM_TEMPLATE(templateData),
-        compClass: 'CIPageItemArticle',
-        compName: compName,
-        facetsStates: {
-            model: {
-                state: {
-                    wpsData: {
-                        headline: value.title,
-                        previewText: value.previewText,
-                        itemId: +value.id,
-                        itemType: 'article'
-                    }
-                }
-            }
-        }
-    };
-}
-
-function _constructRelatedGroupState(value) {
-    if (!value) return;
-    var compName = componentName();
-
-    var templateData = {
-        compName: compName
-    };
-
-    return {
-        outerHTML: CMARTICLE_GROUP_TEMPLATE(templateData),
-        compClass: 'CMRelatedGroup',
-        compName: compName,
-        facetsStates: {
-            model: {
-                state: {
-                    transferData: [
-                        {
-                            url: value.url,
-                            title: value.title,
-
-                            //is not using previewText because the text that appears in relatedArticles
-                            //is the title not the previewText
-                            previewText: value.title,
-                            transferItem: value,
-                            wpsRelated: createWpsData(value)
-                        }
-                    ]
-                }
-            }
-        }
-    };
-
-    function createWpsData(value) {
-        return  {
-            headline: value.title,
-            newWindow: false,
-            previewLink: false,
-            relatedArticleTypeId: 1,
-            relatedId: +value.id,
-            relatedUrl: value.url,
-            target: null,
-            voteFollow: false
-        };
-    }
-}
-
-function _constructListEditorLinkState(value) {
-    if (!value) return;
-
-    var compName = componentName();
-
-    return {
-        outerHTML: LISTITEM_TEMPLATE({compName: compName}),
-        compClass: 'LELinkItem',
-        compName: compName,
-        facetsStates: {
-            model: {
-                state: {
-                    articleId: +value.id,
-                    description: value.title,
-                    longDescription: value.previewText,
-                    status: 'Live'
-                }
-            }
-        }
-    };
 }

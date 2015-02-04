@@ -8,7 +8,7 @@ var componentsRegistry = milo.registry.components
 
 
 var CMVIDEO_GROUP_TEMPLATE = '<div>this video</div>';
-var LISTITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/article/listItem.dot'));
+var LISTITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/CCStatesContainer/article/listItem.dot'));
 
 
 var CCModuleVideoPreview = CCStatesContainer.createComponentClass('CCModuleVideoPreview', {
@@ -21,12 +21,6 @@ var CCModuleVideoPreview = CCStatesContainer.createComponentClass('CCModuleVideo
             params: getMetaParams
         }
     },
-    data: {
-        get: CCModuleVideoPreview_get,
-        set: CCModuleVideoPreview_set,
-        del: CCModuleVideoPreview_del
-    },
-    model: undefined,
     events: undefined,
     container: undefined,
     bigImagePreview: {
@@ -46,7 +40,9 @@ module.exports = CCModuleVideoPreview;
 
 _.extendProto(CCModuleVideoPreview, {
     init: CCModuleVideoPreview$init,
-    getMeta: CCModuleVideoPreview$getMeta
+    getMeta: CCModuleVideoPreview$getMeta,
+    dataFacetSet: CCModuleVideoPreview$dataFacetSet,
+    dataFacetDel: CCModuleVideoPreview$dataFacetDel
 });
 
 
@@ -112,12 +108,7 @@ function CCModuleVideoPreview$getMeta() {
 }
 
 
-function CCModuleVideoPreview_get() {
-    return this.model.get();
-}
-
-
-function CCModuleVideoPreview_set(value) {
+function CCModuleVideoPreview$dataFacetSet(value) {
     //if stillimage is not defined use thumb instead
     value = _transformData(value);
     value.fields.stillImage = value.fields.stillImage
@@ -126,8 +117,6 @@ function CCModuleVideoPreview_set(value) {
 
     try { var isLive = value.fields.status.toLowerCase() == 'live'; } catch(e){}
     value.isLive = !!isLive;
-
-    this.model.set(value);
 
     var mainChannel;
     try{ mainChannel = value.fields.channelFrontUrl.match(/[^/]+/)[0]; } catch(e){}
@@ -144,11 +133,10 @@ function CCModuleVideoPreview_set(value) {
     if (expireDate)
         this.el.classList.toggle('cc-preview-expires-warning', moment.utc(expireDate).diff(moment.utc(), 'days', true) <= 1);
 
-    this.transfer.setStateWithKey('articleEditor', _constructVideoState(value), true);
-    this.transfer.setStateWithKey('linklistEditor', _constructVideoLinkState(value));
-    this.setActiveState();
+    // this.transfer.setStateWithKey('articleEditor', _constructVideoState(value), true);
+    // this.transfer.setStateWithKey('linklistEditor', _constructVideoLinkState(value));
+    // this.setActiveState();
     value = _parseData(value);
-    this.data._set(value);
 }
 
 function CCModuleVideoPreview_setChannel(newChannel) {
@@ -182,8 +170,8 @@ function _dateHelper(date, isRelative) {
 }
 
 
-function CCModuleVideoPreview_del() {
-    this.model.del();
+function CCModuleVideoPreview$dataFacetDel() {
+    CCStatesContainer.prototype.dataFacetDel.call(this);
     this.container.scope.image.el.removeAttribute('src');
 }
 

@@ -20,6 +20,7 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
         set: CCArticlePreviewList_set,
         del: CCArticlePreviewList_del,
         splice: CCArticlePreviewList_splice,
+        len: CCArticlePreviewList_len,
         event: ARTICLEPREVIEWLIST_CHANGE_MESSAGE
     },
     template: {
@@ -36,7 +37,7 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
                         </div>\
                         <div class="cc-article-title-bar">\
                             <div class="cc-status" ml-bind="[data]:status"></div>\
-                            <div class="cc-article-title" ml-bind="[data]:title"></div>\
+                            <div class="cc-article-title" ml-bind="[data]:headline"></div>\
                         </div>\
                         <div class="cc-article-short-body">\
                             <div class="cc-preview-image" ml-bind="[data container]:thumb">\
@@ -95,9 +96,7 @@ function CCArticlePreviewList_get() {
 
 
 function CCArticlePreviewList_set(value) {
-    value = _parseMultiple(value);
-    if (Array.isArray(value))
-        this._list.data._set(value);
+    this._list.data._set(value);
     this.model.set(value);
     _sendChangeMessage.call(this);
     return value;
@@ -112,66 +111,17 @@ function CCArticlePreviewList_del() {
 
 
 function CCArticlePreviewList_splice() { // ... arguments
-    var args = Array.prototype.slice.call(arguments);
     var dataFacet = this._list.data;
-    args = args.slice(0, 2).concat(_parseMultiple(args.slice(2)));
-    dataFacet._splice.apply(dataFacet, args);
-    this.model.splice.apply(this.model, args);
+    dataFacet._splice.apply(dataFacet, arguments);
+    this.model.splice.apply(this.model, arguments);
+}
+
+
+function CCArticlePreviewList_len() {
+    return this._list.data._len();
 }
 
 
 function _sendChangeMessage() {
     this.data.getMessageSource().dispatchMessage(ARTICLEPREVIEWLIST_CHANGE_MESSAGE);
 }
-
-function _parseMultiple(multiple) {
-    if (Array.isArray(multiple)) {
-        return multiple.map(function (item) {
-            return _parseData(item);
-        });
-    }
-    return _parseData(multiple);
-}
-
-function _parseData(data) {
-    data.fields = data._source;
-    var result = {};
-
-    // Set the data in the search result
-    result.id = data._id;
-    result.type = data._type;
-    result.title = data.fields.headline;
-    result.previewText = data.fields.previewText;
-    result.channel = data.fields.topParentChannel || data.fields.channel;
-    result.createdBy = (data.fields.authors && data.fields.authors[0] && data.fields.authors[0].name) || '';
-    result.createdDate = _dateHelper(data.fields.createdDate);
-    result.modifiedDate = _dateHelper(data.fields.modifiedDate);
-    result.status = data.fields.status;
-    result.url = data.fields.articleURL;
-
-    // Search through the images and find the puff thumb
-    result.thumb = _findThumb(data.fields && data.fields.images);
-    return result;
-}
-
-function _dateHelper(date) {
-    if(!date) return null;
-    date = _.toDate(date);
-
-    return date && moment(date).format('MMM DD, YYYY HH:mm');
-    //// native solution
-    //var options = {
-    //    year: "numeric", hour12:false, month: "short",
-    //    day: "2-digit", hour: "2-digit", minute: "2-digit"
-    //};
-    //return date.toLocaleTimeString("en-gb",options).replace(/( [^ ]+)/,function(str,gr1){return gr1+','})
-}
-
-function _findThumb(images) {
-    if (images)
-        return _.find(images, function(image) {
-            return image.imageType == 'LL_PUFF_THUMB';
-        });
-}
-
-
