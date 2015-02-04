@@ -138,7 +138,7 @@ function processInputSchema(comp, schema) {
 }
 
 function processChannelSelectSchema(comp, schema) {
-    comp.setOptions(schema.options);
+    comp.setChannelList(schema.options.channelList, schema.options.defaultSelection);
 }
 
 function setComponentOptions(comp, options, setModelFunc) {
