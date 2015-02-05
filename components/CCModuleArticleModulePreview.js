@@ -8,27 +8,24 @@ var fs = require('fs')
 
 
 var CMARTICLEMODULE_GROUP_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/modules/articleModulePreview.dot'))();
+var CHANNEL_MODULE_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/modules/channelModulePreview.dot'));
+
 
 var channelModuleTypes = {
     'standardModule': {
-        compClass: 'CIPageItemStandardModule',
-        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelStandardModulePreview.dot'))
+        compClass: 'CIPageItemStandardModule'
     },
     'gallery': {
-        compClass: 'CIPageItemGallery',
-        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelGalleryPreview.dot'))
+        compClass: 'CIPageItemGallery'
     },
     'module': {
-        compClass: 'CIPageItemModule',
-        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelModulePreview.dot'))
+        compClass: 'CIPageItemModule'
     },
     'linkListGroup': {
-        compClass: 'CIPageItemLinkListGroup',
-        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelLinkListGroupPreview.dot'))
+        compClass: 'CIPageItemLinkListGroup'
     },
     'poll': {
-        compClass: 'CIPageItemPoll',
-        template: doT.compile(fs.readFileSync(__dirname + '/modules/channelPollPreview.dot'))
+        compClass: 'CIPageItemPoll'
     }
 };
 
@@ -252,7 +249,7 @@ function _makeModuleStateForChannel(value) {
     var compName = milo.util.componentName();
 
     return {
-        outerHTML: channelModuleConfig.template({compName: compName}),
+        outerHTML: CHANNEL_MODULE_TEMPLATE({compName: compName, compClass: channelModuleConfig.compClass}),
         compClass: channelModuleConfig.compClass,
         compName: compName,
         facetsStates: {
@@ -274,3 +271,4 @@ function _makeModuleStateForChannel(value) {
 function getChannelConfig(type) {
     return channelModuleTypes[type] || '';
 }
+

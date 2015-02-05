@@ -1,1 +1,0 @@
-<div ml-bind="CIPageItemGallery:{{= it.compName }}"></div>

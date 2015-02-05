@@ -1,1 +1,2 @@
-<div ml-bind="CIPageItemGallery:{{= it.compName }}"></div>
+<div ml-bind="{{= it.compClass }}:{{= it.compName }}"></div>
+
