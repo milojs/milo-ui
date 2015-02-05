@@ -2,8 +2,9 @@
 
 
 var componentName = milo.util.componentName
-    , article = require('./article')
-    , module = require('./module');
+    , articleItem = require('./article')
+    , videoItem = require('./video')
+    , moduleItem = require('./module');
 
 
 var itemStates = module.exports = {
@@ -11,22 +12,22 @@ var itemStates = module.exports = {
         states: [
             {
                 editorApp: 'articleEditor',
-                createState: article.relatedGroupState,
+                createState: articleItem.relatedGroupState,
                 isDefault: true
             },
             {
                 editorApp: 'channelEditor',
-                createState: article.pageItemArticleState
+                createState: articleItem.pageItemArticleState
             },
             {
                 editorApp: 'listEditor',
-                createState: article.linkItemArticleState
+                createState: articleItem.linkItemArticleState
             }
         ],
         actions: [
             { 
                 action: 'open',
-                func: article.openArticle
+                func: articleItem.openArticle
             }
         ]
     },
@@ -34,18 +35,35 @@ var itemStates = module.exports = {
         states: [
             {
                 editorApp: 'articleEditor',
-                createState: module.moduleItemState,
+                createState: moduleItem.moduleItemState,
                 isDefault: true
             },
             {
                 editorApp: 'channelEditor',
-                createState: module.pageItemModuleState
+                createState: moduleItem.pageItemModuleState
             }
         ],
         actions: [
             {
                 action: 'open',
-                func: module.openModule
+                func: moduleItem.openModule
+            }
+        ]
+    },
+    'video': {
+        states: [
+            {
+                editorApp: 'articleEditor',
+                createState: videoItem.videoInstanceState,
+                isDefault: true
+            },
+            {
+                editorApp: 'channelEditor',
+                createState: videoItem.pageItemVideoState
+            },
+            {
+                editorApp: 'listEditor',
+                createState: videoItem.videoLinkItemState
             }
         ]
     }

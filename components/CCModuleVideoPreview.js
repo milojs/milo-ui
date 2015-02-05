@@ -2,13 +2,7 @@
 //TODO: Refactor as soon as possible, very similar to CCModuleImagePreview
 var componentsRegistry = milo.registry.components
     , moment = require('moment')
-    , fs = require('fs')
-    , doT = milo.util.doT
     , CCStatesContainer = componentsRegistry.get('CCStatesContainer');
-
-
-var CMVIDEO_GROUP_TEMPLATE = '<div>this video</div>';
-var LISTITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/CCStatesContainer/article/listItem.dot'));
 
 
 var CCModuleVideoPreview = CCStatesContainer.createComponentClass('CCModuleVideoPreview', {
@@ -25,10 +19,10 @@ var CCModuleVideoPreview = CCStatesContainer.createComponentClass('CCModuleVideo
     container: undefined,
     bigImagePreview: {
         modelPaths: {
-            imageSrc: '.fields.stillImage.hostUrl',
-            captionText: '.fields.headline',
-            id: '.fields.id',
-            createdDate: '.fields.createdDate'
+            imageSrc: '.stillImage.hostUrl',
+            captionText: '.headline',
+            id: '.id',
+            createdDate: '.createdDate'
         }
     }
 });
@@ -60,7 +54,7 @@ function onStateReady() {
 
 function openPreview(type, event) {
     event.stopPropagation();
-    window.open('/video/preview/' + this.model.m('.fields.id').get(), '_blank');
+    window.open('/video/preview/' + this.model.m('.id').get(), '_blank');
 }
 
 function sendToScratch(type, event) {
@@ -103,10 +97,10 @@ function getMetaParams() {
 
 
 function CCModuleVideoPreview$getMeta() {
-    var model = this.model.get();
+    var data = this.model.get();
     return {
-        description: model.fields.headline,
-        preview: model.fields.stillImage.hostUrl,
+        description: data.headline,
+        preview: data.stillImage.hostUrl,
         typeTitle: 'Video'
     }
 }
@@ -114,34 +108,32 @@ function CCModuleVideoPreview$getMeta() {
 
 function CCModuleVideoPreview$dataFacetSet(value) {
     //if stillimage is not defined use thumb instead
-    value = _transformData(value);
-    value.fields.stillImage = value.fields.stillImage
-                                || (value.fields.thumbImage && _.deepClone(value.fields.thumbImage))
+    value = _parseData(value);
+    value.stillImage = value.stillImage
+                                || (value.thumbImage && _.deepClone(value.thumbImage))
                                 || {hostUrl: 'undefined'};
 
-    try { var isLive = value.fields.status.toLowerCase() == 'live'; } catch(e){}
+    try { var isLive = value.status.toLowerCase() == 'live'; } catch(e){}
     value.isLive = !!isLive;
 
     var mainChannel;
-    try{ mainChannel = value.fields.channelFrontUrl.match(/[^/]+/)[0]; } catch(e){}
+    try{ mainChannel = value.channelFrontUrl.match(/[^/]+/)[0]; } catch(e){}
     if(! mainChannel)
         mainChannel = 'news';
 
     CCModuleVideoPreview_setChannel.call(this, mainChannel);
 
-    try { var hostUrl = value.fields.thumbImage.hostUrl; } catch (e) {}
+    try { var hostUrl = value.thumbImage.hostUrl; } catch (e) {}
     try { this.container.scope.image.el.src = hostUrl; } catch (e) {}
 
-    var expireDate = value.fields.titleEndDate;
+    var expireDate = value.titleEndDate;
     this.el.classList.toggle('cc-preview-expires', expireDate);
     if (expireDate)
         this.el.classList.toggle('cc-preview-expires-warning', moment.utc(expireDate).diff(moment.utc(), 'days', true) <= 1);
 
-    // this.transfer.setStateWithKey('articleEditor', _constructVideoState(value), true);
-    // this.transfer.setStateWithKey('linklistEditor', _constructVideoLinkState(value));
-    // this.setActiveState();
-    value = _parseData(value);
+    CCStatesContainer.prototype.dataFacetSet.call(this, value);
 }
+
 
 function CCModuleVideoPreview_setChannel(newChannel) {
     if (this._channel)
@@ -151,25 +143,29 @@ function CCModuleVideoPreview_setChannel(newChannel) {
     this.el.classList.add(this._channel);
 }
 
-function _transformData(data) {
-    var result = {};
-    result.fields = data._source;
-    return result;
-}
 
 function _parseData(data) {
-    var result = {};
-    result = data.fields;
-    result.createdDate = _dateHelper(data.fields.createdDate);
-    result.titleEndDate = _dateHelper(data.fields.titleEndDate, true);
-    return result;
+    data = data._source;
+    var vsId = data.videoStatusId; // completed = 3, failed = 4, postprocessing = 5
+    data.videoStatus = vsId == 3
+        ? ''  // for completed videos just don't show any info
+        : vsId == 5 ? 'Processing' : 'Error';
+
+    data.modifiedDate = _dateHelper(data.modifiedDate);
+    data.createdDate = _dateHelper(data.createdDate);
+    data.titleEndDate = _dateHelper(data.titleEndDate, true);
+    data.cc_transfer = {
+        itemType: 'video',
+        itemData: _.clone(data)
+    };
+    return data;
 }
 
+
 function _dateHelper(date, isRelative) {
-    if(!date) return null;
-    if (isRelative)
-        return date && moment.utc(date).fromNow();
     date = _.toDate(date);
+    if (!date) return null;
+    if (isRelative) return date && moment.utc(date).fromNow();
     return date && moment(date).format('MMM DD, YYYY HH:mm');
 }
 
@@ -178,56 +174,3 @@ function CCModuleVideoPreview$dataFacetDel() {
     CCStatesContainer.prototype.dataFacetDel.call(this);
     this.container.scope.image.el.removeAttribute('src');
 }
-
-
-function _constructVideoState(value) {
-    if (!value) return;
-    return {
-        outerHTML: CMVIDEO_GROUP_TEMPLATE,
-        compClass: 'MIVideoInstance',
-        compName: milo.util.componentName(),
-        facetsStates: {
-            model: {
-                state: {
-                    instance: {
-                        videoId: +value.fields.id
-                    },
-                    src: value.fields.stillImage && value.fields.stillImage.hostUrl,
-                    width: value.fields.stillImage && value.fields.stillImage.width,
-                    height: value.fields.stillImage && value.fields.stillImage.height,
-                    headline: value.fields.headline,
-                    titleEndDate: value.fields.titleEndDate,
-                    modifiedDate: value.fields.modifiedDate,
-                    createdDate: value.fields.createdDate,
-                    tag: {
-                        id: undefined,
-                        name: 'video',
-                        style: 2
-                    }
-                }
-            }
-        }
-    };
-}
-
-
-function _constructVideoLinkState(value) {
-    if (!value) return;
-
-    var compName = milo.util.componentName();
-
-    return {
-        outerHTML: LISTITEM_TEMPLATE({compName: compName}),
-        compName: compName,
-        compClass: 'LELinkItem',
-        facetsStates: {
-            model: {
-                state: {
-                    videoId: +value.fields.id,
-                    description: value.fields.headline
-                }
-            }
-        }
-    };
-}
-

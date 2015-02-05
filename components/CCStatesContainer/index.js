@@ -9,8 +9,6 @@ var componentsRegistry = milo.registry.components
     , logger = milo.util.logger
     , itemStates = require('./item_states');
 
-    console.log(itemStates);
-
 
 var CCStatesContainer = Component.createComponentClass('CCStatesContainer', {
     data: { // should not be overwritten by subclasses, instead dataFacet... methods should be extended
