@@ -31,7 +31,8 @@ _.extendProto(CCStatesContainer, {
     destroy: CCStatesContainer$destroy,
     setActiveState: CCStatesContainer$setActiveState,
     setTransferStates: CCStatesContainer$setTransferStates,
-
+    performAction: CCStatesContainer$performAction,
+    getTransferItem: CCStatesContainer$getTransferItem,
 
     dataFacetGet: CCStatesContainer$dataFacetGet,
     dataFacetSet: CCStatesContainer$dataFacetSet,
@@ -65,6 +66,8 @@ function CCStatesContainer$setActiveState(key) {
 
 function CCStatesContainer$setTransferStates(data) {
     if (isComponentState(data)) {
+        delete this._itemType;
+        delete this._itemData;
         this.transfer.setState(data);
     } else {
         this._itemType = data.itemType;
@@ -142,4 +145,28 @@ function CCStatesContainer_set(data) {
 
 function CCStatesContainer_del() {
     return this.dataFacetDel();
+}
+
+
+function CCStatesContainer$performAction(action) {
+    var itemType = this._itemType || this.model.m('.meta.compClass').get();
+    try { var actions = itemStates[itemType].actions; } catch(e) {}
+
+    if (actions) {
+        var actionInfo = _.find(actions, function(a) {
+            return a.action == action;
+        });
+        if (actionInfo) actionInfo.func.call(this, this._itemData);
+    }
+}
+
+
+function CCStatesContainer$getTransferItem() {
+    if (this._itemType)
+        return {
+            itemType: this._itemType,
+            itemData: this._itemData
+        };
+    else
+        return this.transfer.getState();
 }

@@ -65,6 +65,20 @@ var itemStates = module.exports = {
                 editorApp: 'listEditor',
                 createState: videoItem.videoLinkItemState
             }
+        ],
+        actions: [
+            {
+                action: 'open',
+                func: videoItem.openVideo
+            }
+        ]
+    },
+    'CMRelatedGroup': {
+        actions: [
+            {
+                action: 'open',
+                func: articleItem.openArticleFromRelatedGroup
+            }
         ]
     }
 };

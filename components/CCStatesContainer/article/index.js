@@ -14,7 +14,8 @@ module.exports = {
     relatedGroupState: relatedGroupState,
     pageItemArticleState: pageItemArticleState,
     linkItemArticleState: linkItemArticleState,
-    openArticle: openArticle
+    openArticle: openArticle,
+    openArticleFromRelatedGroup: openArticleFromRelatedGroup
 };
 
 
@@ -85,11 +86,10 @@ function relatedGroupState(value) {
     function createWpsData(value) {
         return  {
             headline: value.headline,
-            newWindow
-            : false,
+            newWindow: false,
             previewLink: false,
             relatedArticleTypeId: 1,
-            relatedId: Number(value.id),
+            relatedId: Number(value.articleId),
             relatedUrl: value.articleURL,
             target: null,
             voteFollow: false
@@ -110,7 +110,7 @@ function linkItemArticleState(value) {
         facetsStates: {
             model: {
                 state: {
-                    articleId: +value.id,
+                    articleId: +value.articleId,
                     description: value.headline,
                     longDescription: value.previewText,
                     status: 'Live'
@@ -122,5 +122,23 @@ function linkItemArticleState(value) {
 
 
 function openArticle(data) {
+    _openArticle(data.articleId);
+}
 
+
+var ARTICLE_ID_PATH = '.cc_transfer.facetsStates.model.state.transferData[0].transferItem.id';
+
+function openArticleFromRelatedGroup() {
+    var articleId = this.model.m(ARTICLE_ID_PATH).get();
+    _openArticle(articleId);
+}
+
+
+function _openArticle(articleId) {
+    if (articleId);
+        milo.mail.postMessage('loadasset', {
+            editorApp: 'articleEditor',
+            assetType: 'article',
+            assetId: articleId
+        });
 }

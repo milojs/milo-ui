@@ -20,7 +20,11 @@ var CCModuleArticlePreview = CCStatesContainer.createComponentClass('CCModuleArt
     drag: {
         allowedEffects: 'copy'
     },
-    events: undefined
+    events: {
+        messages: {
+            'dblclick': { subscriber: onDblClick, context: 'owner' }
+        }
+    }
 });
 
 componentsRegistry.add(CCModuleArticlePreview);
@@ -57,17 +61,15 @@ function onStateReady() {
 function sendToScratch(type, event) {
     event.stopPropagation();
 
-    var state = this.transfer.getState();
-    var data = this.data.get();
+    var data = this.getTransferItem()
+        , itemData = data.itemData;
 
     var scratchData = {
-        data: state,
+        data: data,
         meta: {
-            compClass: state.compClass,
-            compName: state.compName,
             metaData: {
-                description: '<strong>' + data.title + '</strong> - ' + data.previewText,
-                preview: data.thumb && data.thumb.hostUrl,
+                description: '<strong>' + itemData.headline + '</strong> - ' + itemData.previewText,
+                preview: itemData.thumb && itemData.thumb.hostUrl,
                 typeTitle: 'Article'
             }
         }
@@ -125,10 +127,16 @@ function setStatusColor() {
     statusPath.el.classList.add(statusCssClass);
 }
 
+
 function CCModuleArticlePreview_setChannel(newChannel) {
     if (this._channel)
         this.el.classList.remove(this._channel);
 
     this._channel = newChannel;
     this.el.classList.add(this._channel);
+}
+
+
+function onDblClick(msg, event) {
+    this.performAction('open');
 }
