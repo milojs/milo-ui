@@ -148,39 +148,6 @@ function getMetaParams () {
 }
 
 
-var editorTypes = {
-    //'standardModule': 'moduleEditor',
-    'module': 'moduleEditor',
-    'gallery': 'listEditor',
-    'linkList': 'listEditor',
-    'poll': 'pollEditor'
-};
-function onModuleClick(moduleData) {
-    var state = this.transfer.getStateWithKey('article');
-    var type = state.facetsStates.model.state.tag.name;
-    var id = state.facetsStates.model.state.tag.id;
-    if (type == 'linkListGroup') {
-        type = 'linkList';
-        id = +this.model.m('.linkListId').get();
-    }
-    var app = editorTypes[type];
-
-    if (!app
-        || (app == 'pollEditor' && !CC.config.urlToggles.polls)
-        || (app == 'listEditor' && !CC.config.urlToggles.lists)) {
-        milo.mail.postMessage('opendialog', {
-            name: 'wrong_editor_' + type,
-            options: {
-                title: 'Unable to edit',
-                text: 'There is no editor for the module type: ' + type
-            }
-        });
-        return;
-    }
-
-    milo.mail.postMessage('loadasset', {
-        editorApp: app,
-        assetType: type.toLowerCase(),
-        assetId: +id
-    });
+function onModuleClick(msg, event) {
+    this.performAction('open');
 }
