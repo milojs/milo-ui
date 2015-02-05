@@ -54,10 +54,14 @@ function CCModuleVideoPreview$init() {
 
 function onStateReady() {
     var scope = this.container.scope;
-    if (scope.scratch)
-        scope.scratch && scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
+    scope.scratch && scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
+    scope.preview && scope.preview.events.on('click', { subscriber: openPreview, context: this });
 }
 
+function openPreview(type, event) {
+    event.stopPropagation();
+    window.open('/video/preview/' + this.model.m('.fields.id').get(), '_blank');
+}
 
 function sendToScratch(type, event) {
     event.stopPropagation();
