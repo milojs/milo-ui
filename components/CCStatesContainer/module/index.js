@@ -44,7 +44,11 @@ function moduleItemState(value) {
                         name: value.type,
                         style: value.styleId
                     },
-                    linkListGroups: value.linkListGroups
+                    linkListGroups: value.linkListGroups,
+                    cc_scratch: {
+                        itemType: 'module',
+                        itemData: value
+                    }
                 }
             },
             inspector: {
@@ -76,7 +80,11 @@ function pageItemModuleState(value) {
                         itemStyle: value.styleKey,
                         title: value.title
                     },
-                    styles: value.styles
+                    styles: value.styles,
+                    cc_scratch: {
+                        itemType: 'module',
+                        itemData: value
+                    }
                 }
             }
         }
