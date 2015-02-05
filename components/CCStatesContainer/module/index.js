@@ -5,28 +5,14 @@ var doT = milo.util.doT
 
 
 var CMARTICLEMODULE_GROUP_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/articleModulePreview.dot'))();
+var CHANNEL_MODULE_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/channelModulePreview.dot'));
 
 var channelModuleTypes = {
-    'standardModule': {
-        compClass: 'CIPageItemStandardModule',
-        template: doT.compile(fs.readFileSync(__dirname + '/channelStandardModulePreview.dot'))
-    },
-    'gallery': {
-        compClass: 'CIPageItemGallery',
-        template: doT.compile(fs.readFileSync(__dirname + '/channelGalleryPreview.dot'))
-    },
-    'module': {
-        compClass: 'CIPageItemModule',
-        template: doT.compile(fs.readFileSync(__dirname + '/channelModulePreview.dot'))
-    },
-    'linkListGroup': {
-        compClass: 'CIPageItemLinkListGroup',
-        template: doT.compile(fs.readFileSync(__dirname + '/channelLinkListGroupPreview.dot'))
-    },
-    'poll': {
-        compClass: 'CIPageItemPoll',
-        template: doT.compile(fs.readFileSync(__dirname + '/channelPollPreview.dot'))
-    }
+    'standardModule': 'CIPageItemStandardModule',
+    'gallery': 'CIPageItemGallery',
+    'module': 'CIPageItemModule',
+    'linkListGroup': 'CIPageItemLinkListGroup',
+    'poll': 'CIPageItemPoll'
 };
 
 
@@ -73,13 +59,13 @@ function moduleItemState(value) {
 
 function pageItemModuleState(value) {
     if (!value) return;
-    var channelModuleConfig = channelModuleTypes[value.type] || '';
-    if (!channelModuleConfig) return logger.log(value.type, 'not supported');
+    var channelModuleClass = channelModuleTypes[value.type] || '';
+    if (!channelModuleClass) return logger.log(value.type, 'not supported');
     var compName = milo.util.componentName();
 
     return {
-        outerHTML: channelModuleConfig.template({compName: compName}),
-        compClass: channelModuleConfig.compClass,
+        outerHTML: CHANNEL_MODULE_TEMPLATE({compName: compName,  compClass: channelModuleClass }),
+        compClass: channelModuleClass,
         compName: compName,
         facetsStates: {
             model: {
