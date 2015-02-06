@@ -39,6 +39,10 @@ function videoInstanceState(value) {
                         id: undefined,
                         name: 'video',
                         style: 2
+                    },
+                    cc_scratch: {
+                        itemType: 'video',
+                        itemData: value
                     }
                 }
             }
@@ -65,7 +69,12 @@ function videoLinkItemState(value) {
             model: {
                 state: {
                     videoId: +value.id,
-                    description: value.headline
+                    description: value.headline,
+                    status: value.status,
+                    cc_scratch: {
+                        itemType: 'video',
+                        itemData: value
+                    }
                 }
             }
         }
@@ -73,6 +82,13 @@ function videoLinkItemState(value) {
 }
 
 
-function openVideo() {
-
+function openVideo(data) {
+    if (window.CC.config.urlToggles.video)
+        milo.mail.postMessage('loadasset', {
+            editorApp: 'videoEditor',
+            assetType: 'video',
+            assetId: +data.id
+        });
+    else
+        window.open('/video/preview/' + data.id, '_blank');
 }
