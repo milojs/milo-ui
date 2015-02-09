@@ -24,6 +24,13 @@ var CCModuleArticlePreview = CCStatesContainer.createComponentClass('CCModuleArt
         messages: {
             'dblclick': { subscriber: onDblClick, context: 'owner' }
         }
+    },
+    contextMenu: {
+        items: [
+            { name: 'test1', label: 'Test 1', action: function() { console.log('test1', this); } },
+            { divider: true },
+            { name: 'test2', label: 'Test 2', action: function() { console.log('test2', this); } }
+        ]
     }
 });
 
