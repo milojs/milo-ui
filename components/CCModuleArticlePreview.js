@@ -27,9 +27,9 @@ var CCModuleArticlePreview = CCStatesContainer.createComponentClass('CCModuleArt
     },
     contextMenu: {
         items: [
-            { name: 'test1', label: 'Test 1', action: function() { console.log('test1', this); } },
+            { name: 'test1', label: 'Test 1', action: function() {  } },
             { divider: true },
-            { name: 'test2', label: 'Test 2', action: function() { console.log('test2', this); } }
+            { name: 'test2', label: 'Test 2', action: function() {  } }
         ]
     }
 });
