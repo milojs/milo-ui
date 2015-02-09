@@ -60,14 +60,15 @@ function openPreview(type, event) {
 function sendToScratch(type, event) {
     event.stopPropagation();
 
-    var state = this.transfer.getState();
     var metaData = this.getMeta();
+    var data = this.getTransferItem()
+        , itemData = data.itemData;
 
     var scratchData = {
-        data: state,
+        data: data,
         meta: {
-            compClass: state.compClass,
-            compName: state.compName,
+            compClass: itemData.compClass,
+            compName: itemData.compName,
             metaData: metaData
         }
     };
