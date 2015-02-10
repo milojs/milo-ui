@@ -2,7 +2,6 @@
 
 
 var fs = require('fs')
-    , Promise = milo.util.promise
     , formRegistry = require('./registry');
 
 
@@ -143,15 +142,13 @@ function processChannelSelectSchema(comp, schema) {
 
 function setComponentOptions(comp, options, setModelFunc) {
     if (options) {
-        if (Promise.isPromise(options)) {
+        if (options && typeof options.then == 'function') {
             setModelFunc(comp, [{ value: 0, label: 'loading...' }]);
             options
-                .then(function(err, data) {
-                    setModelFunc(comp, data);
-                })
-                .error(function() {
-                    setModelFunc(comp, [{ value: 0, label: 'loading error' }]);
-                });
+                .then(
+                    function(data) { setModelFunc(comp, data); },
+                    function() { setModelFunc(comp, [{ value: 0, label: 'loading error' }]); }
+                );
         } else
             setModelFunc(comp, options);
     }

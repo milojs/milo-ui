@@ -42,10 +42,10 @@ _.extendProto(CCModuleArticleModulePreview, {
 function CCModuleArticleModulePreview$dataFacetSet(value) {
     var self = this;
     var stylesPromise = window.CC.config.data.itemStyles;
-    stylesPromise.then(function (dontUse, data) {
+    stylesPromise.then(function (data) {
         value = parseData(value, data);
         CCStatesContainer.prototype.dataFacetSet.call(self, value);
-    }).error(function (error) {
+    }, function (err) {
         milo.util.logger.error('itemStyles config returned with an error.');
     });
 }
