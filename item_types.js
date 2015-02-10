@@ -142,7 +142,7 @@ function processChannelSelectSchema(comp, schema) {
 
 function setComponentOptions(comp, options, setModelFunc) {
     if (options) {
-        if (options && typeof options.then == 'function') {
+        if (typeof options.then == 'function') {
             setModelFunc(comp, [{ value: 0, label: 'loading...' }]);
             options
                 .then(
