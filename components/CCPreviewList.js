@@ -19,6 +19,7 @@ var CCPreviewList = Component.createComponentClass('CCPreviewList', {
         set: CCPreviewList_set,
         del: CCPreviewList_del,
         splice: CCPreviewList_splice,
+        len: CCPreviewList_len,
         event: PREVIEWLIST_CHANGE_MESSAGE
     }
 });
@@ -80,6 +81,11 @@ function CCPreviewList_splice() { // ... arguments
     var dataFacet = this._list.data;
     dataFacet._splice.apply(dataFacet, arguments);
     this.model.splice.apply(this.model, arguments);
+}
+
+
+function CCPreviewList_len() {
+    return this._list.data._len();
 }
 
 
