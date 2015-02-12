@@ -63,10 +63,12 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *                 }
  *             },
  *             translate: {          // optional data translation functions
+ *                 context: Object   // optional context that will be passed to translate functions, 'host' means the hostObject passed to Form.createForm
  *                 toModel: func1,   // translates item data from view to model
  *                 fromModel: func2  // translates item data from model to view
  *             },
  *             validate: {           // optional data validation functions
+ *                 context: Object   // optional context that will be passed to validate functions, 'host' means the hostObject passed to Form.createForm
  *                 toModel:   func1 | [func1, func2, ...],// validates item data when it is changed in form
  *                 fromModel: func2 | [func3, func4, ...] // opposite, but not really used and does not make form invalid if it fails.
  *                                                        // Can be used to prevent data being shown in the form.
