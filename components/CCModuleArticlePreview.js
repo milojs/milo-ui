@@ -101,7 +101,7 @@ function onAddedToScratch(event, msg, data) {
 
 
 function cloneArticle(type, event) {
-    _postLoadMessage.call(this, 'clonearticle');
+    _postLoadMessage.call(this, 'cloneasset');
 }
 
 
