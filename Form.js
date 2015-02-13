@@ -58,6 +58,7 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *                         context: context     // context can be an object or a string:
  *                                              //    "facet": facet instance will be used as context
  *                                              //    "owner": item component instance will be used as context
+ *                                              //    "form": the form component instance will be used as context
  *                                              //    "host": host object passed to createForm method will be used as context
  *                     }
  *                 }
@@ -164,7 +165,7 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
         // process form schema
         try {
-            processSchema.call(hostObject, form, schema, '', formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations);
+            processSchema.call(form, form, schema, '', formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations);
         } catch (e) {
             logger.debug('formViewPaths before error: ', formViewPaths);
             logger.debug('formModelPaths before error: ', formModelPaths);
@@ -632,10 +633,8 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         if (!translateFunc) return;
         if (typeof translateFunc == 'function') {
             if (translate.context) {
-                if (translate.context == 'host')
-                    var context = this;
-                else
-                    throw new FormError('Incorrect translator context: ' + translate.context);
+                var context = getFunctionContext.call(this, translate.context);
+
                 translateFunc = translateFunc.bind(context);
             }
             dataTranslations[direction][path] = translateFunc;
@@ -648,8 +647,8 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         var validators = validate && validate[direction];
         if (! validators) return;
 
+        var form = this;
         var formValidators = dataValidations[direction][path] = [];
-        var hostObject = this;
 
         if (Array.isArray(validators))
             validators.forEach(_addValidatorFunc);
@@ -667,10 +666,8 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                 throw new FormError(direction + ' validator for ' + path + ' should be function or string');
 
             if (validate.context) {
-                if (validate.context == 'host')
-                    var context = hostObject;
-                else
-                    throw new FormError('Incorrect validator context: ' + validate.context);
+                var context = getFunctionContext.call(form, validate.context);
+
                 valFunc = valFunc.bind(context);
             }
 
@@ -678,7 +675,6 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         }
     }
 }
-
 
 function getValidatorFunction(validatorName) {
     var valFunc = validationFunctions[validatorName];
@@ -732,23 +728,52 @@ function _processSchemaItems(comp, items, viewPath, formViewPaths, formModelPath
  * Subscribes to messages on facets of items' component as defined in schema
  */
 function _processSchemaMessages(comp, messages) {
-    var hostObject = this;
+    var form = this;
     _.eachKey(messages, function(facetMessages, facetName) {
         var facet = comp[facetName];
         if (! facet)
             throw new FormError('schema has subscriptions for facet "' + facetName + '" of form component "' + comp.name + '", but component has no facet');
         facetMessages = _.clone(facetMessages);
         _.eachKey(facetMessages, function(subscriber, messageType) {
-            if (typeof subscriber == 'object' && subscriber.context == 'host') {
-                subscriber = {
+            var context = typeof subscriber == 'object' ? subscriber.context : null;
+
+            // Avoid changing event subscriptions whose context is 'facet' or 'owner'.
+            if(context != 'facet' && context != 'owner') {
+                context = getFunctionContext.call(form, subscriber.context);
+
+                facetMessages[messageType] = {
                     subscriber: subscriber.subscriber,
-                    context: hostObject
-                },
-                facetMessages[messageType] = subscriber;
+                    context: context
+                };
             }
         });
         facet.onConfigMessages(facetMessages);
     });
+}
+
+
+/**
+ * Returns the object to bind a function to as defined by a section of the form schema.
+ *
+ * Currently supported inputs are:
+ *  - {Object} - Any object
+ *  - {String} 'form' - The form
+ *  - {String} 'host' - The form's host object
+ */
+function getFunctionContext(contextLookup) {
+    var context = contextLookup;
+
+    if(contextLookup == 'form') {
+        context = this;
+    } else if(contextLookup == 'host') {
+        context = this.getHostObject();
+    }
+
+    if(typeof context != 'object') {
+        throw new FormError('Invalid context supplied - Expected {String} [host,form], or {Object}');
+    }
+
+    return context;
 }
 
 
