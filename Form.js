@@ -506,6 +506,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
         _processSchemaMessages.call(this, comp, schema.messages);
 
     var itemRule = schema.type && formRegistry.get(schema.type);
+    var hostObject = this.getHostObject();
 
     if (viewPath) {
         formViewPaths[viewPath] = {
@@ -515,14 +516,14 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 
         if (itemRule) {
             //check(comp.constructor, itemTypes[schema.type].CompClass);
-            itemRule.itemFunction && itemRule.itemFunction.call(this, comp, schema);
+            itemRule.itemFunction && itemRule.itemFunction.call(hostObject, comp, schema);
             _processItemTranslations.call(this, viewPath, schema);
         } else
             throw new FormError('unknown item type ' + schema.type);
     }
 
     if (schema.undoable)
-        _manageUndoable(this.getHostObject(), comp, schema.modelPath);
+        _manageUndoable(hostObject, comp, schema.modelPath);
 
     return modelPathTranslations;
 

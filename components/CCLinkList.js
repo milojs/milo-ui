@@ -76,7 +76,7 @@ function onListClickSubscriber(type, event) {
 
         var parent = comp.getScopeParent('Item');
         if (parent) {
-            var index = parent.item.index;
+            var index = parent.item.getIndex();
             var name = comp.name;
             switch (name) {
                 case 'editBtn':
