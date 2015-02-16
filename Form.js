@@ -522,7 +522,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
     }
 
     if (schema.undoable)
-        _manageUndoable(this, comp, schema.modelPath);
+        _manageUndoable(this.getHostObject(), comp, schema.modelPath);
 
     return modelPathTranslations;
 
