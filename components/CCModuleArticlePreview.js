@@ -47,7 +47,8 @@ _.extendProto(CCModuleArticlePreview, {
 
 function CCModuleArticlePreview$init() {
     CCStatesContainer.prototype.init.apply(this, arguments);
-    this.once('stateready', onStateReady);
+
+    this.onceSync('stateready', onStateReady);
 }
 
 
