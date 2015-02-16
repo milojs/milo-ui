@@ -738,8 +738,8 @@ function _processSchemaMessages(comp, messages) {
             var context = typeof subscriber == 'object' ? subscriber.context : null;
 
             // Avoid changing event subscriptions whose context is 'facet' or 'owner'.
-            if(context != 'facet' && context != 'owner') {
-                context = getFunctionContext.call(form, subscriber.context);
+            if (context && context != 'facet' && context != 'owner') {
+                context = getFunctionContext.call(form, context);
 
                 facetMessages[messageType] = {
                     subscriber: subscriber.subscriber,
@@ -760,18 +760,14 @@ function _processSchemaMessages(comp, messages) {
  *  - {String} 'form' - The form
  *  - {String} 'host' - The form's host object
  */
-function getFunctionContext(contextLookup) {
-    var context = contextLookup;
-
-    if(contextLookup == 'form') {
+function getFunctionContext(context) {
+    if (context == 'form')
         context = this;
-    } else if(contextLookup == 'host') {
+    else if (context == 'host')
         context = this.getHostObject();
-    }
 
-    if(typeof context != 'object') {
+    if (context && typeof context != 'object')
         throw new FormError('Invalid context supplied - Expected {String} [host,form], or {Object}');
-    }
 
     return context;
 }
