@@ -780,13 +780,13 @@ function getFunctionContext(context) {
 function validateLatin1(data, callback) {
     var valid = typeof data == 'string' && REGEX.latin1.test(data);
 
-    var response = _validatorResponse(valid, 'value needs to be latin1 characters only');
+    var response = _validatorResponse(valid, 'needs to be latin1 characters only');
     callback(null, response);
 }
 
 function validateStandard(data, callback) {
     var valid = typeof data == 'string' && !data.match(REGEX.nonStandard);
-    var errorText = valid ? '' : 'value contains non-standard characters: ' + data.match(REGEX.nonStandard).join(' ')
+    var errorText = valid ? '' : 'contains non-standard characters: ' + data.match(REGEX.nonStandard).join(' ')
     var response = _validatorResponse(valid, errorText);
     callback(null, response);
 }
@@ -794,14 +794,14 @@ function validateStandard(data, callback) {
 function validateRequired(data, callback) {
     var valid = typeof data != 'undefined'
                 && (typeof data != 'string' || data.trim() != '');
-    var response = _validatorResponse(valid, 'value is required', 'REQUIRED');
+    var response = _validatorResponse(valid, 'please enter a value', 'REQUIRED');
     callback(null, response);
 }
 
 
 function validateUrl(data, callback) {
     var valid = typeof data == 'string' && REGEX.url.test(data)
-        , response = _validatorResponse(valid, 'should be valid URL');
+        , response = _validatorResponse(valid, 'not a valid URL');
     callback(null, response);
 }
 
