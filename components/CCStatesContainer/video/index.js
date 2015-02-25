@@ -51,8 +51,26 @@ function videoInstanceState(value) {
 }
 
 
-function pageItemVideoState(data) {
-    return {};
+function pageItemVideoState(value) {
+    if (!value) return;
+    return {
+        outerHTML: '<div></div>',
+        compClass: 'CIPageItemVideo',
+        compName: milo.util.componentName(),
+        facetsStates: {
+            model: {
+                state: {
+                    asset: {
+                        id: +value.id
+                    },
+                    wpsData: {
+                        itemType: 'video',
+                        itemId: null
+                    }
+                }
+            }
+        }
+    };
 }
 
 

@@ -25,7 +25,7 @@ var itemStates = module.exports = {
             }
         ],
         actions: [
-            { 
+            {
                 action: 'open',
                 func: articleItem.openArticle
             }
@@ -82,3 +82,4 @@ var itemStates = module.exports = {
         ]
     }
 };
+
