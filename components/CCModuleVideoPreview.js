@@ -92,7 +92,15 @@ function onAddedToScratch(event, msg, data) {
 
 function getMetaParams() {
     return {
-        isLive: this.model.m('.isLive').get()
+        isLive: this.model.m('.isLive').get(),
+        styles: JSON.stringify([
+            {
+                group: 'single'
+            },
+            {
+                group: 'double'
+            }
+        ])
     }
 }
 
