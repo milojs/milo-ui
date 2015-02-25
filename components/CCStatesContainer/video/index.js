@@ -65,7 +65,10 @@ function pageItemVideoState(value) {
                     },
                     wpsData: {
                         itemType: 'video',
-                        itemId: null
+                        itemId: null,
+                        supportedWidths: [
+                            'single', 'double'
+                        ]
                     }
                 }
             }
