@@ -109,7 +109,6 @@ function openModule(data) {
     var app = editorTypes[type];
 
     if (!app
-        || (app == 'pollEditor' && !CC.config.urlToggles.polls)
         || (app == 'listEditor' && !CC.config.urlToggles.lists)) {
         milo.mail.postMessage('opendialog', {
             name: 'wrong_editor_' + type,
