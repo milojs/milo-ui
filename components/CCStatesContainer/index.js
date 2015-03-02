@@ -34,6 +34,7 @@ _.extendProto(CCStatesContainer, {
     performAction: CCStatesContainer$performAction,
     getTransferItem: CCStatesContainer$getTransferItem,
     getDragParams: CCStatesContainer$getDragParams,
+    scratchItem: CCStatesContainer$scratchItem,
 
     dataFacetGet: CCStatesContainer$dataFacetGet,
     dataFacetSet: CCStatesContainer$dataFacetSet,
@@ -165,3 +166,32 @@ function CCStatesContainer$getTransferItem() {
     else
         return this.transfer.getState();
 }
+
+function CCStatesContainer$scratchItem(event) {
+    if (!this.getMeta) return logger.warn('Item does not provide scratch meta data.');
+        var meta = { metaData: this.getMeta() };
+
+    if (this.model) var scratchData = this.model.m('.cc_scratch').get();
+    if (!scratchData) {
+        scratchData = this.getTransferItem();
+    }
+
+    var data = {
+        data: scratchData,
+        meta: meta
+    };
+    milo.mail.postMessage('addtoscratch', data);
+    milo.mail.once('addedtoscratch', onAddedToScratch.bind(this, event));
+}
+
+function onAddedToScratch(event, msg, data) {
+    var options = { x: event.pageX-30, y: event.pageY-5, animationCls: 'cc-fade-in-out'};
+
+    if (data.err)
+        options.iconCls = 'glyphicon glyphicon-remove-sign';
+    else
+        options.iconCls = 'glyphicon glyphicon-ok-sign';
+
+    milo.mail.postMessage('iconnotification', {options: options});
+}
+

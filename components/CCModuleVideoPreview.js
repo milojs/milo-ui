@@ -24,6 +24,16 @@ var CCModuleVideoPreview = CCStatesContainer.createComponentClass('CCModuleVideo
             id: '.id',
             createdDate: '.createdDate'
         }
+    },
+    contextMenu: {
+        items:
+            [
+                { name: 'edit', label: 'Edit', action: function() {onEditClick.call(this, '', event) } },
+                { divider: true },
+                { name: 'preview', label: 'Preview', action: function() {openPreview.call(this, '', event) }  },
+                { divider: true },
+                { name: 'scratch', label: 'Scratch', action: onScratchClick }
+            ]
     }
 });
 
@@ -52,6 +62,14 @@ function onStateReady() {
     scope.preview && scope.preview.events.on('click', { subscriber: openPreview, context: this });
 }
 
+function onEditClick(type, event){
+    if(CC.config.urlToggles.video){
+        this.performAction('open');
+    } else {
+        openPreview.call(this, type, event);
+    }
+
+}
 function openPreview(type, event) {
     event.stopPropagation();
     window.open('/video/preview/' + this.model.m('.id').get(), '_blank');
@@ -182,4 +200,8 @@ function _dateHelper(date, isRelative) {
 function CCModuleVideoPreview$dataFacetDel() {
     CCStatesContainer.prototype.dataFacetDel.call(this);
     this.container.scope.image.el.removeAttribute('src');
+}
+
+function onScratchClick(event) {
+    this.scratchItem(event);
 }

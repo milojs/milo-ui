@@ -12,6 +12,7 @@ var articleStatusLabelCSS = {
     'Spiked': 'label-danger'
 };
 
+var articleId = '';
 
 var CCModuleArticlePreview = CCStatesContainer.createComponentClass('CCModuleArticlePreview', {
     dom: {
@@ -27,14 +28,23 @@ var CCModuleArticlePreview = CCStatesContainer.createComponentClass('CCModuleArt
         messages: {
             'dblclick': { subscriber: onDblClick, context: 'owner' }
         }
+    },
+    contextMenu: {
+         items:
+             [
+                { name: 'edit', label: 'Edit', action: onEditClick },
+                { divider: true },
+                { name: 'preview', label: 'Preview', action: previewArticle },
+                { divider: true },
+                { name: 'preview&RelatedLinks', label: 'Preview & related links' },
+                { divider: true },
+                { name: 'scratch', label: 'Scratch', action: onScratchClick },
+                { divider: true },
+                { name: 'clone', label: 'Clone', action: cloneArticle },
+                { divider: true },
+                { name: 'showImages', label: 'Show images', action: showArticleImages }
+            ]
     }
-    // contextMenu: {
-    //     items: [
-    //         { name: 'test1', label: 'Test 1', action: function() {  } },
-    //         { divider: true },
-    //         { name: 'test2', label: 'Test 2', action: function() {  } }
-    //     ]
-    // }
 });
 
 componentsRegistry.add(CCModuleArticlePreview);
@@ -44,16 +54,29 @@ module.exports = CCModuleArticlePreview;
 
 _.extendProto(CCModuleArticlePreview, {
     init: CCModuleArticlePreview$init,
-    dataFacetSet: CCModuleArticlePreview$dataFacetSet
+    dataFacetSet: CCModuleArticlePreview$dataFacetSet,
+    getMeta: CCModuleArticlePreview$getMeta
 });
 
+function getArticleId(){
+    return this.model.m('.id').get();
+}
 
 function CCModuleArticlePreview$init() {
+    articleId = this.model.m('.id').get();
     CCStatesContainer.prototype.init.apply(this, arguments);
 
     this.onceSync('stateready', onStateReady);
 }
 
+function CCModuleArticlePreview$getMeta(){
+    var data = this.model.get();
+    return  {
+        description: '<strong>' + data.headline + '</strong> - ' + data.previewText,
+        preview: data.thumb && data.thumb.hostUrl,
+        typeTitle: 'Article'
+    }
+}
 
 function onStateReady() {
     var scope = this.container.scope
@@ -67,7 +90,6 @@ function onStateReady() {
     if (scope.previewBtn) scope.cloneBtn.events.on('click',
         { subscriber: cloneArticle, context: this });
 }
-
 
 function sendToScratch(type, event) {
     event.stopPropagation();
@@ -103,6 +125,15 @@ function onAddedToScratch(event, msg, data) {
 }
 
 
+
+function onEditClick(){
+    this.performAction('open');
+}
+
+function onScratchClick(event) {
+    this.scratchItem(event);
+}
+
 function cloneArticle(type, event) {
     _postLoadMessage.call(this, 'cloneasset');
 }
@@ -111,6 +142,7 @@ function cloneArticle(type, event) {
 function previewArticle(type, event) {
     _postLoadMessage.call(this, 'previewasset');
 }
+
 
 
 function _postLoadMessage(msg) {
@@ -150,4 +182,9 @@ function CCModuleArticlePreview_setChannel(newChannel) {
 
 function onDblClick(msg, event) {
     this.performAction('open');
+}
+
+function showArticleImages() {
+    var articleId = this.model.m('.id').get();
+    milo.mail.postMessage('showarticleimages', {articleId: articleId});
 }

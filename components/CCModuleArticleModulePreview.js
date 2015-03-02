@@ -2,7 +2,7 @@
 
 var logger = milo.util.logger
     , componentsRegistry = milo.registry.components
-    , CCStatesContainer = componentsRegistry.get('CCStatesContainer');
+    , CCStatesContainer = componentsRegistry.get('CCStatesContainer')
 
 
 var CCModuleArticleModulePreview = CCStatesContainer.createComponentClass('CCModuleArticleModulePreview', {
@@ -25,6 +25,15 @@ var CCModuleArticleModulePreview = CCStatesContainer.createComponentClass('CCMod
         messages: {
             'dblclick': { context: 'owner', subscriber: onModuleClick }
         }
+    },
+    contextMenu: {
+        items:
+            [
+                { name: 'edit', label: 'Edit', action: onModuleClick },
+                { divider: true },
+                { name: 'scratch', label: 'Scratch', action: onScratchClick },
+                { divider: true }
+            ]
     }
 });
 
@@ -35,9 +44,19 @@ module.exports = CCModuleArticleModulePreview;
 
 
 _.extendProto(CCModuleArticleModulePreview, {
-    dataFacetSet: CCModuleArticleModulePreview$dataFacetSet
+    dataFacetSet: CCModuleArticleModulePreview$dataFacetSet,
+    getMeta: CCModuleArticleModulePreview$getMeta
 });
 
+function CCModuleArticleModulePreview$getMeta() {
+    var data = this.model.get();
+    var type = data.type.toUpperCase().charAt(0) + data.type.substring(1);
+    return {
+        typeTitle: type,
+        description: data.title + ': ' + data.styleKey,
+        previewType: 'module'
+    }
+}
 
 function CCModuleArticleModulePreview$dataFacetSet(value) {
     var self = this;
@@ -153,7 +172,10 @@ function getMetaParams () {
     };
 }
 
-
 function onModuleClick(msg, event) {
     this.performAction('open');
+}
+
+function onScratchClick(event) {
+    this.scratchItem(event);
 }
