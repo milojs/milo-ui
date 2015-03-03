@@ -24,6 +24,7 @@ var itemStates = module.exports = {
                 createState: articleItem.linkItemArticleState
             }
         ],
+        dragParams: articleItem.getArticleParams,
         actions: [
             {
                 action: 'open',

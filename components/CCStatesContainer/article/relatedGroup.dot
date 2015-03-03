@@ -1,12 +1,1 @@
-<div ml-bind="CMRelatedGroup:{{= it.compName }}" class="cc-module-related-group">
-    <div class="relatedItemsTopBorder">&nbsp;</div>
-    <div class="relatedItems">
-        <h4 ml-bind="[data]:relatedCaption"></h4>
-        <ul ml-bind="[list]:relatedList">
-            <li ml-bind="CMRelated[item]:result">
-                <a ml-bind="[data]:headline" target="_blank">
-                </a>
-            </li>
-        </ul>
-    </div>
-</div>
+<div ml-bind="CMRelatedGroup:{{= it.compName }}" class="cc-module-related-group"></div>

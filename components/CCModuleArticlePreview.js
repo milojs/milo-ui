@@ -18,7 +18,10 @@ var CCModuleArticlePreview = CCStatesContainer.createComponentClass('CCModuleArt
         cls: 'cc-module-article-preview'
     },
     drag: {
-        allowedEffects: 'copy'
+        allowedEffects: 'copy',
+        meta: {
+            params: 'getDragParams'
+        }
     },
     events: {
         messages: {

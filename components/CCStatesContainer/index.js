@@ -12,9 +12,9 @@ var componentsRegistry = milo.registry.components
 
 var CCStatesContainer = Component.createComponentClass('CCStatesContainer', {
     data: { // should not be overwritten by subclasses, instead dataFacet... methods should be extended
-        get: CCStatesContainer_get,
-        set: CCStatesContainer_set,
-        del: CCStatesContainer_del
+        get: 'dataFacetGet',
+        set: 'dataFacetSet',
+        del: 'dataFacetDel'
     },
     model: undefined,
     transfer: undefined
@@ -33,6 +33,7 @@ _.extendProto(CCStatesContainer, {
     setTransferStates: CCStatesContainer$setTransferStates,
     performAction: CCStatesContainer$performAction,
     getTransferItem: CCStatesContainer$getTransferItem,
+    getDragParams: CCStatesContainer$getDragParams,
 
     dataFacetGet: CCStatesContainer$dataFacetGet,
     dataFacetSet: CCStatesContainer$dataFacetSet,
@@ -48,7 +49,7 @@ function CCStatesContainer$init() {
 
 
 function checkDataFacet() {
-    if (this.data.config.get != CCStatesContainer_get)
+    if (this.data.config.get != 'dataFacetGet')
         logger.error('data facet cannot be added to the subclass of CCStatesContainer');
 }
 
@@ -133,21 +134,6 @@ function changeActiveState(msg, data) {
 }
 
 
-function CCStatesContainer_get() {
-    return this.dataFacetGet();
-}
-
-
-function CCStatesContainer_set(data) {
-    return this.dataFacetSet(data);
-}
-
-
-function CCStatesContainer_del() {
-    return this.dataFacetDel();
-}
-
-
 function CCStatesContainer$performAction(action) {
     var itemType = this._itemType || this.model.m('.meta.compClass').get();
     try { var actions = itemStates[itemType].actions; } catch(e) {}
@@ -158,6 +144,15 @@ function CCStatesContainer$performAction(action) {
         });
         if (actionInfo) actionInfo.func.call(this, this._itemData);
     }
+}
+
+
+function CCStatesContainer$getDragParams() {
+    var itemType = this._itemType || this.model.m('.meta.compClass').get();
+    try { var params = itemStates[itemType].dragParams; } catch(e) {}
+    return typeof params == 'function' 
+                    ? params.call(this, this._itemData)
+                    : params;
 }
 
 

@@ -1,0 +1,6 @@
+{{# def.partials.formGroup }}
+    {{# def.partials.label }}
+    <div ml-bind="MLList:{{= it.compName }}">
+        <div ml-bind="SubformItem:itemSample" class="list-item"></div>
+    </div>
+</div>

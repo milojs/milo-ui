@@ -8,14 +8,15 @@ var doT = milo.util.doT
 var CMARTICLE_GROUP_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/relatedGroup.dot'));
 var CMARTICLE_CI_PAGE_ITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/channelArticlePreview.dot'));
 var LISTITEM_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/listItem.dot'));
-
+var THUMB_IMAGE_TYPE = 'ARTICLE_PREVIEW_THUMB';
 
 module.exports = {
     relatedGroupState: relatedGroupState,
     pageItemArticleState: pageItemArticleState,
     linkItemArticleState: linkItemArticleState,
     openArticle: openArticle,
-    openArticleFromRelatedGroup: openArticleFromRelatedGroup
+    openArticleFromRelatedGroup: openArticleFromRelatedGroup,
+    getArticleParams: getArticleParams
 };
 
 
@@ -64,19 +65,10 @@ function relatedGroupState(value) {
         compClass: 'CMRelatedGroup',
         compName: compName,
         facetsStates: {
-            model: {
+            inspector: {
                 state: {
-                    transferData: [
-                        {
-                            url: value.articleURL,
-                            title: value.headline,
-
-                            //is not using previewText because the text that appears in relatedArticles
-                            //is the title not the previewText
-                            previewText: value.headline,
-                            transferItem: value,
-                            wpsRelated: createWpsData(value)
-                        }
+                    relatedArticles: [
+                        createWpsData(value)
                     ]
                 }
             }
@@ -117,6 +109,16 @@ function linkItemArticleState(value) {
                 }
             }
         }
+    };
+}
+
+
+function getArticleParams(data) {
+    var thumb = _.find(data.images, image => image.imageType == THUMB_IMAGE_TYPE);
+    return {
+        hostUrl: thumb && thumb.hostUrl || '',
+        imageType: THUMB_IMAGE_TYPE,
+        articleId: data.id
     };
 }
 

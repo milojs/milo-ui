@@ -16,18 +16,33 @@ var CCRelatedList = Component.createComponentClass('CCRelatedList', {
     dom: {
         cls: 'cc-relatedlist-group'
     },
-    list: undefined,
-    data: {
+    model: {
         messages: {
-            '**': {
-                subscriber: _.debounce(addStylesToList, 75),
-                context: 'owner'
-            },
+            '***': { subscriber: onItemsChange, context: 'owner'},
             '[*].relatedArticleTypeId': {
                 subscriber: updatePartnersView,
                 context: 'owner'
             }
         }
+    },
+    list: undefined,
+    data: {
+        get: CCRelatedList_get,
+        set: CCRelatedList_set,
+        del: CCRelatedList_del,
+        splice: CCRelatedList_splice,
+        len: CCRelatedList_len,
+        event: RELATEDLIST_CHANGE_MESSAGE
+        // messages: {
+        //     '**': {
+        //         subscriber: _.debounce(addStylesToList, 75),
+        //         context: 'owner'
+        //     },
+        //     '[*].relatedArticleTypeId': {
+        //         subscriber: updatePartnersView,
+        //         context: 'owner'
+        //     }
+        // }
     }
 });
 
@@ -41,8 +56,8 @@ _.extendProto(CCRelatedList, {
 
 function CCRelatedList$init() {
     Component.prototype.init.apply(this, arguments);
-    this.once('childrenbound', onChildrenBound);
-    this.once('stateready', _.deferred(addStylesToList));
+    this.once('stateready', onStateReady);
+    //this.once('stateready', _.deferred(addStylesToList));
 }
 
 function CCRelatedList$setLinkDefaults(defaultLink) {
@@ -50,7 +65,36 @@ function CCRelatedList$setLinkDefaults(defaultLink) {
 }
 
 
-function onChildrenBound() {
+function CCRelatedList_get() {
+    var value = this.model.m.get();
+    return typeof value == 'object' ? _.clone(value) : value;
+}
+
+function CCRelatedList_set(value) {
+    value = value || [];
+    this.model.m.set(value);
+    this.data._set(value);
+}
+
+function CCRelatedList_del() {
+    return this.model.m.set([]);
+}
+
+function CCRelatedList_splice() {
+    this.data._splice.apply(this.data, arguments);
+    return this.model.m.splice.apply(this.model.m, arguments);
+}
+
+function CCRelatedList_len() {
+    return this.model.m.len();
+}
+
+function onItemsChange(msg, data) {
+    this.data.dispatchSourceMessage(RELATEDLIST_CHANGE_MESSAGE);
+}
+
+
+function onStateReady() {
     var saveBtn = this.container.scope.saveBtn;
     saveBtn.events.on('click', { subscriber: onSaveButtonClick, context: this });
 
@@ -64,10 +108,10 @@ function onChildrenBound() {
 function updatePartnersView(path, data) {
     var list = this.list;
     _.defer(function () {
-        var getIndex = parseInt(path.match(/\[([0-9])\]/)[1], 10);
-
-        var isMoney = list.item(getIndex).container.scope.isMoney.el;
-
+        var getIndex = parseInt(data.path.match(/\[([0-9])\]/)[1], 10);
+        var itemComp = list.item(getIndex);
+        if (!itemComp) return;
+        var isMoney = itemComp.container.scope.isMoney.el;
         isMoney.checked = isPartner(data.newValue);
     });
 }
@@ -112,8 +156,8 @@ function onListChangeSubscriber(type, event) {
 
 function changeRelatedId(linkId, isPartner) {
     if (isExternal(linkId))
-        return isPartner ? '11' : '2';
-    return isPartner ? '12' : '1';
+        return isPartner ? 11 : 2;
+    return isPartner ? 12 : 1;
 }
 
 
@@ -123,8 +167,8 @@ function onInputKey(msg, event) {
 
 
 function onSaveButtonClick() {
-    var newRelated = this.container.scope.input.data.get()
-        .split(' ').filter(function(value) {
+    var inputEl = this.container.scope.input.el,
+        newRelated = inputEl.value.split(' ').filter(function(value) {
             return value != '';
         }),
         self = this,
@@ -134,14 +178,11 @@ function onSaveButtonClick() {
         return _.partial(getLinkMeta, link);
     }), function (err, success) { // Error is only passed for numeric erorrs (getRelatedArticle)
         lock.unlock();
-        self.container.scope.input.data.set('');
+        inputEl.value = '';
         if (!err) return;
 
         error('DIALOG_RELATED_ARTICLE_NOT_FOUND');
-
-        self.container.scope.input.data.set(
-            newRelated.splice(newRelated.indexOf(err)).join(' ')
-        );
+        inputEl.value = newRelated.splice(newRelated.indexOf(err)).join(' ');
     });
 
     function getLinkMeta(urlOrId, callback) {
