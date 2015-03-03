@@ -32,17 +32,13 @@ var CCRelatedList = Component.createComponentClass('CCRelatedList', {
         del: CCRelatedList_del,
         splice: CCRelatedList_splice,
         len: CCRelatedList_len,
-        event: RELATEDLIST_CHANGE_MESSAGE
-        // messages: {
-        //     '**': {
-        //         subscriber: _.debounce(addStylesToList, 75),
-        //         context: 'owner'
-        //     },
-        //     '[*].relatedArticleTypeId': {
-        //         subscriber: updatePartnersView,
-        //         context: 'owner'
-        //     }
-        // }
+        event: RELATEDLIST_CHANGE_MESSAGE,
+        messages: {
+            '**': {
+                subscriber: _.debounce(addStylesToList, 75),
+                context: 'owner'
+            }
+        }
     }
 });
 
@@ -57,7 +53,7 @@ _.extendProto(CCRelatedList, {
 function CCRelatedList$init() {
     Component.prototype.init.apply(this, arguments);
     this.once('stateready', onStateReady);
-    //this.once('stateready', _.deferred(addStylesToList));
+    this.once('stateready', _.deferred(addStylesToList));
 }
 
 function CCRelatedList$setLinkDefaults(defaultLink) {
