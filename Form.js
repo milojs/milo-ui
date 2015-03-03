@@ -5,7 +5,6 @@ var formGenerator = require('./generator')
     , Component = milo.Component
     , componentsRegistry = milo.registry.components
     , check = milo.util.check
-    , FormError = milo.util.error.createClass('Form')
     , logger = milo.util.logger
     , formRegistry = require('./registry')
     , modelChangedCommand = require('../commands/model_changed')
@@ -519,7 +518,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             itemRule.itemFunction && itemRule.itemFunction.call(hostObject, comp, schema);
             _processItemTranslations.call(this, viewPath, schema);
         } else
-            throw new FormError('unknown item type ' + schema.type);
+            throw new Error('unknown item type ' + schema.type);
     }
 
     if (schema.undoable)
@@ -541,11 +540,11 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             switch (itemRule.modelPathRule) {
                 case 'prohibited':
                     if (modelPath)
-                        throw new FormError('modelPath is prohibited for item type ' + schema.type);
+                        throw new Error('modelPath is prohibited for item type ' + schema.type);
                     break;
                 case 'required':
                     if (! (modelPath || notInModel))
-                        throw new FormError('modelPath is required for item type ' + schema.type + ' . Add "notInModel: true" to override');
+                        throw new Error('modelPath is required for item type ' + schema.type + ' . Add "notInModel: true" to override');
                     // falling through to 'optional'
                 case 'optional':
                     if (modelPath) {
@@ -563,7 +562,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
                     }
                     break;
                 default:
-                    throw new FormError('unknown modelPath rule for item type ' + schema.type);
+                    throw new Error('unknown modelPath rule for item type ' + schema.type);
             }
         }
     }
@@ -622,9 +621,9 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 
     function _addModelPathTranslation(viewPath, modelPath, pathPattern) {
         if (viewPath in modelPathTranslations)
-            throw new FormError('duplicate view path ' + viewPath);
+            throw new Error('duplicate view path ' + viewPath);
         else if (_.keyOf(modelPathTranslations, modelPath))
-            throw new FormError('duplicate model path ' + modelPath + ' for view path ' + viewPath);
+            throw new Error('duplicate model path ' + modelPath + ' for view path ' + viewPath);
         else
             modelPathTranslations[viewPath + pathPattern] = modelPath + pathPattern;
     }
@@ -640,7 +639,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             }
             dataTranslations[direction][path] = translateFunc;
         } else {
-            throw new FormError(direction + ' translator for ' + path + ' should be function');
+            throw new Error(direction + ' translator for ' + path + ' should be function');
         }
     }
 
@@ -664,7 +663,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             else if (typeof validator == 'function')
                 valFunc = validator;
             else
-                throw new FormError(direction + ' validator for ' + path + ' should be function or string');
+                throw new Error(direction + ' validator for ' + path + ' should be function or string');
 
             if (validate.context) {
                 var context = getFunctionContext.call(form, validate.context);
@@ -680,7 +679,7 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
 function getValidatorFunction(validatorName) {
     var valFunc = validationFunctions[validatorName];
     if (! valFunc)
-        throw new FormError('Form: unknown validator function name ' + validatorName);
+        throw new Error('Form: unknown validator function name ' + validatorName);
     return valFunc;
 }
 
@@ -719,7 +718,7 @@ function _processSchemaItems(comp, items, viewPath, formViewPaths, formModelPath
         var itemComp = comp.container.scope[item.compName]
             , compViewPath = viewPath + '.' + item.compName;
         if (! itemComp)
-            throw new FormError('component "' + item.compName + '" is not in scope (or subscope) of form');
+            throw new Error('component "' + item.compName + '" is not in scope (or subscope) of form');
         processSchema.call(this, itemComp, item, compViewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations);
     }, this);
 }
@@ -733,7 +732,7 @@ function _processSchemaMessages(comp, messages) {
     _.eachKey(messages, function(facetMessages, facetName) {
         var facet = comp[facetName];
         if (! facet)
-            throw new FormError('schema has subscriptions for facet "' + facetName + '" of form component "' + comp.name + '", but component has no facet');
+            throw new Error('schema has subscriptions for facet "' + facetName + '" of form component "' + comp.name + '", but component has no facet');
         facetMessages = _.clone(facetMessages);
         _.eachKey(facetMessages, function(subscriber, messageType) {
             var context = typeof subscriber == 'object' ? subscriber.context : null;
@@ -768,7 +767,7 @@ function getFunctionContext(context) {
         context = this.getHostObject();
 
     if (context && typeof context != 'object')
-        throw new FormError('Invalid context supplied - Expected {String} [host,form], or {Object}');
+        throw new Error('Invalid context supplied - Expected {String} [host,form], or {Object}');
 
     return context;
 }
