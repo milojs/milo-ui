@@ -51,6 +51,17 @@ function CCModuleArticleModulePreview$dataFacetSet(value) {
 }
 
 
+var moduleTypeMap = {
+    'linklist': 'linkListGroup',
+    'standardmodule': 'standardModule'
+};
+var moduleTypeDisplayMap = {
+    'linkListGroup': 'Link List',
+    'standardModule': 'Standard',
+    'poll': 'Poll',
+    'gallery': 'Gallery',
+    'module': 'Module'
+};
 function parseData(value, styleData) {
     var fields = value._source = value._source || {};
     // var linkListGroupIds = fields['linkListGroups.linkListGroupId'];
@@ -82,7 +93,7 @@ function parseData(value, styleData) {
         title: stripHtml(fields.title || fields.name || fields.headline),
         type: moduleType,
         styles: styleArr,
-        styleName: moduleStyle.replace(/_/g, ' '),
+        styleName: '<strong>' + moduleTypeDisplayMap[moduleType] + ':</strong> ' + moduleStyle.replace(/_/g, ' '),
         styleKey: moduleStyle,
         isLive: !!isLive,
         linkListGroups: linkListGroups,
@@ -96,12 +107,7 @@ function parseData(value, styleData) {
 
 
     function getModuleType(moduleType) {
-        if (moduleType == 'linklist')
-            return 'linkListGroup';
-        else if (moduleType == 'standardmodule')
-            return 'standardModule';
-        else
-            return moduleType;
+        return  moduleTypeMap[moduleType] || moduleType;
     }
 }
 
