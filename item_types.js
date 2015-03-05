@@ -44,7 +44,7 @@ formRegistry.add('radio',                 { compClass: 'MLRadioGroup',          
 formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,             modelPathRule: 'optional'                                             });
 formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                     });
 formRegistry.add('list',                  { compClass: 'MLList',                  template: list_dot                                                                                         });
-formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot                                                                                         });
+formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot,                                               itemFunction: setValue                   });
 formRegistry.add('date',                  { compClass: 'MLDate',                  template: date_dot                                                                                         });
 formRegistry.add('combo',                 { compClass: 'MLCombo',                 template: combo_dot,                                              itemFunction: processComboSchema         });
 formRegistry.add('supercombo',            { compClass: 'MLSuperCombo',                                                                              itemFunction: processSuperComboSchema    });
@@ -65,6 +65,13 @@ formRegistry.add('contextcolorpicker',    { compClass: 'CCContextColorPicker',  
 formRegistry.add('channelselect',         { compClass: 'CCChannelSelect',         template: cc_channel_select_dot,                                  itemFunction: processChannelSelectSchema });
 formRegistry.add('articlestatusselect',   { compClass: 'CCArticleStatusSelect',   template: cc_article_status_select_dot,                                                                    });
 
+
+function setValue(comp, schema) {
+    var options = schema.selectOptions;
+    if (schema.hasOwnProperty('value')) {
+        comp.data.set(schema.value);
+    }
+}
 
 function processSelectSchema(comp, schema) {
     var options = schema.selectOptions;
