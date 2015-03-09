@@ -54,7 +54,8 @@ _.extendProto(CCPreviewImage, {
     init: CCPreviewImage$init,
     setImageSrc: CCPreviewImage$setImageSrc,
     processFormSchema: CCPreviewImage$processFormSchema,
-    setOptions: CCPreviewImage$setOptions
+    setOptions: CCPreviewImage$setOptions,
+    autocrop: CCPreviewImage$autocrop
 });
 
 
@@ -179,6 +180,27 @@ function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
         logger.error('CMArticle onPreviewImageDrop: no image dropped');
         event.target.parentNode.classList.remove(IMAGE_LOADING_CLASS);
     }
+}
+
+function CCPreviewImage$autocrop(imageType) {
+    var self = this;
+    self.el.classList.add(IMAGE_LOADING_CLASS);
+
+    var cropType = _getPreviewImageCropType(imageType, self);
+    var targetWidth = cropType.width;
+    var targetHeight = cropType.height;
+
+    self.croppable.autoCropImageToFit(targetWidth, targetHeight, { imageType: imageType }, function (err, settings, wpsImage){
+        self.el.classList.remove(IMAGE_LOADING_CLASS);
+        if (err) return logger.error('Error cropping image: ', err);
+
+        self.croppable.getImageModel().del(); // remove old wpsImage so it doesn't interfere with new crop
+        self.croppable.applyCropDetails(settings, wpsImage, null, function(err) {
+            if (err) {
+                return logger.error("Failed to apply crop details on drop: " + err);
+            }
+        });
+    });
 }
 
 
