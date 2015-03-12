@@ -36,8 +36,6 @@ var CCModuleArticlePreview = CCStatesContainer.createComponentClass('CCModuleArt
                 { divider: true },
                 { name: 'preview', label: 'Preview', action: previewArticle },
                 { divider: true },
-                { name: 'preview&RelatedLinks', label: 'Preview & related links' },
-                { divider: true },
                 { name: 'scratch', label: 'Scratch', action: onScratchClick },
                 { divider: true },
                 { name: 'clone', label: 'Clone', action: cloneArticle },
