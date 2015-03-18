@@ -23,7 +23,7 @@ var variantsTemplate = '<div ml-bind="MLSuperCombo:addCountry"></div> \
                         </div> \
                         <div ml-bind="MLList:variants"> \
                             <div ml-bind="MLListItem:variant" class="list-item"> \
-                                <span class="fa fa-trash-o cc-variant-icon" ml-bind="[events, dom]:deleteBtn"></span> \
+                                <span class="glyphicon glyphicon-remove cc-variant-icon cc-variant-delete" ml-bind="[events, dom]:deleteBtn"></span> \
                                 <span ml-bind="[data]:label" class="cc-variant-label"></span> \
                                 <span ml-bind="[dom]:visible" style="display:none;" class="cc-variant-status">Visible</span> \
                                 <span ml-bind="[dom]:excludedWrapper" class="cc-variant-status"> \
