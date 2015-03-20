@@ -11,7 +11,8 @@ var componentRegistry = milo.registry.components
     , Match = check.Match
     , PREVIEW_IMAGE_CHANGE_MESSAGE = 'previewimagechange';
 
-var IMAGE_LOADING_CLASS = 'cc-image-loading';
+var IMAGE_LOADING_CLASS = 'cc-image-loading',
+    REPLACE_CLASS = 'cc-drop-method-replace';
 
 var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
     model: {
@@ -29,8 +30,8 @@ var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
         messages: {
             'dragenter': {context: 'owner', subscriber: CCPreviewImage_onDragEnter},
             'dragover': {context: 'owner', subscriber: CCPreviewImage_onDragOver},
-            'dragleave': {context: 'owner', subscriber: CCPreviewImage_leaveImage},
-            'drop': {context: 'owner', subscriber: CCPreviewImage_onDrop}
+            'dragleave': {context: 'owner', subscriber: _.partial(_toogleReplaceState, false)},
+            'drop': {context: 'owner', subscriber: _.partial(_toogleReplaceState, false)}
         }
     },
     croppable: {
@@ -53,9 +54,11 @@ componentRegistry.add(CCPreviewImage);
 _.extendProto(CCPreviewImage, {
     init: CCPreviewImage$init,
     setImageSrc: CCPreviewImage$setImageSrc,
+    autocrop: CCPreviewImage$autocrop,
     processFormSchema: CCPreviewImage$processFormSchema,
     setOptions: CCPreviewImage$setOptions,
-    autocrop: CCPreviewImage$autocrop
+    _setEvents: CCPreviewImage_setEvents,
+    _toggleSubscribe: CCPreviewImage_toggleSubscribe
 });
 
 
@@ -112,7 +115,6 @@ function CCPreviewImage$setImageSrc(url) {
     this.model.m('.src').set(url);
 }
 
-
 function CCPreviewImage$processFormSchema(schema) {
     if (schema.options) this.setOptions(schema.options);
 }
@@ -132,24 +134,25 @@ function CCPreviewImage$setOptions(options) {
     });
     this._imageType = options.imageType;
     if (options.cropSettings) this._cropSettings = options.cropSettings;
-    var self = this;
-    _subscribe('croppable', 'events', 'click', CCPreviewImage$$onPreviewImageClick);
-    _subscribe('dragdrop', 'drop', 'drop', CCPreviewImage$$onPreviewImageDrop);
+    this._setEvents(options);
+}
 
+function CCPreviewImage_setEvents(options) {
+    this._toggleSubscribe(options, 'croppable', 'events', 'click', CCPreviewImage.onPreviewImageClick);
+    this._toggleSubscribe(options, 'dragdrop', 'drop', 'drop', CCPreviewImage.onPreviewImageDrop);
+}
 
-    function _subscribe(optKey, facet, event, subscriber) {
-        var opt = options[optKey];
-        if (self._subscriptions[optKey] != opt) {
-            self[facet][opt ? 'on' : 'off'](event,
-                { subscriber: _.partial(subscriber, self._imageType), context: self });
-            self._subscriptions[optKey] = opt;
-        }
+function CCPreviewImage_toggleSubscribe(options, optKey, facet, event, subscriber) {
+    var opt = options[optKey];
+    if (this._subscriptions[optKey] != opt) {
+        this[facet][opt ? 'on' : 'off'](event, { subscriber: _.partial(subscriber, this._imageType), context: this });
+        this._subscriptions[optKey] = opt;
     }
 }
 
-
-function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
-    event.target.parentNode.classList.add(IMAGE_LOADING_CLASS);
+function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event, customTarget) {
+    var target = customTarget || event.target.parentNode;
+    target.classList.add(IMAGE_LOADING_CLASS);
     var dt = new DragDrop(event);
     var cropType = _getPreviewImageCropType(imageType, this);
     var transferState = dt.getComponentState();
@@ -162,7 +165,7 @@ function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
         var targetHeight = cropType.height;
 
         droppedImage.croppable.autoCropImageToFit(targetWidth, targetHeight, { imageType: imageType }, function (err, settings, wpsImage){
-            event.target.parentNode.classList.remove(IMAGE_LOADING_CLASS);
+            target.classList.remove(IMAGE_LOADING_CLASS);
             if (err) {
                 return logger.error('Error cropping image: ', err);
             }
@@ -178,7 +181,7 @@ function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event) {
         });
     } else {
         logger.error('CMArticle onPreviewImageDrop: no image dropped');
-        event.target.parentNode.classList.remove(IMAGE_LOADING_CLASS);
+        target.classList.remove(IMAGE_LOADING_CLASS);
     }
 }
 
@@ -280,6 +283,7 @@ function _setPreviewImageAfterCrop(previewImage, cropResponse, transferItem, ima
 function _cropLinkedTypes(image, imageType, settings) {
     var CCForm = componentRegistry.get('CCForm');
     var form = this.getScopeParentWithClass(CCForm);
+    if (!form) return;
 
     var imageTypeConfig = imagesConfig(imageType);
     var linkedImageTypes = imageTypeConfig.linkedImageTypes;
@@ -394,7 +398,7 @@ function onModelChange(path, data) {
 
 function CCPreviewImage_onDragEnter(eventType, event) {
     event.preventDefault();
-    this.el.classList.add('cc-drop-method-replace');
+    _toggleReplaceState.call(this, true);
 }
 
 
@@ -403,11 +407,7 @@ function CCPreviewImage_onDragOver(eventType, event) {
 }
 
 
-function CCPreviewImage_leaveImage(eventType, event) {
-    this.el.classList.remove('cc-drop-method-replace');
+function _toogleReplaceState(isReplaceState) {
+    this.el.classList.toggle(REPLACE_CLASS, isReplaceState);
 }
 
-
-function CCPreviewImage_onDrop(eventType, event) {
-    this.el.classList.remove('cc-drop-method-replace');
-}
