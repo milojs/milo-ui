@@ -30,8 +30,8 @@ var CCPreviewImage = MLImage.createComponentClass('CCPreviewImage', {
         messages: {
             'dragenter': {context: 'owner', subscriber: CCPreviewImage_onDragEnter},
             'dragover': {context: 'owner', subscriber: CCPreviewImage_onDragOver},
-            'dragleave': {context: 'owner', subscriber: _.partial(_toogleReplaceState, false)},
-            'drop': {context: 'owner', subscriber: _.partial(_toogleReplaceState, false)}
+            'dragleave': {context: 'owner', subscriber: _.partial(_toggleReplaceState, false)},
+            'drop': {context: 'owner', subscriber: _.partial(_toggleReplaceState, false)}
         }
     },
     croppable: {
@@ -407,7 +407,7 @@ function CCPreviewImage_onDragOver(eventType, event) {
 }
 
 
-function _toogleReplaceState(isReplaceState) {
+function _toggleReplaceState(isReplaceState) {
     this.el.classList.toggle(REPLACE_CLASS, isReplaceState);
 }
 
