@@ -19,6 +19,7 @@ var CCArticleModulePreviewList = Component.createComponentClass('CCArticleModule
         set: CCArticleModulePreviewList_set,
         del: CCArticleModulePreviewList_del,
         splice: CCArticleModulePreviewList_splice,
+        len: CCArticleModulePreviewList_len,
         event: ARTICLEMODULE_PREVIEWLIST_CHANGE_MESSAGE
     },
     template: {
@@ -92,6 +93,11 @@ function CCArticleModulePreviewList_splice() { // ... arguments
     var dataFacet = this._list.data;
     dataFacet._splice.apply(dataFacet, arguments);
     this.model.splice.apply(this.model, arguments);
+}
+
+
+function CCArticleModulePreviewList_len() {
+    return this._list.list.count();
 }
 
 
