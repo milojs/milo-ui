@@ -31,7 +31,8 @@ _.extendProto(CCStatesContainer, {
     destroy: CCStatesContainer$destroy,
     setActiveState: CCStatesContainer$setActiveState,
     setTransferStates: CCStatesContainer$setTransferStates,
-    performAction: CCStatesContainer$performAction,
+    performAction: CCStatesContainer$callMethod, //deprecated
+    callMethod: CCStatesContainer$callMethod,
     getTransferItem: CCStatesContainer$getTransferItem,
     getDragParams: CCStatesContainer$getDragParams,
     scratchItem: CCStatesContainer$scratchItem,
@@ -89,9 +90,12 @@ function CCStatesContainer$dataFacetGet() {
 
 
 function CCStatesContainer$dataFacetSet(data) {
+    var ccTransfer = data.cc_transfer;
+    delete data.cc_transfer;
+
     this.model.set(data);
     this.data._set(data);
-    if (data) this.setTransferStates(data.cc_transfer);
+    if (data) this.setTransferStates(ccTransfer);
 }
 
 
@@ -135,15 +139,15 @@ function changeActiveState(msg, data) {
 }
 
 
-function CCStatesContainer$performAction(action) {
+function CCStatesContainer$callMethod(method) {
     var itemType = this._itemType || this.model.m('.meta.compClass').get();
-    try { var actions = itemStates[itemType].actions; } catch(e) {}
+    try { var methods = itemStates[itemType].methods; } catch(e) {}
 
-    if (actions) {
-        var actionInfo = _.find(actions, function(a) {
-            return a.action == action;
+    if (methods) {
+        var methodInfo = _.find(methods, function(m) {
+            return m.method == method;
         });
-        if (actionInfo) actionInfo.func.call(this, this._itemData);
+        if (methodInfo) methodInfo.func.call(this, this._itemData);
     }
 }
 

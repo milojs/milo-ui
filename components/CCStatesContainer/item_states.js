@@ -25,9 +25,9 @@ var itemStates = module.exports = {
             }
         ],
         dragParams: articleItem.getArticleParams,
-        actions: [
+        methods: [
             {
-                action: 'open',
+                method: 'open',
                 func: articleItem.openArticle
             }
         ]
@@ -44,9 +44,9 @@ var itemStates = module.exports = {
                 createState: moduleItem.pageItemModuleState
             }
         ],
-        actions: [
+        methods: [
             {
-                action: 'open',
+                method: 'open',
                 func: moduleItem.openModule
             }
         ]
@@ -67,17 +67,17 @@ var itemStates = module.exports = {
                 createState: videoItem.videoLinkItemState
             }
         ],
-        actions: [
+        methods: [
             {
-                action: 'open',
+                method: 'open',
                 func: videoItem.openVideo
             }
         ]
     },
     'CMRelatedGroup': {
-        actions: [
+        methods: [
             {
-                action: 'open',
+                method: 'open',
                 func: articleItem.openArticleFromRelatedGroup
             }
         ]

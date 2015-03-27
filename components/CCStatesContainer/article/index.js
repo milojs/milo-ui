@@ -128,11 +128,12 @@ function openArticle(data) {
 }
 
 
-var ARTICLE_ID_PATH = '.cc_transfer.facetsStates.model.state.transferData[0].transferItem.id';
-
 function openArticleFromRelatedGroup() {
-    var articleId = this.model.m(ARTICLE_ID_PATH).get();
-    _openArticle(articleId);
+    var state = this.transfer.getState();
+    try {
+        var articleId = state.facetsStates.inspector.state.relatedArticles[0].relatedId;
+    } catch (e) {}
+    articleId && _openArticle(articleId);
 }
 
 
