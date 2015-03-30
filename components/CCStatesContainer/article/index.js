@@ -138,7 +138,7 @@ function openArticleFromRelatedGroup() {
 
 
 function _openArticle(articleId) {
-    if (articleId);
+    if (articleId)
         milo.mail.postMessage('loadasset', {
             editorApp: 'articleEditor',
             assetType: 'article',
