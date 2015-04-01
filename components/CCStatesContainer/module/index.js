@@ -1,7 +1,8 @@
 'use strict';
 
 var doT = milo.util.doT
-    , fs = require('fs');
+    , fs = require('fs')
+    , logger = milo.util.logger;
 
 
 var CMARTICLEMODULE_GROUP_TEMPLATE = doT.compile(fs.readFileSync(__dirname + '/articleModulePreview.dot'))();
