@@ -26,15 +26,7 @@ var CCModuleArticleModulePreview = CCStatesContainer.createComponentClass('CCMod
             'dblclick': { context: 'owner', subscriber: onModuleClick }
         }
     },
-    contextMenu: {
-        items:
-            [
-                { name: 'edit', label: 'Edit', action: onModuleClick },
-                { divider: true },
-                { name: 'scratch', label: 'Scratch', action: onScratchClick },
-                { divider: true }
-            ]
-    }
+    contextMenu: undefined
 });
 
 componentsRegistry.add(CCModuleArticleModulePreview);

@@ -36,6 +36,7 @@ _.extendProto(CCStatesContainer, {
     getTransferItem: CCStatesContainer$getTransferItem,
     getDragParams: CCStatesContainer$getDragParams,
     scratchItem: CCStatesContainer$scratchItem,
+    deleteItem: CCStatesContainer$deleteItem,
 
     dataFacetGet: CCStatesContainer$dataFacetGet,
     dataFacetSet: CCStatesContainer$dataFacetSet,
@@ -96,8 +97,12 @@ function CCStatesContainer$dataFacetSet(data) {
     this.model.set(data);
     this.data._set(data);
     if (data) this.setTransferStates(ccTransfer);
-}
+    if(ccTransfer) {
+        var contextMenuConfig = this.performAction('getContextConfig') ;
+        this.contextMenu.config.items = contextMenuConfig;
+    }
 
+}
 
 function CCStatesContainer$dataFacetDel() {
     this.model.del();
@@ -147,7 +152,7 @@ function CCStatesContainer$callMethod(method) {
         var methodInfo = _.find(methods, function(m) {
             return m.method == method;
         });
-        if (methodInfo) methodInfo.func.call(this, this._itemData);
+        if (methodInfo) return methodInfo.func.call(this, this._itemData);
     }
 }
 
@@ -199,3 +204,37 @@ function onAddedToScratch(event, msg, data) {
     milo.mail.postMessage('iconnotification', {options: options});
 }
 
+function CCStatesContainer$deleteItem(event) {
+    var url = [
+        window.CC.config.apiHost,
+        'scratch/delete',
+        this.model.m('.id').get()
+    ].join('/');
+    var self = this;
+
+    milo.util.request.get(url, function (err) {
+        if (err) return;
+
+        self.item.removeItem();
+    });
+}
+
+
+function cloneArticle(type, event) {
+    _postLoadMessage.call(this, 'cloneasset');
+}
+
+
+function previewArticle(type, event) {
+    _postLoadMessage.call(this, 'previewasset');
+}
+
+
+
+function _postLoadMessage(msg) {
+    milo.mail.postMessage(msg, {
+        editorApp: 'articleEditor',
+        assetType: 'article',
+        assetId: this.model.m('.id').get()
+    });
+}

@@ -16,8 +16,64 @@ module.exports = {
     linkItemArticleState: linkItemArticleState,
     openArticle: openArticle,
     openArticleFromRelatedGroup: openArticleFromRelatedGroup,
-    getArticleParams: getArticleParams
+    getArticleParams: getArticleParams,
+    getContextMenuConfig: getContextMenuConfig
+
 };
+
+function getContextMenuConfig(data) {
+    var items =
+    [
+        { name: 'edit', label: 'Edit', action: onEditClick },
+        { divider: true },
+        { name: 'preview', label: 'Preview', action: previewArticle },
+        { divider: true },
+        { name: 'scratch', label: 'Scratch', action: onScratchClick },
+        { divider: true },
+        { name: 'clone', label: 'Clone', action: cloneArticle },
+        { divider: true },
+        { name: 'showImages', label: 'Show images', action: showArticleImages }
+    ];
+
+    return items;
+}
+
+
+function cloneArticle(type, event) {
+    _postLoadMessage.call(this, 'cloneasset');
+}
+
+
+function previewArticle(type, event) {
+    _postLoadMessage.call(this, 'previewasset');
+}
+
+
+function _postLoadMessage(msg) {
+    var id = this.model.m('.articleId').get() ? this.model.m('.articleId').get() : this._itemData.articleId;
+    milo.mail.postMessage(msg, {
+        editorApp: 'articleEditor',
+        assetType: 'article',
+        assetId:   id
+    });
+}
+
+function onScratchClick(event) {
+    this.scratchItem(event);
+}
+
+function onEditClick() {
+    this.performAction('open');
+}
+
+function onRemoveClick(event) {
+    this.deleteItem(event);
+}
+
+function showArticleImages() {
+    var articleId = this._itemData.articleId ? this._itemData.articleId : this.model.m('.cc_transfer.itemData.articleId').get();
+    milo.mail.postMessage('showarticleimages', {articleId: articleId});
+}
 
 
 function pageItemArticleState(value) {

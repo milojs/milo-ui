@@ -29,6 +29,10 @@ var itemStates = module.exports = {
             {
                 method: 'open',
                 func: articleItem.openArticle
+            },
+            {
+                method: 'getContextConfig',
+                func: articleItem.getContextMenuConfig
             }
         ]
     },
@@ -48,6 +52,10 @@ var itemStates = module.exports = {
             {
                 method: 'open',
                 func: moduleItem.openModule
+            },
+            {
+                method: 'getContextConfig',
+                func: moduleItem.getContextMenuConfig
             }
         ]
     },
@@ -71,6 +79,10 @@ var itemStates = module.exports = {
             {
                 method: 'open',
                 func: videoItem.openVideo
+            },
+            {
+                method: 'getContextConfig',
+                func: videoItem.getContextMenuConfig
             }
         ]
     },

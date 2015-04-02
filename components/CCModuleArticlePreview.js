@@ -29,20 +29,7 @@ var CCModuleArticlePreview = CCStatesContainer.createComponentClass('CCModuleArt
             'dblclick': { subscriber: onDblClick, context: 'owner' }
         }
     },
-    contextMenu: {
-         items:
-             [
-                { name: 'edit', label: 'Edit', action: onEditClick },
-                { divider: true },
-                { name: 'preview', label: 'Preview', action: previewArticle },
-                { divider: true },
-                { name: 'scratch', label: 'Scratch', action: onScratchClick },
-                { divider: true },
-                { name: 'clone', label: 'Clone', action: cloneArticle },
-                { divider: true },
-                { name: 'showImages', label: 'Show images', action: showArticleImages }
-            ]
-    }
+    contextMenu: undefined
 });
 
 componentsRegistry.add(CCModuleArticlePreview);
@@ -122,16 +109,6 @@ function onAddedToScratch(event, msg, data) {
     milo.mail.postMessage('iconnotification', {options: options});
 }
 
-
-
-function onEditClick(){
-    this.performAction('open');
-}
-
-function onScratchClick(event) {
-    this.scratchItem(event);
-}
-
 function cloneArticle(type, event) {
     _postLoadMessage.call(this, 'cloneasset');
 }
@@ -180,9 +157,4 @@ function CCModuleArticlePreview_setChannel(newChannel) {
 
 function onDblClick(msg, event) {
     this.performAction('open');
-}
-
-function showArticleImages() {
-    var articleId = this.model.m('.id').get();
-    milo.mail.postMessage('showarticleimages', {articleId: articleId});
 }

@@ -12,9 +12,35 @@ module.exports = {
     videoInstanceState: videoInstanceState,
     pageItemVideoState: pageItemVideoState,
     videoLinkItemState: videoLinkItemState,
-    openVideo: openVideo
+    openVideo: openVideo,
+    getContextMenuConfig: getContextMenuConfig
 };
 
+function getContextMenuConfig(data) {
+    var items =
+        [
+            { name: 'edit', label: 'Edit', action: openVideo },
+            { divider: true },
+            { name: 'preview', label: 'Preview', action: openPreview },
+            { divider: true },
+            { name: 'scratch', label: 'Scratch', action: onScratchClick },
+        ];
+
+    return items;
+}
+
+function onRemoveClick(event) {
+    this.deleteItem(event);
+}
+
+function openPreview(event) {
+    event.stopPropagation();
+    window.open('/video/preview/' + this._itemData.id, '_blank');
+}
+
+function onScratchClick(event) {
+    this.scratchItem(event);
+}
 
 function videoInstanceState(value) {
     if (!value) return;
@@ -102,14 +128,14 @@ function videoLinkItemState(value) {
     };
 }
 
-
 function openVideo(data) {
+    var videoId = this._itemData.id;
     if (window.CC.config.urlToggles.video)
         milo.mail.postMessage('loadasset', {
             editorApp: 'videoEditor',
             assetType: 'video',
-            assetId: +data.id
+            assetId: +videoId
         });
     else
-        window.open('/video/preview/' + data.id, '_blank');
+        window.open('/video/preview/' + videoId, '_blank');
 }

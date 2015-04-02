@@ -20,8 +20,29 @@ var channelModuleTypes = {
 module.exports = {
     moduleItemState: moduleItemState,
     pageItemModuleState: pageItemModuleState,
-    openModule: openModule
+    openModule: openModule,
+    getContextMenuConfig: getContextMenuConfig
 };
+
+
+function getContextMenuConfig(data) {
+    var items =
+        [
+            { name: 'edit', label: 'Edit', action: onEditClick },
+            { divider: true },
+            { name: 'scratch', label: 'Scratch', action: onScratchClick }
+        ];
+
+    return items;
+}
+
+function onRemoveClick(event) {
+    this.deleteItem(event);
+}
+
+function onEditClick() {
+    this.performAction('open');
+}
 
 
 function moduleItemState(value) {
@@ -61,6 +82,10 @@ function moduleItemState(value) {
     };
 }
 
+
+function onScratchClick(event) {
+    this.scratchItem(event);
+}
 
 function pageItemModuleState(value) {
     if (!value) return;
