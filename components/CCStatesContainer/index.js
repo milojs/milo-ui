@@ -156,9 +156,6 @@ function CCStatesContainer$callMethod(method) {
             return m.method == method;
         });
         if (methodInfo) return methodInfo.func.call(this, this._itemData);
-
-    } else if (method == 'getContextConfig') {
-        return [ { name: 'remove', label: 'Remove', action: onRemoveClick }        ];
     }
 }
 
