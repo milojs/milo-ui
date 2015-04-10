@@ -22,19 +22,23 @@ module.exports = {
 };
 
 function getContextMenuConfig(data) {
+
+    var item = (this.constructor.name == 'CCScratchItem') ?
+    { name: 'remove', label: 'Remove', action: onRemoveClick } : { name: 'scratch', label: 'Scratch', action: onScratchClick };
+
     var items =
     [
         { name: 'edit', label: 'Edit', action: onEditClick },
         { divider: true },
-        { name: 'preview', label: 'Preview', action: previewArticle },
-        { divider: true },
-        { name: 'scratch', label: 'Scratch', action: onScratchClick },
+        { name: 'preview', label: 'Preview', action: previewArticle},
         { divider: true },
         { name: 'clone', label: 'Clone', action: cloneArticle },
         { divider: true },
         { name: 'showImages', label: 'Show images', action: showArticleImages }
     ];
 
+    items.splice(4,0,item);
+    items.splice(5,0,{ divider: true });
     return items;
 }
 

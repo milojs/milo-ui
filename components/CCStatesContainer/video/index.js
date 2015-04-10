@@ -17,15 +17,17 @@ module.exports = {
 };
 
 function getContextMenuConfig(data) {
+    var item = (this.constructor.name == 'CCScratchItem') ?
+    { name: 'remove', label: 'Remove', action: onRemoveClick } : { name: 'scratch', label: 'Scratch', action: onScratchClick };
+
     var items =
         [
             { name: 'edit', label: 'Edit', action: openVideo },
             { divider: true },
             { name: 'preview', label: 'Preview', action: openPreview },
-            { divider: true },
-            { name: 'scratch', label: 'Scratch', action: onScratchClick },
+            { divider: true }
         ];
-
+    items.push(item);
     return items;
 }
 
