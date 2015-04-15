@@ -1,7 +1,8 @@
 'use strict';
 
 var componentsRegistry = milo.registry.components
-    , Component = componentsRegistry.get('Component');
+    , Component = componentsRegistry.get('Component')
+    , logger = milo.util.logger;
 
 
 var CMIMAGE_GROUP_TEMPLATE = '<div class="artSplitter mol-img-group" ml-bind="CMImageGroup:newImage">\
@@ -51,6 +52,42 @@ function CCModuleImagePreview$init() {
     var isInFrame = !!window.frameElement;
     this._postMethod = isInFrame ? 'trigger' : 'postMessage';
     this._subscribePrefix = isInFrame ? 'message:' : '';
+    this._assetId = this.model.m('.assetTransferId');
+    subscribeUsedAssetsHash.call(this);
+}
+
+function subscribeUsedAssetsHash() {
+    var refresh;
+
+    // (usedAssets:Listen:3) in CMImage
+    // this component is at the top window
+    milo.mail.on('usedassetshash', { context: this, subscriber: refreshHighlight });
+
+    function refreshHighlight(msg, hashData) {
+        var self = this;
+        if(refresh) window.clearTimeout(refresh);
+        refresh = window.setTimeout(function(){
+            _refreshHighlight.call(self, msg, hashData);
+        }, 100);
+    }
+
+    function _refreshHighlight(msg, hashData) {
+        var addOrRemove;
+        if(_.isEqual(hashData, {}))
+            addOrRemove = 'remove';
+        else {
+            if(this.destroyed || !this.model.get() || !this.el) return;
+
+            var assetId = this._assetId && this._assetId.get();
+
+            if(!assetId)
+                return logger.error('could not get assetId on ' + this.constructor.name);
+
+            var hash = hashData.imagegroup;
+            addOrRemove = hash && hash[assetId] ? 'add' : 'remove';
+        }
+        this.el && this.el.classList[addOrRemove]('cc-exists-in-asset');
+    }
 }
 
 

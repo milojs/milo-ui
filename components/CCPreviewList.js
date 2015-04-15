@@ -91,4 +91,6 @@ function CCPreviewList_len() {
 
 function _sendChangeMessage() {
     this.data.getMessageSource().dispatchMessage(PREVIEWLIST_CHANGE_MESSAGE);
+    // (usedAssets:Post:2) on change in CCPreviewList
+    milo.mail.postMessage('assetlistpageloaded');
 }

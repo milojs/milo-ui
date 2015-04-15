@@ -49,6 +49,51 @@ function CCStatesContainer$init() {
     subscribeAssetChange.call(this, 'on');
     this.on('stateready', onStateReady);
     checkDataFacet.call(this);
+    createModelPaths.call(this);
+    subscribeUsedAssetsHash.call(this);
+}
+
+function createModelPaths() {
+    this._assetId = this.model.m('.id');
+    this._assetType = this.model.m('.type');
+}
+
+function subscribeUsedAssetsHash() {
+    var refresh;
+
+    // (usedAssets:Listen:3) in CCStatesContainer
+    // this component is at the top window
+    milo.mail.on('usedassetshash', { context: this, subscriber: refreshHighlight });
+
+    function refreshHighlight(msg, hashData) {
+        var self = this;
+        if(refresh) window.clearTimeout(refresh);
+        refresh = window.setTimeout(function(){
+            _refreshHighlight.call(self, msg, hashData);
+        }, 100);
+    }
+
+    function _refreshHighlight(msg, hashData) {
+        var addOrRemove;
+        if(_.isEqual(hashData, {}))
+            addOrRemove = 'remove';
+        else {
+            if(this.destroyed || !this.model.get() || !this.el) return;
+            // TODO slidey listitem
+            var assetType = this._getAssetType && this._getAssetType() ||
+                             this._assetType && this._assetType.get && this._assetType.get() ||
+                              this._itemType
+                , assetId = this._getAssetId && this._getAssetId() ||
+                             this._assetId && this._assetId.get && this._assetId.get();
+
+            if(!assetType || !assetId)
+                return logger.error('could not get assetType or assetId on ' + this.constructor.name);
+
+            var hash = hashData[assetType];
+            addOrRemove = hash && hash[assetId] ? 'add' : 'remove';
+        }
+        this.el && this.el.classList[addOrRemove]('cc-exists-in-asset');
+    }
 }
 
 

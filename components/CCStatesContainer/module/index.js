@@ -21,7 +21,9 @@ module.exports = {
     moduleItemState: moduleItemState,
     pageItemModuleState: pageItemModuleState,
     openModule: openModule,
-    getContextMenuConfig: getContextMenuConfig
+    getContextMenuConfig: getContextMenuConfig,
+    getAssetId,
+    getAssetType
 };
 
 
@@ -152,3 +154,18 @@ function openModule(data) {
             assetId: +id
         });
 }
+
+function getAssetId(value){
+    var type = value.type
+        , id = value.id;
+    if (type == 'linkListGroup') {
+        type = 'linkList';
+        id = +this.model.m('.linkListId').get();
+    }
+    return id;
+}
+
+function getAssetType(value){
+    return value.type;
+}
+

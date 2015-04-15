@@ -53,6 +53,9 @@ function videoInstanceState(value) {
         facetsStates: {
             model: {
                 state: {
+                    asset: {
+                        id: +value.id
+                    },
                     instance: {
                         videoId: +value.id
                     },

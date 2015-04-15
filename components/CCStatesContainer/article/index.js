@@ -102,7 +102,7 @@ function pageItemArticleState(value) {
                     wpsData: {
                         headline: value.headline,
                         previewText: value.previewText,
-                        itemId: parseInt(value.id),
+                        itemId: parseInt(value.articleId),
                         itemType: 'article'
                     }
                 }
