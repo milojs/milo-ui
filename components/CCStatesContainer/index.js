@@ -50,7 +50,7 @@ function CCStatesContainer$init() {
     this.on('stateready', onStateReady);
     checkDataFacet.call(this);
     createModelPaths.call(this);
-    subscribeUsedAssetsHash.call(this);
+    subscribeUsedAssetsHash.call(this, 'on');
 }
 
 function createModelPaths() {
