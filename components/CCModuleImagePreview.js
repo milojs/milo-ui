@@ -41,6 +41,7 @@ module.exports = CCModuleImagePreview;
 
 _.extendProto(CCModuleImagePreview, {
     init: CCModuleImagePreview$init,
+    destroy: CCModuleImagePreview$destroy,
     getMeta: CCModuleImagePreview$getMeta
 });
 
@@ -56,12 +57,16 @@ function CCModuleImagePreview$init() {
     subscribeUsedAssetsHash.call(this);
 }
 
+function _subscribeUsedAssetsHash(onOff) {
+    // (usedAssets:Listen:3) in CMImage
+    // this component is at the top window
+    milo.mail[onOff]('usedassetshash', { context: this, subscriber: refreshHighlight });
+}
+
 function subscribeUsedAssetsHash() {
     var refresh;
 
-    // (usedAssets:Listen:3) in CMImage
-    // this component is at the top window
-    milo.mail.on('usedassetshash', { context: this, subscriber: refreshHighlight });
+    _subscribeUsedAssetsHash.call(this, 'on');
 
     function refreshHighlight(msg, hashData) {
         var self = this;
@@ -198,7 +203,7 @@ function onAddedToScratch(event, msg, data) {
         options.iconCls = 'glyphicon glyphicon-remove-sign';
     else
         options.iconCls = 'glyphicon glyphicon-ok-sign';
-    
+
     milo.mail[this._postMethod]('iconnotification', {options: options});
 }
 
@@ -206,7 +211,7 @@ function onAddedToScratch(event, msg, data) {
 function _constructImageGroupState(value) {
     if (!value) return;
     value.caption = milo.util.dom.stripHtml(value.caption);
-    
+
     return {
         outerHTML: CMIMAGE_GROUP_TEMPLATE,
         compClass: 'CMImageGroup',
@@ -228,4 +233,9 @@ function _constructImageGroupState(value) {
             }
         }
     };
+}
+
+function CCModuleImagePreview$destroy() {
+    _subscribeUsedAssetsHash.call(this, 'off');
+    Component.prototype.destroy.apply(this, arguments);
 }

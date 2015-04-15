@@ -58,12 +58,16 @@ function createModelPaths() {
     this._assetType = this.model.m('.type');
 }
 
+function _subscribeUsedAssetsHash(onOff) {
+    // (usedAssets:Listen:3) in CCStatesContainer
+    // this component is at the top window
+    milo.mail[onOff]('usedassetshash', { context: this, subscriber: refreshHighlight });
+}
+
 function subscribeUsedAssetsHash() {
     var refresh;
 
-    // (usedAssets:Listen:3) in CCStatesContainer
-    // this component is at the top window
-    milo.mail.on('usedassetshash', { context: this, subscriber: refreshHighlight });
+    _subscribeUsedAssetsHash.call(this, 'on');
 
     function refreshHighlight(msg, hashData) {
         var self = this;
@@ -134,6 +138,7 @@ function checkDataFacet() {
 
 function CCStatesContainer$destroy() {
     subscribeAssetChange.call(this, 'off');
+    _subscribeUsedAssetsHash.call(this, 'off');
     _toggleIdClickSubscriptions.call(this, false);
     Component.prototype.destroy.apply(this, arguments);
 }
@@ -155,8 +160,8 @@ function CCStatesContainer$setTransferStates(data) {
         var states = createItemStates(data);
         states.forEach(function (stateObj) {
             this.transfer.setStateWithKey(stateObj.editorApp, stateObj.state, stateObj.isDefault);
-        }, this); 
-        this.setActiveState();   
+        }, this);
+        this.setActiveState();
     }
 }
 
@@ -239,7 +244,7 @@ function CCStatesContainer$callMethod(method) {
 function CCStatesContainer$getDragParams() {
     var itemType = this._itemType || this.model.m('.meta.compClass').get();
     try { var params = itemStates[itemType].dragParams; } catch(e) {}
-    return typeof params == 'function' 
+    return typeof params == 'function'
                     ? params.call(this, this._itemData)
                     : params;
 }
