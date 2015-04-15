@@ -43,9 +43,11 @@ _.extendProto(CCModuleArticlePreview, {
     getMeta: CCModuleArticlePreview$getMeta
 });
 
+
 function getArticleId(){
     return this.model.m('.id').get();
 }
+
 
 function CCModuleArticlePreview$init() {
     articleId = this.model.m('.id').get();
@@ -53,6 +55,7 @@ function CCModuleArticlePreview$init() {
 
     this.onceSync('stateready', onStateReady);
 }
+
 
 function CCModuleArticlePreview$getMeta(){
     var data = this.model.get();
@@ -62,6 +65,7 @@ function CCModuleArticlePreview$getMeta(){
         typeTitle: 'Article'
     }
 }
+
 
 function onStateReady() {
     var scope = this.container.scope
@@ -75,6 +79,7 @@ function onStateReady() {
     if (scope.previewBtn) scope.cloneBtn.events.on('click',
         { subscriber: cloneArticle, context: this });
 }
+
 
 function sendToScratch(type, event) {
     event.stopPropagation();

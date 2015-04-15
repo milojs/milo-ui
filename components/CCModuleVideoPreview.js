@@ -15,7 +15,11 @@ var CCModuleVideoPreview = CCStatesContainer.createComponentClass('CCModuleVideo
             params: getMetaParams
         }
     },
-    events: undefined,
+    events: {
+        messages: {
+            'dblclick': { subscriber: onDblClick, context: 'owner' }
+        }
+    },
     container: undefined,
     bigImagePreview: {
         modelPaths: {
@@ -169,6 +173,11 @@ function _parseData(data) {
         itemData: _.clone(data)
     };
     return data;
+}
+
+
+function onDblClick(msg, event) {
+    this.performAction('open');
 }
 
 

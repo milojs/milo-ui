@@ -47,8 +47,38 @@ _.extendProto(CCStatesContainer, {
 function CCStatesContainer$init() {
     Component.prototype.init.apply(this, arguments);
     subscribeAssetChange.call(this, 'on');
+    this.on('stateready', onStateReady);
     checkDataFacet.call(this);
 }
+
+
+function onStateReady() {
+    _toggleIdClickSubscriptions.call(this, true);
+}
+
+
+function _toggleIdClickSubscriptions(isOn) {
+    var method = isOn ? 'addEventListener' : 'removeEventListener';
+    var topbar = this.el.getElementsByClassName('cc-id')[0];
+    if (!topbar) return;
+    topbar[method]('mousemove', removeWrapperDraggable);
+    topbar[method]('dblclick', selFunc);
+}
+
+
+function removeWrapperDraggable(event) {
+    var comp = Component.getContainingComponent(this);
+    comp.el.removeAttribute('draggable');
+    event.stopPropagation();
+};
+
+
+function selFunc(event) {
+    var comp = Component.getContainingComponent(this);
+    comp.el.removeAttribute('draggable');
+    event.stopPropagation();
+    milo.util.dom.selectElementContents(this);
+};
 
 
 function checkDataFacet() {
@@ -59,6 +89,7 @@ function checkDataFacet() {
 
 function CCStatesContainer$destroy() {
     subscribeAssetChange.call(this, 'off');
+    _toggleIdClickSubscriptions.call(this, false);
     Component.prototype.destroy.apply(this, arguments);
 }
 
