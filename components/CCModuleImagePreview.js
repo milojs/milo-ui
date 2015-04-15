@@ -54,19 +54,15 @@ function CCModuleImagePreview$init() {
     this._postMethod = isInFrame ? 'trigger' : 'postMessage';
     this._subscribePrefix = isInFrame ? 'message:' : '';
     this._assetId = this.model.m('.assetTransferId');
-    subscribeUsedAssetsHash.call(this);
+    subscribeUsedAssetsHash.call(this, 'on');
 }
 
-function _subscribeUsedAssetsHash(onOff) {
+function subscribeUsedAssetsHash(onOff) {
+    var refresh;
+
     // (usedAssets:Listen:3) in CMImage
     // this component is at the top window
     milo.mail[onOff]('usedassetshash', { context: this, subscriber: refreshHighlight });
-}
-
-function subscribeUsedAssetsHash() {
-    var refresh;
-
-    _subscribeUsedAssetsHash.call(this, 'on');
 
     function refreshHighlight(msg, hashData) {
         var self = this;
@@ -236,6 +232,6 @@ function _constructImageGroupState(value) {
 }
 
 function CCModuleImagePreview$destroy() {
-    _subscribeUsedAssetsHash.call(this, 'off');
+    subscribeUsedAssetsHash.call(this, 'off');
     Component.prototype.destroy.apply(this, arguments);
 }

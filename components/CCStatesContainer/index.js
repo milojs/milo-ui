@@ -58,16 +58,12 @@ function createModelPaths() {
     this._assetType = this.model.m('.type');
 }
 
-function _subscribeUsedAssetsHash(onOff) {
+function subscribeUsedAssetsHash(onOff) {
+    var refresh;
+
     // (usedAssets:Listen:3) in CCStatesContainer
     // this component is at the top window
     milo.mail[onOff]('usedassetshash', { context: this, subscriber: refreshHighlight });
-}
-
-function subscribeUsedAssetsHash() {
-    var refresh;
-
-    _subscribeUsedAssetsHash.call(this, 'on');
 
     function refreshHighlight(msg, hashData) {
         var self = this;
@@ -138,7 +134,7 @@ function checkDataFacet() {
 
 function CCStatesContainer$destroy() {
     subscribeAssetChange.call(this, 'off');
-    _subscribeUsedAssetsHash.call(this, 'off');
+    subscribeUsedAssetsHash.call(this, 'off');
     _toggleIdClickSubscriptions.call(this, false);
     Component.prototype.destroy.apply(this, arguments);
 }
