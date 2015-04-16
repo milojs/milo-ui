@@ -209,9 +209,6 @@ function createItemStates(data) {
     });
 }
 
-function onRemoveClick(event) {
-    this.deleteItem(event);
-}
 
 function subscribeAssetChange(onOff) {
     milo.mail[onOff]('changeactiveasset', { subscriber: changeActiveState, context: this });
