@@ -98,6 +98,7 @@ function onAddedToScratch(event, msg, data) {
 function getMetaParams() {
     return {
         isLive: this.model.m('.isLive').get(),
+        isProcessing: this.model.m('.videoStatus').get() == 'Processing',
         styles: JSON.stringify([
             {
                 group: 'single'
@@ -106,7 +107,7 @@ function getMetaParams() {
                 group: 'double'
             }
         ])
-    }
+    };
 }
 
 
