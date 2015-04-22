@@ -166,6 +166,7 @@ function _parseData(data) {
         ? ''  // for completed videos just don't show any info
         : vsId == 5 ? 'Processing' : 'Error';
 
+    data.sourceShort = data.source.substring(0, 15) + (data.source.length > 15 ? '...' : '');
     data.modifiedDate = _dateHelper(data.modifiedDate);
     data.createdDate = _dateHelper(data.createdDate);
     data.titleEndDate = _dateHelper(data.titleEndDate, true);
