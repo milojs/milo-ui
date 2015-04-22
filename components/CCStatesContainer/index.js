@@ -44,6 +44,11 @@ _.extendProto(CCStatesContainer, {
 });
 
 
+_.extend(CCStatesContainer, {
+    itemStates
+});
+
+
 function CCStatesContainer$init() {
     Component.prototype.init.apply(this, arguments);
     subscribeAssetChange.call(this, 'on');
