@@ -6,10 +6,10 @@ var componentsRegistry = milo.registry.components
 
 
 var articleStatusLabelCSS = {
-    'Live': 'label-success',
-    'Raw': 'label-primary',
-    'Held': 'label-warning',
-    'Spiked': 'label-danger'
+    'Live': 'label-live',
+    'Raw': 'label-raw',
+    'Held': 'label-held',
+    'Spiked': 'label-spiked'
 };
 
 var articleId = '';
@@ -136,8 +136,8 @@ function _postLoadMessage(msg) {
 
 function CCModuleArticlePreview$dataFacetSet(value) {
     CCModuleArticlePreview_setChannel.call(this, value.channel);
-    setStatusColor.call(this);
     CCStatesContainer.prototype.dataFacetSet.apply(this, arguments);
+    setStatusColor.call(this);
 }
 
 
