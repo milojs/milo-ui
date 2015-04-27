@@ -72,12 +72,9 @@ function onStateReady() {
         , imgData = this.data.path('.thumb.hostUrl')
         , isLogoImage = imgData && imgData.get() == 'http://i.dailymail.co.uk/i/pix/m_logo_154x115px.png';
     scope.thumb.el.classList[isLogoImage ? 'add' : 'remove']('cc-hidden');
-    scope.scratchBtn.events.on('click',
-        { subscriber: sendToScratch, context: this });
-    if (scope.previewBtn) scope.previewBtn.events.on('click',
-        { subscriber: previewArticle, context: this });
-    if (scope.previewBtn) scope.cloneBtn.events.on('click',
-        { subscriber: cloneArticle, context: this });
+    if (scope.scratchBtn) scope.scratchBtn.events.on('click', { subscriber: sendToScratch, context: this });
+    if (scope.previewBtn) scope.previewBtn.events.on('click', { subscriber: previewArticle, context: this });
+    if (scope.cloneBtn) scope.cloneBtn.events.on('click', { subscriber: cloneArticle, context: this });
 }
 
 
@@ -113,6 +110,7 @@ function onAddedToScratch(event, msg, data) {
 
     milo.mail.postMessage('iconnotification', {options: options});
 }
+
 
 function cloneArticle(type, event) {
     _postLoadMessage.call(this, 'cloneasset');

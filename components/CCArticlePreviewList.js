@@ -25,38 +25,38 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
     },
     template: {
         template:
-            '<span ml-bind="[list]:relatedArticles">\
-            <article ml-bind="CCModuleArticlePreview[item]:result" class="media" >\
-                <span class="bocc channel-bar"></span>\
-                <div>\
-                    <div>\
-                        <div class="cc-article-top-bar">\
-                            <div class="cc-id"><span ml-bind="[data]:id"></span></div>\
-                            <div class="cc-created"> <span ml-bind="[data]:createdDate"></span></div>\
-                            <div class="cc-modified">Modified: <span ml-bind="[data]:modifiedDate"></span></span></div>\
-                        </div>\
-                        <div class="cc-article-title-bar">\
-                            <div class="cc-status" ml-bind="[data]:status"></div>\
-                            <div class="cc-article-title" ml-bind="[data]:headline"></div>\
-                        </div>\
-                        <div class="cc-article-short-body">\
-                            <div class="cc-preview-image" ml-bind="[data container]:thumb">\
-                                <img ml-bind="[data]:hostUrl" class="media-object">\
-                            </div>\
-                            <div class="" ml-bind="[data]:previewText"></div>\
-                        </div>\
-                        <div class="cc-article-bottom-bar">\
-                            <div class="cc-created-by"><span ml-bind="[data]:createdBy"></span></div>\
-                            <span class="cc-article-actions">\
-                                <span class="fa fa-search cc-debug" ml-bind="[events]:previewBtn" title="read-only article"></span>\
-                                <span class="cc-icon cc-clone-article-small-icon" ml-bind="[events]:cloneBtn" title="Clone this article"></span>\
-                                <span class="cc-icon cc-scratch-icon" ml-bind="[events]:scratchBtn" title="Scratch this article"></span>\
-                            </span>\
-                        </div>\
-                    </div>\
-                </div>\
-            </article>\
-            </span>'
+           `<span ml-bind="[list]:relatedArticles">
+            <article ml-bind="CCModuleArticlePreview[item]:result" class="media" >
+                <span class="bocc channel-bar"></span>
+                <div>
+                    <div>
+                        <div class="cc-article-top-bar">
+                            <div class="cc-id"><span ml-bind="[data]:id"></span></div>
+                            <div class="cc-created"> <span ml-bind="[data]:createdDate"></span></div>
+                            <div class="cc-modified">Modified: <span ml-bind="[data]:modifiedDate"></span></span></div>
+                        </div>
+                        <div class="cc-article-title-bar">
+                            <div class="cc-status" ml-bind="[data]:status"></div>
+                            <div class="cc-article-title" ml-bind="[data]:headline"></div>
+                        </div>
+                        <div class="cc-article-short-body">
+                            <div class="cc-preview-image" ml-bind="[data container]:thumb">
+                                <img ml-bind="[data]:hostUrl" class="media-object">
+                            </div>
+                            <div class="" ml-bind="[data]:previewText"></div>
+                        </div>
+                        <div class="cc-article-bottom-bar">
+                            <div class="cc-created-by"><span ml-bind="[data]:createdBy"></span></div>
+                            <span class="cc-article-actions">
+                                <span class="fa fa-search cc-debug" ml-bind="[events]:previewBtn" title="read-only article"></span>
+                                <span class="cc-icon cc-clone-article-small-icon" ml-bind="[events]:cloneBtn" title="Clone this article"></span>
+                                <span class="cc-icon cc-scratch-icon" ml-bind="[events]:scratchBtn" title="Scratch this article"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            </span>`
     }
 });
 
