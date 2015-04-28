@@ -120,7 +120,7 @@ function removeWrapperDraggable(event) {
     var comp = Component.getContainingComponent(this);
     comp.el.removeAttribute('draggable');
     event.stopPropagation();
-};
+}
 
 
 function selFunc(event) {
@@ -128,7 +128,7 @@ function selFunc(event) {
     comp.el.removeAttribute('draggable');
     event.stopPropagation();
     milo.util.dom.selectElementContents(this);
-};
+}
 
 
 function checkDataFacet() {
@@ -180,7 +180,7 @@ function CCStatesContainer$dataFacetSet(data) {
     this.data._set(data);
     if (data) this.setTransferStates(ccTransfer);
     if(ccTransfer) {
-        var contextMenuConfig = this.performAction('getContextConfig') ;
+        var contextMenuConfig = this.performAction('getContextConfig');
         this.contextMenu.config.items = contextMenuConfig;
     }
 
@@ -276,7 +276,7 @@ function CCStatesContainer$scratchItem(event) {
 }
 
 function onAddedToScratch(event, msg, data) {
-    var options = { x: event.pageX-30, y: event.pageY-5, animationCls: 'cc-fade-in-out'};
+    var options = { x: event.pageX - 30, y: event.pageY - 5, animationCls: 'cc-fade-in-out'};
 
     if (data.err)
         options.iconCls = 'glyphicon glyphicon-remove-sign';
@@ -286,7 +286,7 @@ function onAddedToScratch(event, msg, data) {
     milo.mail.postMessage('iconnotification', {options: options});
 }
 
-function CCStatesContainer$deleteItem(event) {
+function CCStatesContainer$deleteItem(/*event*/) {
     var url = [
         window.CC.config.apiHost,
         'scratch/delete',
@@ -301,22 +301,3 @@ function CCStatesContainer$deleteItem(event) {
     });
 }
 
-
-function cloneArticle(type, event) {
-    _postLoadMessage.call(this, 'cloneasset');
-}
-
-
-function previewArticle(type, event) {
-    _postLoadMessage.call(this, 'previewasset');
-}
-
-
-
-function _postLoadMessage(msg) {
-    milo.mail.postMessage(msg, {
-        editorApp: 'articleEditor',
-        assetType: 'article',
-        assetId: this.model.m('.id').get()
-    });
-}
