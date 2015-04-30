@@ -49,16 +49,19 @@ function cloneArticle(type, event) {
 
 
 function previewArticle(type, event) {
-    _postLoadMessage.call(this, 'previewasset');
+    _postLoadMessage.call(this, 'previewassetinwindow');
 }
 
 
 function _postLoadMessage(msg) {
     var id = this.model.m('.articleId').get() ? this.model.m('.articleId').get() : this._itemData.articleId;
-    milo.mail.postMessage(msg, {
-        editorApp: 'articleEditor',
-        assetType: 'article',
-        assetId:   id
+    var parentChannel = this.model.m('.topParentChannel').get();
+    var channel = this.model.m('.channel').get();
+    milo.mail.postMessage(msg , {
+        articleId: id,
+        pageURL: this.model.m('.articleURL').get(),
+        channel: parentChannel ? parentChannel : channel ,
+        subchannel: parentChannel ? channel : null
     });
 }
 
