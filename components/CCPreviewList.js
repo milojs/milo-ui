@@ -91,6 +91,7 @@ function CCPreviewList_len() {
 
 function _sendChangeMessage() {
     this.data.getMessageSource().dispatchMessage(PREVIEWLIST_CHANGE_MESSAGE);
+    // explanation: https://github.com/MailOnline/content-creator/issues/1216
     // (usedAssets:Post:2) on change in CCPreviewList
     milo.mail.postMessage('assetlistpageloaded');
 }

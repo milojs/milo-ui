@@ -60,6 +60,7 @@ function CCModuleImagePreview$init() {
 function subscribeUsedAssetsHash(onOff) {
     var refresh;
 
+    // explanation: https://github.com/MailOnline/content-creator/issues/1216
     // (usedAssets:Listen:3) in CMImage
     // this component is at the top window
     milo.mail[onOff]('usedassetshash', { context: this, subscriber: refreshHighlight });
