@@ -130,9 +130,11 @@ function CCPreviewImage$setOptions(options) {
         imageType: String,
         croppable: Match.Optional(Boolean),
         cropSettings: Match.Optional(Object),
-        dragdrop: Match.Optional(Boolean)
+        dragdrop: Match.Optional(Boolean),
+        showCropperOnDrop: Match.Optional(Boolean)
     });
     this._imageType = options.imageType;
+    this._showCropperOnDrop = options.showCropperOnDrop;
     if (options.cropSettings) this._cropSettings = options.cropSettings;
     this._setEvents(options);
 }
@@ -151,37 +153,51 @@ function CCPreviewImage_toggleSubscribe(options, optKey, facet, event, subscribe
 }
 
 function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event, customTarget) {
-    var target = customTarget || event.target.parentNode;
-    target.classList.add(IMAGE_LOADING_CLASS);
-    var dt = new DragDrop(event);
-    var cropType = _getPreviewImageCropType(imageType, this);
-    var transferState = dt.getComponentState();
-
-    var droppedImage = getDroppedImageComponent(transferState);
+    var previewImage = this;
+    var droppedImage = getDroppedImageComponent(new DragDrop(event).getComponentState());
 
     if (droppedImage) {
-        var previewImage = this;
-        var targetWidth = cropType.width;
-        var targetHeight = cropType.height;
+        // Settings for the crop which is to take place
+        var cropType = _.deepClone(_getPreviewImageCropType(imageType, this));
+        _.extend(cropType, this._cropSettings || {});
 
-        droppedImage.croppable.autoCropImageToFit(targetWidth, targetHeight, { imageType: imageType }, function (err, settings, wpsImage){
-            target.classList.remove(IMAGE_LOADING_CLASS);
-            if (err) {
-                return logger.error('Error cropping image: ', err);
+        // Toggles the loading CSS class during the crop operation.
+        var toggleLoading = function(isLoading) {
+            (customTarget || event.target.parentNode).classList.toggle(IMAGE_LOADING_CLASS, isLoading);
+        }
+
+        // Applies the crop to the previewImage.
+        var applyCropDetails = function(err, settings, wpsImage) {
+            if(!err) {
+                previewImage.croppable.getImageModel().del(); // remove old wpsImage so it doesn't interfere with new crop (of scratched images)
+                previewImage.croppable.applyCropDetails(settings, wpsImage, null, function(err) {
+                    if(!err) {
+                        var imageData = previewImage.croppable.getImageData();
+
+                        _applyCropToInspectorImage(imageData, previewImage);
+                        _cropLinkedTypes.call(previewImage, previewImage, imageType, settings);
+                    }
+
+                    toggleLoading(false);
+                });
+            } else {
+                toggleLoading(false);
             }
-            droppedImage.croppable.getImageModel().del(); // remove old wpsImage so it doesn't interfere with new crop (of scratched images)
-            droppedImage.croppable.applyCropDetails(settings, wpsImage, null, function(err) {
-                if (err) {
-                    return logger.error("Failed to apply crop details on drop: " + err);
-                }
-                var imageData = droppedImage.croppable.getImageData()
-                _applyCropToInspectorImage(imageData, previewImage);
-                _cropLinkedTypes.call(previewImage, previewImage, imageType, settings);
+        }
+
+        toggleLoading(true);
+
+        if(previewImage._showCropperOnDrop) {
+            droppedImage.croppable.showImageEditor([cropType], function(err, cropResponses) {
+                var response = err ? {} : cropResponses[cropType.name];
+
+                applyCropDetails(err, response.settings, response.wpsImage);
             });
-        });
+        } else {
+            droppedImage.croppable.autoCropImageToFit(cropType.width, cropType.height, { imageType: imageType }, applyCropDetails);
+        }
     } else {
         logger.error('CMArticle onPreviewImageDrop: no image dropped');
-        target.classList.remove(IMAGE_LOADING_CLASS);
     }
 }
 
