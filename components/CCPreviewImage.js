@@ -170,7 +170,7 @@ function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event, customTarget)
         var applyCropDetails = function(err, settings, wpsImage) {
             if(!err) {
                 previewImage.croppable.getImageModel().del(); // remove old wpsImage so it doesn't interfere with new crop (of scratched images)
-                previewImage.croppable.applyCropDetails(settings, wpsImage, null, function(err) {
+                previewImage.croppable.applyCropDetails(settings, wpsImage, false, function(err) {
                     if(!err) {
                         var imageData = previewImage.croppable.getImageData();
 
@@ -376,7 +376,10 @@ function _getPreviewImageCropType(imageType, previewImage) {
     var wpsImage = previewImage.croppable.getWpsImage();
     if (wpsImage) {
         cropType.description = wpsImage.description;
+
+        if(wpsImage.cropRequest) cropType.userSettings = wpsImage.cropRequest.userSettings;
     }
+
     return cropType;
 }
 
