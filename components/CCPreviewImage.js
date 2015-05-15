@@ -160,6 +160,7 @@ function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event, customTarget)
         // Settings for the crop which is to take place
         var cropType = _.deepClone(_getPreviewImageCropType(imageType, this));
         _.extend(cropType, this._cropSettings || {});
+        cropType.coords =  null; // Set the crop coords to null as this is a new image being cropped (the coords are for the previous image)
 
         // Toggles the loading CSS class during the crop operation.
         var toggleLoading = function(isLoading) {
