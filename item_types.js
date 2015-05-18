@@ -94,10 +94,12 @@ function processComboSchema(comp, schema) {
 function processSuperComboSchema(comp, schema) {
     var options = schema.comboOptions
         , optionsURL = schema.comboOptionsURL
-        , addItemPrompt = schema.addItemPrompt;
+        , addItemPrompt = schema.addItemPrompt
+        , placeHolder = schema.placeHolder;
 
     _.deferTicks(function() {
         if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
+        if (placeHolder) comp.setPlaceholder(placeHolder);
         setComponentOptions(comp, options, setComboOptions);
         if(optionsURL)
             comp.initOptionsURL(optionsURL);
@@ -107,10 +109,12 @@ function processSuperComboSchema(comp, schema) {
 
 function processComboListSchema(comp, schema) {
     var options = schema.comboOptions
-        , addItemPrompt = schema.addItemPrompt;
+        , addItemPrompt = schema.addItemPrompt
+        , placeHolder = schema.placeHolder;
 
     _.deferTicks(function() {
         if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
+        if (placeHolder) comp.setPlaceholder(placeHolder);
         comp.setDataValidation(schema.dataValidation);
         setComponentOptions(comp, options, setComboOptions);
     }, 2);
