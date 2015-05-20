@@ -44,7 +44,7 @@ function getContextMenuConfig(data) {
 
 
 function cloneArticle(type, event) {
-    _postLoadMessage.call(this, 'cloneasset');
+    _postToClone.call(this, 'cloneasset');
 }
 
 
@@ -53,13 +53,25 @@ function previewArticle(type, event) {
 }
 
 
-function _postLoadMessage(msg) {
+function _postToClone(msg) {
     var id = this.model.m('.articleId').get() ? this.model.m('.articleId').get() : this._itemData.articleId;
-    var parentChannel = this.model.m('.topParentChannel').get();
-    var channel = this.model.m('.channel').get();
+    milo.mail.postMessage(msg, {
+        editorApp: 'articleEditor',
+        assetType: 'article',
+        assetId: id
+    });
+}
+
+
+function _postLoadMessage(msg) {
+    var itemData = this._itemData;
+    var data = this.model;
+    var id = data.m('.articleId').get() ? data.m('.articleId').get() : itemData.articleId;
+    var parentChannel = data.m('.topParentChannel').get() ? data.m('.topParentChannel').get() :  itemData.topParentChannel;
+    var channel = data.m('.channel').get() ? data.m('.channel').get() : itemData.channel;
     milo.mail.postMessage(msg , {
         articleId: id,
-        pageURL: this.model.m('.articleURL').get(),
+        pageURL: data.m('.articleURL').get() ? data.m('.articleURL').get() : itemData.articleURL,
         channel: parentChannel ? parentChannel : channel ,
         subchannel: parentChannel ? channel : null
     });
@@ -85,12 +97,13 @@ function showArticleImages() {
 
 function pageItemArticleState(value) {
     if (!value) return;
+    var ppiData = value.ppiData ? value.ppiData : value;
     var compName = componentName();
 
     var templateData = {
-        title: value.headline,
-        previewText: value.previewText,
-        previewImg: value.thumb && value.thumb.hostUrl || '',
+        title: ppiData.headline,
+        previewText: ppiData.previewText,
+        previewImg: ppiData.thumb && ppiData.thumb.hostUrl || '',
         compName: compName
     };
 
@@ -103,9 +116,9 @@ function pageItemArticleState(value) {
             model: {
                 state: {
                     wpsData: {
-                        headline: value.headline,
-                        previewText: value.previewText,
-                        itemId: parseInt(value.articleId),
+                        headline: ppiData.headline,
+                        previewText: ppiData.previewText,
+                        itemId: parseInt(ppiData.itemId ? ppiData.itemId : ppiData.articleId),
                         itemType: 'article'
                     }
                 }
@@ -177,7 +190,7 @@ function linkItemArticleState(value) {
 
 
 function getArticleParams(data) {
-    var thumb = _.find(data.images, image => image.imageType == THUMB_IMAGE_TYPE);
+    var thumb = data.images ? _.find(data.images, image => image.imageType == THUMB_IMAGE_TYPE) : '' ;
     return {
         hostUrl: thumb && thumb.hostUrl || '',
         imageType: THUMB_IMAGE_TYPE,
