@@ -7,7 +7,7 @@ _.extendProto(ElementLock, {
 });
 
 function ElementLock(element, options) {
-    var timeout = Number.isInteger(options) ? options : options.timeout || 20000;
+    var timeout = (typeof options == 'object' ? options.timeout : options) || 20000;
     var position = options.position || 'absolute';
     var backgroundColor = options.backgroundColor || 'rgba(255, 255, 255, 0.85)';
 
