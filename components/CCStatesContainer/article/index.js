@@ -32,10 +32,13 @@ function getContextMenuConfig(data) {
         { divider: true },
         { name: 'preview', label: 'Preview', action: previewArticle},
         { divider: true },
-        { name: 'clone', label: 'Clone', action: cloneArticle },
-        { divider: true },
-        { name: 'showImages', label: 'Show images', action: showArticleImages }
+        { name: 'clone', label: 'Clone', action: cloneArticle }
     ];
+
+    if (window.CC.config.urlToggles.channels) {
+        items.push({ divider: true });
+        items.push({ name: 'showImages', label: 'Show images', action: showArticleImages });
+    }
 
     items.splice(4,0,item);
     items.splice(5,0,{ divider: true });
