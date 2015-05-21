@@ -32,7 +32,10 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
                     <div>
                         <div class="cc-article-top-bar">
                             <div class="cc-id"><span ml-bind="[data]:id"></span></div>
-                            <div class="cc-created"><span ml-bind="[data]:createdBy"></span></div>
+                            <div class="cc-created">
+                                <span class="date" ml-bind="[data]:createdDate"></span>
+                                <span class="by" ml-bind="[data]:createdBy"></span>
+                            </div>
                             <div class="cc-date cc-published">Published: <span ml-bind="[data]:firstPubDate"></span></span></div>
                             <div class="cc-date cc-modified">Modified: <span ml-bind="[data]:modifiedDate"></span></span></div>
                         </div>
@@ -45,6 +48,14 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
                                 <img ml-bind="[data]:hostUrl" class="media-object">
                             </div>
                             <div class="" ml-bind="[data]:previewText"></div>
+                        </div>
+                        <div class="cc-article-bottom-bar">
+                            <div class="cc-created-by"><span ml-bind="[data]:createdBy2"></span></div>
+                            <span class="cc-article-actions">
+                                <span class="fa fa-search cc-debug" ml-bind="[events]:previewBtn" title="read-only article"></span>
+                                <span class="cc-icon cc-clone-article-small-icon" ml-bind="[events]:cloneBtn" title="Clone this article"></span>
+                                <span class="cc-icon cc-scratch-icon" ml-bind="[events]:scratchBtn" title="Scratch this article"></span>
+                            </span>
                         </div>
                     </div>
                 </div>
