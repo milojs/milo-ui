@@ -100,17 +100,18 @@ function showArticleImages() {
 
 function pageItemArticleState(value) {
     if (!value) return;
-    var ppiData = value.ppiData ? value.ppiData : value;
+    var data = value.ppiData || value;
     var compName = componentName();
 
     var templateData = {
-        title: ppiData.headline,
-        previewText: ppiData.previewText,
-        previewImg: ppiData.thumb && ppiData.thumb.hostUrl || '',
-        compName: compName
+        title: data.headline,
+        previewText: data.previewText,
+        previewImg: data.thumb && data.thumb.hostUrl || '',
+        compName: compName,
+        showPreviewLinks: data.showPreviewLinks || getDefaultPreviewLinkStatus(data)
     };
 
-    //todo create article item for channel
+    //todo create article item for channel <- does this mean article property for channel item model?
     return {
         outerHTML: CMARTICLE_CI_PAGE_ITEM_TEMPLATE(templateData),
         compClass: 'CIPageItemArticle',
@@ -119,15 +120,23 @@ function pageItemArticleState(value) {
             model: {
                 state: {
                     wpsData: {
-                        headline: ppiData.headline,
-                        previewText: ppiData.previewText,
-                        itemId: parseInt(ppiData.itemId ? ppiData.itemId : ppiData.articleId),
-                        itemType: 'article'
+                        headline: data.headline,
+                        previewText: data.previewText,
+                        itemId: parseInt(data.itemId ? data.itemId : data.articleId),
+                        itemType: 'article',
+                        showPreviewLinks: data.showPreviewLinks || getDefaultPreviewLinkStatus(data)
                     }
                 }
             }
         }
     };
+}
+
+
+function getDefaultPreviewLinkStatus(data) {
+    var previewLinks = data.relatedArticles 
+                        && data.relatedArticles.filter((link) => link.previewLink);
+    return !!(previewLinks && previewLinks.length);
 }
 
 
