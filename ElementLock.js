@@ -7,9 +7,10 @@ _.extendProto(ElementLock, {
 });
 
 function ElementLock(element, options) {
-    var timeout = (typeof options == 'object' ? options.timeout : options) || 20000;
-    var position = options.position || 'absolute';
-    var backgroundColor = options.backgroundColor || 'rgba(255, 255, 255, 0.85)';
+    var opts = typeof options == 'object' ? options : { timeout: options };
+    var timeout = opts.timeout || 20000;
+    var position = opts.position || 'absolute';
+    var backgroundColor = opts.backgroundColor || 'rgba(255, 255, 255, 0.85)';
 
     var blankDiv = document.createElement('div');
     this.blankDiv = blankDiv;
