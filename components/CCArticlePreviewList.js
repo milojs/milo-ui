@@ -36,8 +36,8 @@ var CCArticlePreviewList = Component.createComponentClass('CCArticlePreviewList'
                                 <span class="date" ml-bind="[data]:createdDate"></span>
                                 <span class="by" ml-bind="[data]:createdBy"></span>
                             </div>
-                            <div class="cc-date cc-published">Published: <span ml-bind="[data]:firstPubDate"></span></span></div>
-                            <div class="cc-date cc-modified">Modified: <span ml-bind="[data]:modifiedDate"></span></span></div>
+                            <div class="cc-date cc-published">Pub: <span ml-bind="[data]:firstPubDate"></span></span></div>
+                            <div class="cc-date cc-modified">Mod: <span ml-bind="[data]:modifiedDate"></span></span></div>
                         </div>
                         <div class="cc-article-title-bar">
                             <div class="cc-status" ml-bind="[data]:status"></div>
