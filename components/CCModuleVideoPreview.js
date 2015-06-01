@@ -126,7 +126,7 @@ function CCModuleVideoPreview$dataFacetSet(value) {
     value = _parseData(value);
     value.stillImage = value.stillImage
                                 || (value.thumbImage && _.deepClone(value.thumbImage))
-                                || {hostUrl: 'undefined'};
+                                || { hostUrl: undefined };
 
     try { var isLive = value.status.toLowerCase() == 'live'; } catch(e){}
     value.isLive = !!isLive;
@@ -138,8 +138,7 @@ function CCModuleVideoPreview$dataFacetSet(value) {
 
     CCModuleVideoPreview_setChannel.call(this, mainChannel);
 
-    try { var hostUrl = value.thumbImage.hostUrl; } catch (e) {}
-    try { this.container.scope.image.el.src = hostUrl; } catch (e) {}
+    try { this.container.scope.image.el.src = value.thumbImage.hostUrl; } catch (e) {}
 
     var expireDate = value.titleEndDate;
     this.el.classList.toggle('cc-preview-expires', expireDate);
