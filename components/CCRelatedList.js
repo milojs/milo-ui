@@ -184,7 +184,7 @@ function onSaveButtonClick() {
     function getLinkMeta(urlOrId, callback) {
         var baseUrl = window.CC.config.apiHost;
         if ( _.isNumeric(urlOrId) ) {
-            baseUrl += '/article/getRelatedArticle/';
+            baseUrl += '/assets/article/getRelatedArticle/';
 
             milo.util.request.json(baseUrl + urlOrId, function (err, responseData) {
                 if (err) return callback(urlOrId);
