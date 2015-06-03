@@ -1,5 +1,6 @@
 'use strict';
 
+require('./ContentModule');
 require('./CCPreviewImage');
 require('./CCPreviewCropAll');
 require('./CCArticleHistory');
