@@ -135,12 +135,9 @@ function videoLinkItemState(value) {
 
 function openVideo(data) {
     var videoId = this._itemData.id;
-    if (window.CC.config.urlToggles.video)
-        milo.mail.postMessage('loadasset', {
-            editorApp: 'videoEditor',
-            assetType: 'video',
-            assetId: +videoId
-        });
-    else
-        window.open('/video/preview/' + videoId, '_blank');
+    milo.mail.postMessage('loadasset', {
+        editorApp: 'videoEditor',
+        assetType: 'video',
+        assetId: +videoId
+    });
 }
