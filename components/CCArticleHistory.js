@@ -1,50 +1,55 @@
 'use strict';
 
-var componentsRegistry = milo.registry.components
-    , Component = componentsRegistry.get('Component')
-    , articleStorage = require('../../storage/article')
+var articleStorage = require('../../storage/article')
     , logger = milo.util.logger
     , moment = require('moment')
     , SaveCommunicationsServerInterface = window.CC.autosave && window.CC.autosave.SaveCommunicationsServerInterface;
 
 var USING_ELASTICSEARCH_SAVE_HISTORY = (window.CC.config.urlToggles && window.CC.config.urlToggles.elasticsearchHistory) || window.CC && window.CC.config && (['development', 'integration'].indexOf(window.CC.config.environment) > -1);
 
-var listTemplate = '<ul class="list-group" ml-bind="[list,events]:list"> \
-                        <li class="list-group-item" ml-bind="[item]:item"> \
-                            <div class="row"> \
-                                <span class="date col-md-6" ml-bind="[data]:createdDate"></span> \
-                                <span class="status col-md-6 text-right"> \
-                                    <span class="label" ml-bind="[data]:status"></span> \
-                                </span> \
-                            </div> \
-                            <div class="row"> \
-                                <span class="user col-md-6" ml-bind="[data]:user"></span> \
-                                <span class="col-md-6 text-right"> \
-                                    <span ml-bind="[data]:editorTool" class="editor-tool"></span> \
-                                </span> \
-                            </div> \
-                        </li> \
-                    </ul>';
+var LIST_TEMPLATE = '<div> \
+                        <ul class="list-group" ml-bind="[list,events]:list"> \
+                            <li class="list-group-item" ml-bind="[item]:item"> \
+                                <div class="row"> \
+                                    <span class="date col-md-6" ml-bind="[data]:createdDate"></span> \
+                                    <span class="status col-md-6 text-right"> \
+                                        <span class="label" ml-bind="[data]:status"></span> \
+                                    </span> \
+                                </div> \
+                                <div class="row"> \
+                                    <span class="user col-md-6" ml-bind="[data]:user"></span> \
+                                    <span class="col-md-6 text-right"> \
+                                        <span ml-bind="[data]:editorTool" class="editor-tool"></span> \
+                                    </span> \
+                                </div> \
+                            </li> \
+                        </ul> \
+                        <div class="button cc-article-history-more-versions-btn" ml-bind="[events, dom]:more">Show older versions</button> \
+                    </div>';
 
-var CCArticleHistory = Component.createComponentClass('CCArticleHistory', {
-    dom: {
-        cls: ['cc-article-history']
+var ARTICLE_STATUS_CSS_LABELS = {
+    live: 'label-success',
+    raw: 'label-primary',
+    held: 'label-warning',
+    spiked: 'label-danger'
+};
+
+var PAGINATION_PAGE_SIZE = 8;
+
+var ArticleHistory = module.exports = milo.createComponentClass({
+    className: 'CCArticleHistory',
+    facets: {
+        container: undefined,
+        dom: { cls: ['cc-article-history'] },
+        events: undefined,
+        model: undefined,
+        template: { template: LIST_TEMPLATE, autoRender: true }
     },
-    container: undefined,
-    events: undefined,
-    model: undefined,
-    template: { template: listTemplate }
-});
-
-componentsRegistry.add(CCArticleHistory);
-
-module.exports = CCArticleHistory;
-
-
-_.extendProto(CCArticleHistory, {
-    init: CCArticleHistory$init,
-    fetchHistory: fetchHistory,
-    showLocalHistory: showLocalHistory
+    methods: {
+        init: ArticleHistory$init,
+        fetchHistory: fetchHistory,
+        showLocalHistory: showLocalHistory,
+    }
 });
 
 
@@ -52,70 +57,90 @@ _.extendProto(CCArticleHistory, {
  * Article History instance method
  * Initialize History
  */
-function CCArticleHistory$init() {
-    Component.prototype.init.apply(this, arguments);
+function ArticleHistory$init() {
+    ArticleHistory.super.init.apply(this, arguments);
+
     this.on('childrenbound', onChildrenBound);
-    var m = this.model;
-    _.defer(function() {
-        if (! m.get()) m.set([]);
-    });
 }
 
 
 function onChildrenBound () {
     this.off('childrenbound');
-    this.template.render().binder();
-    //milo.minder(this.model, '<<<->>>', this.container.scope.list.data);
 
     var historyList = this.container.scope.list;
+    var moreButton = this.container.scope.more;
 
-    historyList.events.on('dblclick', { subscriber: clickedHistoryEl, context: this });
+    historyList.events.on('dblclick', { context: this, subscriber: function(msg, event) {
+        var listComp = milo.Component.getContainingComponent(event.target, true, 'item');
+
+        if(listComp) {
+            milo.mail.postMessage('loadarticleversion', { 
+                data: { 
+                    version: this.model.get()[listComp.item.index], 
+                    currentArticleId: this._currentArticleId
+                }
+            });
+        }
+    }});
+
+    moreButton.events.on('click', { context: this, subscriber: function(msg, event) {
+        var currentCount = this.container.scope.list.data.get().length;
+
+        showItems.call(this, currentCount + PAGINATION_PAGE_SIZE);
+    }});
 }
 
-
-function clickedHistoryEl (msg, event) {
-    var listComp = Component.getContainingComponent(event.target, true, 'item');
-    milo.mail.postMessage('loadarticleversion',
-        { data: { version: this.model.m('[$1]', listComp.item.index).get(), currentArticleId: this._currentArticleId} });
-}
-
-
-var articleStatusLabelCSS = {
-    'live': 'label-success',
-    'raw': 'label-primary',
-    'held': 'label-warning',
-    'spiked': 'label-danger'
-};
-
-function fetchHistory (articleID, currentArticleId) {
-    if (! articleID) return;
+function fetchHistory (articleId, articleVersion) {
+    if (! articleId) return;
     var self = this;
 
-    this.container.scope.list.data.set([]);
-    this.model.set([]);
-    this._currentArticleId = articleID;
+    self._currentArticleId = articleId;
+    self.container.scope.list.data.set([]);
+    self.model.set([]);
 
-    milo.util.request.json(window.CC.config.apiHost + '/assets/article/' + articleID + '/versions', function(err, res) {
+    self.container.scope.more.dom.hide(); // Hide 'more' button initially (Will be made visible if required after version data has loaded)
+
+    milo.util.request.json(window.CC.config.apiHost + '/assets/article/' + articleId + '/versions', function(err, res) {
         if (err) return logger.error('Cannot load versions list', err);
+
         var list = mergeWpsCCVersions(res);
-        var list = Array.isArray(list) ? list : [];
+        var initialPage = 1;
 
-        self.container.scope.list.data.set(list);
-        self.container.scope.list.list.each(function(item, index) {
-            var status = list[index].status.toLowerCase();
-            var statusComp = item.container.scope.status;
-            var editorToolComp = item.container.scope.editorTool;
+        // Add additional flag to versionData (isCurrentVersion) and calculate the initial pagination page required to show the current version 
+        for(var i = 0; i < list.length; i++) {
+            var versionData = list[i];
+            var isCurrentVersion = versionData.isCurrentVersion = versionData.id == articleVersion || (i == 0 && articleVersion == 'latest');
 
-            statusComp.el.classList.add(articleStatusLabelCSS[status]);
-            item.el.classList.toggle('active', currentArticleId == list[index].id || (index == 0 && currentArticleId == 'latest'));
-
-            if (list[index].editorTool != 'CC') editorToolComp.el.classList.add('label', 'label-warning');
-        });
+            if(isCurrentVersion) initialPage = Math.ceil((i + 1) / PAGINATION_PAGE_SIZE);
+        }
 
         self.model.set(list);
+
+        showItems.call(self, initialPage * PAGINATION_PAGE_SIZE);    
     });
 }
 
+function showItems(count) {
+    var self = this;
+    var list = this.model.get();
+    var listComp = this.container.scope.list;
+    var itemsToShow = list.slice(0, Math.min(count, list.length));
+
+    listComp.data.set(itemsToShow);
+    listComp.list.each(function(item, index) {
+        var versionData = list[index];
+        var status = versionData.status.toLowerCase();
+        var statusComp = item.container.scope.status;
+        var editorToolComp = item.container.scope.editorTool;
+
+        statusComp.el.classList.add(ARTICLE_STATUS_CSS_LABELS[status]);
+        item.el.classList.toggle('active', versionData.isCurrentVersion);
+
+        if (versionData.editorTool != 'CC') editorToolComp.el.classList.add('label', 'label-warning');
+    });
+
+    this.container.scope.more.dom.toggle(list.length > count);
+}
 
 function mergeWpsCCVersions(res) {
     var ccVersions = res.ccVersions || [];
@@ -158,7 +183,6 @@ function mergeWpsCCVersions(res) {
 
 
 function showLocalHistory(editingSessionId) {
-
     var saveComminicationServerInterface = new SaveCommunicationsServerInterface(),
         self = this;
 
@@ -184,7 +208,6 @@ function showLocalHistory(editingSessionId) {
         return;
     }
 
-
     // ===== OLD CODE ======================================================
     var ids = articleStorage.getVersionIds(editingSessionId)
         , versions = articleStorage.getVersionMetas(editingSessionId);
@@ -206,8 +229,6 @@ function showLocalHistory(editingSessionId) {
     this.container.scope.list.data.set(list);
     this.model.set(list);
     // ===== /OLD CODE =====================================================
-
-
 }
 
 
