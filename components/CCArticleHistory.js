@@ -34,8 +34,6 @@ var ARTICLE_STATUS_CSS_LABELS = {
     spiked: 'label-danger'
 };
 
-var PAGINATION_PAGE_SIZE = 8;
-
 var ArticleHistory = module.exports = milo.createComponentClass({
     className: 'CCArticleHistory',
     facets: {
@@ -49,9 +47,9 @@ var ArticleHistory = module.exports = milo.createComponentClass({
         init: ArticleHistory$init,
         fetchHistory: fetchHistory,
         showLocalHistory: showLocalHistory,
-    }
+        getPaginationPageSize: getPaginationPageSize
+    },
 });
-
 
 /**
  * Article History instance method
@@ -86,12 +84,14 @@ function onChildrenBound () {
     moreButton.events.on('click', { context: this, subscriber: function(msg, event) {
         var currentCount = this.container.scope.list.data.get().length;
 
-        showItems.call(this, currentCount + PAGINATION_PAGE_SIZE);
+        showItems.call(this, currentCount + this.getPaginationPageSize());
     }});
 }
 
-function fetchHistory (articleId, articleVersion) {
+function fetchHistory (articleId, articleVersion, completeCallback) {
     if (! articleId) return;
+
+    completeCallback = completeCallback || _.noop;
     var self = this;
 
     self._currentArticleId = articleId;
@@ -101,7 +101,10 @@ function fetchHistory (articleId, articleVersion) {
     self.container.scope.more.dom.hide(); // Hide 'more' button initially (Will be made visible if required after version data has loaded)
 
     milo.util.request.json(window.CC.config.apiHost + '/assets/article/' + articleId + '/versions', function(err, res) {
-        if (err) return logger.error('Cannot load versions list', err);
+        if (err) {
+            completeCallback(err, res);
+            return logger.error('Cannot load versions list', err);
+        }
 
         var list = mergeWpsCCVersions(res);
         var initialPage = 1;
@@ -111,12 +114,14 @@ function fetchHistory (articleId, articleVersion) {
             var versionData = list[i];
             var isCurrentVersion = versionData.isCurrentVersion = versionData.id == articleVersion || (i == 0 && articleVersion == 'latest');
 
-            if(isCurrentVersion) initialPage = Math.ceil((i + 1) / PAGINATION_PAGE_SIZE);
+            if(isCurrentVersion) initialPage = Math.ceil((i + 1) / self.getPaginationPageSize());
         }
 
         self.model.set(list);
 
-        showItems.call(self, initialPage * PAGINATION_PAGE_SIZE);    
+        showItems.call(self, initialPage * self.getPaginationPageSize());    
+
+        completeCallback(err, list);
     });
 }
 
@@ -140,6 +145,10 @@ function showItems(count) {
     });
 
     this.container.scope.more.dom.toggle(list.length > count);
+}
+
+function getPaginationPageSize() {
+    return 8; // No need to make configurable at this point
 }
 
 function mergeWpsCCVersions(res) {
