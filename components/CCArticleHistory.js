@@ -75,7 +75,7 @@ function onChildrenBound () {
             milo.mail.postMessage('loadarticleversion', { 
                 data: { 
                     version: this.model.get()[listComp.item.index], 
-                    currentArticleId: this._currentArticleId
+                    currentArticleId: this.articleId
                 }
             });
         }
@@ -94,7 +94,8 @@ function fetchHistory (articleId, articleVersion, completeCallback) {
     completeCallback = completeCallback || _.noop;
     var self = this;
 
-    self._currentArticleId = articleId;
+    self.articleId = articleId;
+    self.articleVersionId = articleVersion;
     self.container.scope.list.data.set([]);
     self.model.set([]);
 
