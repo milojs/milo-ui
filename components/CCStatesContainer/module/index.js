@@ -131,15 +131,17 @@ var editorTypes = {
 };
 function openModule(data) {
     var type = data.type
-        , id = data.id;
+        , id = data.id
+        , isPuff = /puff/.test(data.styleKey);
+
     if (type == 'linkListGroup') {
         type = 'linkList';
         id = +this.model.m('.linkListId').get();
     }
-    var app = editorTypes[type];
+    var app = isPuff ? 'puffEditor' : editorTypes[type];
 
     if (!app
-        || (app == 'listEditor' && !CC.config.urlToggles.lists)) {
+        || ((app == 'listEditor' || app == 'puffEditor') && !CC.config.urlToggles.lists)) {
         milo.mail.postMessage('opendialog', {
             name: 'wrong_editor_' + type,
             options: {
