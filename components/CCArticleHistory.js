@@ -149,7 +149,7 @@ function showItems(count) {
 }
 
 function getPaginationPageSize() {
-    return 8; // No need to make configurable at this point
+    return 10; // No need to make configurable at this point
 }
 
 function mergeWpsCCVersions(res) {
