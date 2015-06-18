@@ -193,26 +193,34 @@ function mergeWpsCCVersions(res) {
 
 
 function showLocalHistory(editingSessionId) {
+    if(this.isDestroyed()) return;
+
     var saveComminicationServerInterface = new SaveCommunicationsServerInterface(),
         self = this;
+
+    this.container.scope.more.dom.toggle(false); // Always hide pagination button when rendering autosave history.
 
     if (USING_ELASTICSEARCH_SAVE_HISTORY) {
         var serverData = saveComminicationServerInterface.editingSessionsIdGet('article', editingSessionId).then(function(serverData) {
             var code = serverData[0];
             var data = serverData[1];
 
-            var list = data && data.states && data.states.map(function(item) {
-                return {
-                    id: item.href,
-                    editingSessionId: editingSessionId,
-                    storage: 'local',
-                    createdDate: fromNow(item.timeEdited),
-                    user: item.status
-                };
-            }).reverse();
+            if(data && !self.isDestroyed()) {
+                self.articleId = data.assetId;
 
-            self.container.scope.list.data.set(list);
-            self.model.set(list);
+                var list = data.states && data.states.reverse().map(function(item) {
+                    return {
+                        id: item.href,
+                        editingSessionId: editingSessionId,
+                        storage: 'local',
+                        createdDate: fromNow(item.timeEdited),
+                        user: item.status
+                    };
+                });
+
+                self.container.scope.list.data.set(list);
+                self.model.set(list);
+            }
 
         });
         return;
