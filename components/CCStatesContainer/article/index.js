@@ -123,7 +123,9 @@ function pageItemArticleState(value) {
                         itemId: parseInt(data.itemId ? data.itemId : data.articleId),
                         itemType: 'article',
                         showPreviewLinks: data.showPreviewLinks || getDefaultPreviewLinkStatus(data)
-                    }
+                    },
+                    userModifiedHeadline: value.userModifiedHeadline,
+                    userModifiedPreviewText: value.userModifiedPreviewText
                 }
             }
         }
