@@ -5,8 +5,6 @@ var articleStorage = require('../../storage/article')
     , moment = require('moment')
     , SaveCommunicationsServerInterface = window.CC.autosave && window.CC.autosave.SaveCommunicationsServerInterface;
 
-var USING_ELASTICSEARCH_SAVE_HISTORY = (window.CC.config.urlToggles && window.CC.config.urlToggles.elasticsearchHistory) || window.CC && window.CC.config && (['development', 'integration'].indexOf(window.CC.config.environment) > -1);
-
 var LIST_TEMPLATE = '<div> \
                         <ul class="list-group" ml-bind="[list,events]:list"> \
                             <li class="list-group-item" ml-bind="[item]:item"> \
@@ -200,7 +198,7 @@ function showLocalHistory(editingSessionId) {
 
     this.container.scope.more.dom.toggle(false); // Always hide pagination button when rendering autosave history.
 
-    if (USING_ELASTICSEARCH_SAVE_HISTORY) {
+    if (window.CC.config.elasticsearchHistory) {
         var serverData = saveComminicationServerInterface.editingSessionsIdGet('article', editingSessionId).then(function(serverData) {
             var code = serverData[0];
             var data = serverData[1];
