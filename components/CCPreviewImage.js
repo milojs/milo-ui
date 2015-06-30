@@ -259,6 +259,9 @@ function CCPreviewImage$$onCropAllDrop(imageTypes, msg, event) {
     if (droppedImage) {
         var self = this;
         droppedImage.croppable.showImageEditor(cropTypes, function(err, cropResponses) {
+            if (err && err.wasClosed) return;
+            if (err) return logger.error('Error cropping image: ', err);
+
             var transferItem = droppedImage.model.m('.transferItem').get();
             var form = self.getScopeParentWithClass(CCForm);
             if (!form) return;
