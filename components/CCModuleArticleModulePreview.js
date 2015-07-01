@@ -73,6 +73,7 @@ var moduleTypeDisplayMap = {
     'gallery': 'Gallery',
     'module': 'Module'
 };
+
 function parseData(value, styleData) {
     var fields = value._source = value._source || {};
     // var linkListGroupIds = fields['linkListGroups.linkListGroupId'];
@@ -110,25 +111,25 @@ function parseData(value, styleData) {
         linkListGroups: linkListGroups,
         linkListId: linkListGroups.length ? value._id : null
     };
+
     data.cc_transfer = {
         itemType: 'module',
         itemData: _.clone(data)
     };
-    return data;
 
+    return data;
 
     function getModuleType(moduleType) {
         return  moduleTypeMap[moduleType] || moduleType;
     }
-}
 
-
-function mapGroup(group) {
-    return {
-        id: group.linkListGroupId,
-        style: group.linkListGroupStyle,
-        title: group.title
-    };
+    function mapGroup(group) {
+        return {
+            id: group.linkListGroupId,
+            style: group.linkListGroupStyle,
+            title: group.title
+        };
+    }
 }
 
 
@@ -159,7 +160,7 @@ function stripHtml(text) {
 
 function getMetaParams () {
     return {
-        styles: JSON.stringify(this.model.m('.styles').get()),
+        styles: this.model.m('.styles').get(),
         isLive: this.model.m('.isLive').get()
     };
 }

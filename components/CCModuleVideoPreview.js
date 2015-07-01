@@ -99,14 +99,10 @@ function getMetaParams() {
     return {
         isLive: this.model.m('.isLive').get(),
         isProcessing: this.model.m('.videoStatus').get() == 'Processing',
-        styles: JSON.stringify([
-            {
-                group: 'single'
-            },
-            {
-                group: 'double'
-            }
-        ])
+        styles: [
+            { group: 'single' },
+            { group: 'double' }
+        ]
     };
 }
 
