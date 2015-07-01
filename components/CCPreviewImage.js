@@ -131,9 +131,11 @@ function CCPreviewImage$setOptions(options) {
         croppable: Match.Optional(Boolean),
         cropSettings: Match.Optional(Object),
         dragdrop: Match.Optional(Boolean),
-        showCropperOnDrop: Match.Optional(Boolean)
+        showCropperOnDrop: Match.Optional(Boolean),
+        customTarget: Match.Optional(Object)
     });
     this._imageType = options.imageType;
+    this._customTarget = options.customTarget;
     this._showCropperOnDrop = options.showCropperOnDrop;
     if (options.cropSettings) this._cropSettings = options.cropSettings;
     this._setEvents(options);
@@ -164,7 +166,7 @@ function CCPreviewImage$$onPreviewImageDrop(imageType, msg, event, customTarget)
 
         // Toggles the loading CSS class during the crop operation.
         var toggleLoading = function(isLoading) {
-            (customTarget || event.target.parentNode).classList.toggle(IMAGE_LOADING_CLASS, isLoading);
+            (customTarget || previewImage._customTarget || event.target.parentNode).classList.toggle(IMAGE_LOADING_CLASS, isLoading);
         }
 
         // Applies the crop to the previewImage.
