@@ -206,7 +206,8 @@ function getArticleParams(data) {
     return {
         hostUrl: thumb && thumb.hostUrl || '',
         imageType: THUMB_IMAGE_TYPE,
-        articleId: data.id
+        articleId: data.id,
+        isLive: data.status.toLowerCase() == 'live'
     };
 }
 
