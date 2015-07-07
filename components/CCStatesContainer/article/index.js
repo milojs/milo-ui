@@ -106,7 +106,7 @@ function pageItemArticleState(value) {
         previewText: data.previewText,
         previewImg: data.thumb && data.thumb.hostUrl || '',
         compName: compName,
-        showPreviewLinks: data.showPreviewLinks || getDefaultPreviewLinkStatus(data)
+        showPreviewLinks: !!data.showPreviewLinks
     };
 
     //todo create article item for channel <- does this mean article property for channel item model?
@@ -122,7 +122,7 @@ function pageItemArticleState(value) {
                         previewText: data.previewText,
                         itemId: parseInt(data.itemId ? data.itemId : data.articleId),
                         itemType: 'article',
-                        showPreviewLinks: data.showPreviewLinks || getDefaultPreviewLinkStatus(data)
+                        showPreviewLinks: !!data.showPreviewLinks
                     },
                     userModifiedHeadline: value.userModifiedHeadline,
                     userModifiedPreviewText: value.userModifiedPreviewText
@@ -130,13 +130,6 @@ function pageItemArticleState(value) {
             }
         }
     };
-}
-
-
-function getDefaultPreviewLinkStatus(data) {
-    var previewLinks = data.relatedArticles 
-                        && data.relatedArticles.filter((link) => link.previewLink);
-    return !!(previewLinks && previewLinks.length);
 }
 
 
