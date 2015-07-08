@@ -22,7 +22,6 @@ module.exports = {
 };
 
 function getContextMenuConfig(data) {
-
     var item = (this.constructor.name == 'CCScratchItem') ?
     { name: 'remove', label: 'Remove', action: onRemoveClick } : { name: 'scratch', label: 'Scratch', action: onScratchClick };
 
@@ -73,7 +72,7 @@ function _postLoadMessage(msg) {
     milo.mail.postMessage(msg , {
         articleId: id,
         pageURL: data.m('.articleURL').get() ? data.m('.articleURL').get() : itemData.articleURL,
-        channel: parentChannel ? parentChannel : channel ,
+        channel: parentChannel ? parentChannel : channel,
         subchannel: parentChannel ? channel : null
     });
 }
@@ -125,7 +124,8 @@ function pageItemArticleState(value) {
                         showPreviewLinks: !!data.showPreviewLinks
                     },
                     userModifiedHeadline: value.userModifiedHeadline,
-                    userModifiedPreviewText: value.userModifiedPreviewText
+                    userModifiedPreviewText: value.userModifiedPreviewText,
+                    userModifiedLargePreviewText: value.userModifiedLargePreviewText
                 }
             }
         }
