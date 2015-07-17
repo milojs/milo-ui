@@ -131,13 +131,14 @@ var editorTypes = {
 };
 function openModule(data) {
     var type = data.type
-        , id = data.id
-        , isPuff = /puff/.test(data.styleKey);
+        , id = data.id;
 
     if (type == 'linkListGroup') {
         type = 'linkList';
         id = +this.model.m('.linkListId').get();
     }
+
+    var isPuff = /puff/.test(data.styleKey) && type == 'linkList';
     var app = isPuff ? 'puffEditor' : editorTypes[type];
 
     if (!app
