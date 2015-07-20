@@ -5,7 +5,7 @@ var componentsRegistry = milo.registry.components
     , formRegistry = require('../registry')
     , Component = componentsRegistry.get('Component')
     , logger = milo.util.logger
-    , countries = require('../../countries').toArray();
+    , countries = require('../../countries').toArrayForVariants();
 
 
 var variantsTemplate = '<div ml-bind="MLSuperCombo:addCountry"></div> \
