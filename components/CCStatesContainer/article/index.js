@@ -103,7 +103,7 @@ function pageItemArticleState(value) {
     var templateData = {
         title: data.headline,
         previewText: data.previewText,
-        previewImg: data.thumb && data.thumb.hostUrl || '',
+        previewImg: data.thumb && data.thumb.hostUrl || data.image && data.image.hostUrl || '',
         compName: compName,
         showPreviewLinks: !!data.showPreviewLinks
     };
