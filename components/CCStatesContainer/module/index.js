@@ -141,8 +141,7 @@ function openModule(data) {
     var isPuff = /puff/.test(data.styleKey) && type == 'linkList';
     var app = isPuff ? 'puffEditor' : editorTypes[type];
 
-    if (!app
-        || ((app == 'listEditor' || app == 'puffEditor') && !CC.config.urlToggles.lists)) {
+    if (!app || app == 'listEditor' && !CC.config.urlToggles.lists || app == 'puffEditor' && !CC.config.urlToggles.puffs) {
         milo.mail.postMessage('opendialog', {
             name: 'wrong_editor_' + type,
             options: {
