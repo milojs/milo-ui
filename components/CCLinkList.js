@@ -176,11 +176,10 @@ function CCLinkList_splice(index, howmany) { // ... arguments
 
 
 function onSaveButtonSubscriber() {
-    try {
-         _processFormData.call(this, validateForm);
-    } catch (e) {
-        logger.error("Failed to Save External Link:" + e);
-        return;
+    if (this._saving) {
+        saveExternalLink.call(this, this._saving.index);
+    } else {
+        addExternalLink.call(this);
     }
 }
 
@@ -194,7 +193,13 @@ function validateForm(formData) {
 }
 
 
-function saveExternalLink(index, formData) {
+function saveExternalLink(index) {
+    try {
+        var formData = _getAndClearFormData.call(this, validateForm);
+    } catch (e) {
+        logger.error("Failed to Save External Link:" + e);
+        return;
+    }
     var data = this.model.get();
     var externalLink = data[index];
     _.extend(externalLink, externalLinkDefaults);
@@ -206,7 +211,13 @@ function saveExternalLink(index, formData) {
 }
 
 
-function addExternalLink(formData) {
+function addExternalLink() {
+    try {
+        var formData = _getAndClearFormData.call(this, validateForm);
+    } catch (e) {
+        logger.error("Failed to Add External Link:" + e);
+        return;
+    }
     var externalLink = _.extend(_.clone(externalLinkDefaults), formData);
 
 
@@ -229,12 +240,6 @@ function updateLinks() {
     });
 }
 
-
-var numCheckRegex = /^\d+$/;
-function checkArticleId(url){
-    return numCheckRegex.test(url);
-}
-
 var mailToRegex = /^mailto\:/;
 function matchMailTo(url) {
     return mailToRegex.test(url);
@@ -245,51 +250,30 @@ function matchRelative(url) {
     return url.indexOf('/') === 0;
 }
 
-function errorDialog(msg) {
-    milo.mail.trigger('opendialog', {
-        name: msg,
-        options: {
-            title: 'Error',
-            text: text(msg)
-        }
-    });
-}
 
-function _processFormData(validateFn) {
-    var scope = this.container.scope;
+function _getAndClearFormData(validateFn) {
+    var headlineDataPath = this.container.scope.headline.data
+        , urlDataPath = this.container.scope.url.data
+        , IMHyperlink = componentsRegistry.get('IMHyperlink')
+        , url = urlDataPath.get()
+        , relatedUrl = url ;
 
-    var url = scope.url.data.get();
-    processRelatedLinkData.call(this, url, validateFn);
-
-    scope.url.data.set('');
-    scope.headline.data.set('');
-}
-
-function processRelatedLinkData(url, validateFn) {
-    var IMHyperlink = componentsRegistry.get('IMHyperlink')
-    if (matchRelative(url))   updateRelatedLink.call(this, window.CC.config.dailymailSite + url);
+    if(url && matchRelative(url))  relatedUrl =  window.CC.config.dailymailSite + url;
     else {
-        (matchMailTo(url)) ? updateRelatedLink.call(this, url) : updateRelatedLink.call(this, IMHyperlink.prependUrlProtocol(url));
+        relatedUrl  = url && matchMailTo(url) ? url : url && IMHyperlink.prependUrlProtocol(url);
     }
+    var relatedLink = {
+        relatedUrl: url && relatedUrl,
+        headline: headlineDataPath.get()
+    };
 
-    function updateRelatedLink(relatedUrl){
-        var relatedLink = {
-            relatedUrl: relatedUrl,
-            headline: this.container.scope.headline.data.get()
-        };
+    validateFn && validateFn.call(this, relatedLink);
 
-        validateFn && validateFn.call(this, relatedLink);
-
-        if (this._saving) {
-            saveExternalLink.call(this, this._saving.index, relatedLink);
-        } else {
-            addExternalLink.call(this, relatedLink);
-        }
-    }
-
-
-
+    urlDataPath.set('');
+    headlineDataPath.set('');
+    return relatedLink;
 }
+
 
 function _triggerExternalPropagation() {
     this.data.dispatchSourceMessage(LINKLIST_CHANGE_MESSAGE);
