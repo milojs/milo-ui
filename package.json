@@ -1,5 +1,5 @@
 {
-  "name": "milojs",
+  "name": "milo-ui",
   "version": "0.2.8",
   "description": "Browser/nodejs reactive programming and data driven DOM manipulation with modular components.",
   "keywords": [
