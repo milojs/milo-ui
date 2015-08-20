@@ -94,7 +94,7 @@ function onScratchClick(event) {
 function pageItemModuleState(value) {
     if (!value) return;
     var channelModuleClass = channelModuleTypes[value.type] || '';
-    if (!channelModuleClass) return logger.log(value.type, 'not supported');
+    if (!channelModuleClass) return logger.warn(value.type, 'not supported');
     var compName = milo.util.componentName();
 
     return {
