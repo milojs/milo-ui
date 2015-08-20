@@ -309,14 +309,24 @@ function _cropLinkedTypes(image, imageType, settings) {
 
     var imageTypeConfig = imagesConfig(imageType);
     var linkedImageTypes = imageTypeConfig.linkedImageTypes;
+    var imageModel = image.croppable.getImageData();
+    var cropSettings = imageModel.crop.settings;
+
     if (linkedImageTypes) {
+        var linkedMetric = new window.CC.services.monitoring.metrics.Metric({
+            namespace: 'cc.crop.linked',
+            data:  _.extend({linkedTypes: linkedImageTypes.join(','), assetId: cropSettings.assetId}, _.pickKeys(image, ['imageTypeId']))
+        });
+        linkedMetric.log('start');
+
         linkedImageTypes.forEach(function(linkedImageType) {
             var linkedImageTypeConfig = imagesConfig(linkedImageType);
             var size = { h: linkedImageTypeConfig.height, w: linkedImageTypeConfig.width};
 
+            linkedMetric.log('linkedstart', { type: linkedImageType });
+
             var modelPath = imagesConfig(linkedImageType).inspectorModelPath;
-            var linkedImage = form.modelPathComponent(modelPath)
-                , imageModel = image.croppable.getImageData();
+            var linkedImage = form.modelPathComponent(modelPath);
 
             linkedImage.croppable.setImageData({
                 transferItem: imageModel.transferItem,
@@ -324,7 +334,11 @@ function _cropLinkedTypes(image, imageType, settings) {
             });
 
             linkedImage.croppable.cropImage(settings.coords, size, { imageType: linkedImageType }, function(err, coords, wpsImage) {
-                if (err) return logger.error('Error cropping linked image: ', imageType, err);
+                if (err) {
+                    linkedMetric.log('linkederror', { type: linkedImageType, msg: err });
+                    return logger.error('Error cropping linked image: ', imageType, err);
+                }
+                linkedMetric.log('linkedend', { type: linkedImageType });
 
                 var imageModel = linkedImage.model.get();
                 var imageData = {
