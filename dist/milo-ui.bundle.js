@@ -2225,15 +2225,16 @@ function MLDropdown$toggleMenu(doShow) {
 },{}],22:[function(require,module,exports){
 'use strict';
 
-// register included components
-require('./use_components');
-
+if (!(window.milo && window.milo.milo_version))
+    throw new Error('milo is not available');
 
 /**
  * `milo-ui`
  *
  * This bundle will register additional component classes for UI
  */
+
+require('./use_components');
 
 },{"./use_components":23}],23:[function(require,module,exports){
 'use strict';
