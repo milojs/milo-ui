@@ -1,12 +1,12 @@
 {
-  "name": "milojs",
+  "name": "milo-ui",
   "version": "0.2.8",
   "homepage": "https://github.com/milojs/milo",
   "authors": [
     "MOL Technical <MOL_Technical@assocnews.co.uk>"
   ],
-  "description": "Browser/nodejs reactive programming and data driven DOM manipulation with modular components.",
-  "main": "milo.bundle.js",
+  "description": "UI components and schema-based form generator for [milo.js](https://github.com/milojs/milo) framework",
+  "main": "dist/milo-ui.bundle.js",
   "license": "BSD",
   "ignore": [
     "**/.*",
