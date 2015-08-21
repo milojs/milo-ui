@@ -9,31 +9,13 @@ module.exports = function(grunt) {
                 src: 'test/**/*.js'
             }
         },
-        mocha: {
-            test: {
-                src: 'test_html/**/*.html',
-                options: {
-                    run: true,
-                    log: true,
-                    reporter: 'Spec'
-                }
-            }
-        },
         browserify: {
-            milo: {
+            milo_ui: {
                 files: {
-                    'dist/milo.bundle.js': 'lib/milo.js'
+                    'dist/milo-ui.bundle.js': 'lib/milo-ui.js'
                 },
                 options: {
                     transform: ['brfs'],
-                    debug: true
-                }
-            },
-            test1: {
-                files: {
-                    'test_html/bind_test.bundle.js': 'test_html/bind_test/*.js'
-                },
-                options: {
                     debug: true
                 }
             },
@@ -52,7 +34,7 @@ module.exports = function(grunt) {
             build: {
                 options: {},
                 files: {
-                    'dist/milo.bundle.map': 'dist/milo.bundle.js'
+                    'dist/milo-ui.bundle.map': 'dist/milo-ui.bundle.js'
                 }
             }
         },
@@ -65,7 +47,7 @@ module.exports = function(grunt) {
             },
             milo: {
                 files: {
-                    'dist/milo.min.js': 'dist/milo.bundle.js'
+                    'dist/milo-ui.min.js': 'dist/milo-ui.bundle.js'
                 }
             }
         },
@@ -75,19 +57,12 @@ module.exports = function(grunt) {
             }
         },
         watch: {
-            milo: {
-                files: [
-                    'lib/**/*.js',
-                    'node_modules/mol-proto/lib/**/*.js'
-                ],
-                tasks: ['browserify']
-            },
-            test1: {
-                files: ['test_html/bind_test/*.js'],
-                tasks: 'browserify:test1'
+            milo_ui: {
+                files: ['lib/**/*.js'],
+                tasks: 'browserify:milo_ui'
             },
             tests: {
-                files: ['test_browser/**/*.{js,html}', 'mocks/**/*'],
+                files: ['test_browser/**/*.{js,html}'],
                 tasks: 'browserify:tests'
             }
         }
@@ -111,10 +86,8 @@ module.exports = function(grunt) {
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('karma', 'browserify:tests');
     grunt.registerTask('karmatest', 'karma');
-    grunt.registerTask('htmltest', ['browserify:test1', 'watch']);
     grunt.registerTask('tests', ['mochaTest', 'browserify', 'karmatest']);
     grunt.registerTask('build', ['test', 'browserify', 'uglify', 'exorcise']);
     grunt.registerTask('default', ['build', 'watch']);
     grunt.registerTask('skiptest', ['browserify', 'watch']);
-
 };
