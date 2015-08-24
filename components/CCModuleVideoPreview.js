@@ -55,6 +55,12 @@ function onStateReady() {
     var scope = this.container.scope;
     scope.scratch && scope.scratch.events.on('click', { subscriber: sendToScratch, context: this });
     scope.preview && scope.preview.events.on('click', { subscriber: openPreview, context: this });
+    scope.downloadBestRendition && scope.downloadBestRendition.events.on('click', { subscriber: downloadBestRendition, context: this });
+}
+
+function downloadBestRendition(type, event) {
+    event.stopPropagation();
+    window.open('/video/bestrendition/' + this.model.m('.id').get(), '_blank');
 }
 
 function openPreview(type, event) {
