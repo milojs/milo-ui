@@ -92,8 +92,7 @@ function subscribeUsedAssetsHash(onOff) {
                 , assetId = this._getAssetId && this._getAssetId() ||
                              this._assetId && this._assetId.get && this._assetId.get();
 
-            if(!assetType || !assetId)
-                return logger.error('could not get assetType or assetId on ' + this.constructor.name);
+            if(!assetType || !assetId) return; //Is a plain scratch item
 
             var hash = hashData[assetType];
             addOrRemove = hash && hash[assetId] ? 'add' : 'remove';
