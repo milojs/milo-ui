@@ -947,8 +947,10 @@ function MLListItem$moveItem(index) {
 
 
 function MLListItem$isDropAllowed(meta/*, dragDrop*/){
+    var component = componentsRegistry.get(meta.compClass);
+
     return meta.params && meta.params.index
-            && meta.compClass == 'MLListItem'
+            && (component == MLListItem || component.prototype instanceof MLListItem)
             && draggingFromSameList.call(this);
 }
 
