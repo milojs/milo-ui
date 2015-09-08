@@ -1,1 +1,0 @@
-<select ml-bind="CCChannelSelect:{{= it.compName }}" class="{{= it.item.wrapCssClass }}"></select>

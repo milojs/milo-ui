@@ -1,1 +1,0 @@
-<select ml-bind="CCArticleStatusSelect:{{= it.compName }}" class="{{= it.item.wrapCssClass }}"></select>
