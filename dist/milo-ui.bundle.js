@@ -2738,6 +2738,1143 @@ function MLDropdown$toggleMenu(doShow) {
 },{}],24:[function(require,module,exports){
 'use strict';
 
+var formGenerator = require('./generator')
+    , Component = milo.Component
+    , componentsRegistry = milo.registry.components
+    , check = milo.util.check
+    , logger = milo.util.logger
+    , formRegistry = require('./registry')
+    // , keyboard = require('../keyboard') - needed for undoable
+    // , modelChangedCommand = require('../commands/model_changed') - needed for undoable
+    // , ccCommon = require('cc-common')
+    // , REGEX = ccCommon.util.REGEX
+    , async = require('async');
+
+
+var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
+
+/**
+ * A component class for generating forms from schema
+ * To create form class method [createForm](#CCForm$$createForm) should be used.
+ * Form schema has the following format:
+ * ```
+ * var schema = {
+ *     items: [
+ *         {
+ *             type: '<type of ui control>',
+ *                             // can be group, select, input, button, radio,
+ *                             // hyperlink, checkbox, list, time, date
+ *             compName: '<component name>',
+ *                             // optional name of component, should be unique within the form
+ *                             // (or form group), only needs tobe used when component needs to be
+ *                             // manipilated in some event handler and it cannot be accessed via modelPath
+ *                             // using `modelPathComponent` method
+ *                             // (which is a preferred way to access conponents in form)
+ *             label: '<ui control label>',
+ *                             // optional label, will not be added if not defined
+ *                             // or empty string
+ *             altText: '<alt text or title>',
+ *                             // optional alt text string on buttons and hyperlinks
+ *             modelPath: '<model mapping>',
+ *                             // path in model where the value will be stored.
+ *                             // Most types of items require this property,
+ *                             // some items may have this property (button, e.g.),
+ *                             // "group" must NOT have this property.
+ *                             // Warning will be logged if these rules are not followed.
+ *                             // Items without this property will not be in model
+ *                             // (apart from "group which subitems will be in model
+ *                             // if they have this property)
+ *                             // This property allows to have fixed form model structure
+ *                             // while changing view structure of the form
+ *                             // See Model.
+ *             messages: {                      // to subscribe to messages on item's component facets
+ *                 events: {                    // facet to subscribe to
+ *                     '<message1>': onMessage1 // message and subscriber function
+ *                     '<msg2> <msg3>': {       // subscribe to 2 messages
+ *                         subscriber: onMessage2,
+ *                         context: context     // context can be an object or a string:
+ *                                              //    "facet": facet instance will be used as context
+ *                                              //    "owner": item component instance will be used as context
+ *                                              //    "form": the form component instance will be used as context
+ *                                              //    "host": host object passed to createForm method will be used as context
+ *                     }
+ *                 }
+ *             },
+ *             translate: {          // optional data translation functions
+ *                 context: Object   // optional context that will be passed to translate functions, 'host' means the hostObject passed to Form.createForm
+ *                 toModel: func1,   // translates item data from view to model
+ *                 fromModel: func2  // translates item data from model to view
+ *             },
+ *             validate: {           // optional data validation functions
+ *                 context: Object   // optional context that will be passed to validate functions, 'host' means the hostObject passed to Form.createForm
+ *                 toModel:   func1 | [func1, func2, ...],// validates item data when it is changed in form
+ *                 fromModel: func2 | [func3, func4, ...] // opposite, but not really used and does not make form invalid if it fails.
+ *                                                        // Can be used to prevent data being shown in the form.
+ *             },                    // data validation functions should accept two parameters: data and callback (they are asynchronous).
+ *                                   // when validation is finished, callback should be called with (error, response) parameters.
+ *                                   // response should have properties valid (Boolean) and optional reason (String - reason of validation failure).
+ *                                   // Note!: at the moment, if callback is called with error parameter which is not falsy, validation will be passed.
+ *             <item specific>: {<item configuration>}
+ *                             // "select" supports "selectOptions" - array of objects
+ *                             // with properties "value" and "label"
+ *                             // "radio" supports "radioOptions" with the same format
+ *             items: [
+ *                 { ... } //, ... - items inside "group" or "wrapper" item
+ *             ]
+ *         } // , ... more items
+ *     ]
+ * }
+ */
+var CCForm = Component.createComponentClass('CCForm', {
+    dom: {
+        cls: 'cc-module-inspector'
+    },
+    model: undefined,
+    container: undefined,
+    data: undefined,
+    events: undefined
+});
+
+componentsRegistry.add(CCForm);
+
+module.exports = CCForm;
+
+
+_.extend(CCForm, {
+    createForm: CCForm$$createForm,
+    generator: formGenerator,
+    registry: formRegistry
+});
+
+_.extendProto(CCForm, {
+    getHostObject: CCForm$getHostObject,
+    isValid: CCForm$isValid,
+    validateModel: CCForm$validateModel,
+    getInvalidControls: CCForm$getInvalidControls,
+    getInvalidReasons: CCForm$getInvalidReasons,
+    getInvalidReasonsText: CCForm$getInvalidReasonsText,
+    modelPathComponent: CCForm$modelPathComponent,
+    modelPathSchema: CCForm$modelPathSchema,
+    viewPathComponent: CCForm$viewPathComponent,
+    viewPathSchema: CCForm$viewPathSchema,
+    getModelPath: CCForm$getModelPath,
+    getViewPath: CCForm$getViewPath,
+    destroy: CCForm$destroy
+});
+
+
+/**
+ * CCForm class method
+ * Creates form from schema.
+ * Form data can be obtained from its Model (`form.model`), reactive connection to form's model can also be used.
+ *
+ * @param {Object} schema form schema, as described above
+ * @param {Object} hostObject form host object, used to define as message subscriber context in schema - by convention the context should be defined as "host"
+ * @param {Object} formData data to initialize the form with
+ * @param {String} template optional form template, will be used instead of automatically generated from schema. Not recommended to use, as it will have to be maintained to be consistent with schema for bindings.
+ * @return {CCForm}
+ */
+function CCForm$$createForm(schema, hostObject, formData, template) {
+    var form = _createFormComponent();
+    _.defineProperty(form, '_hostObject', hostObject);
+    var formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations;
+    _processFormSchema();
+    _connectFormDataToModel();
+    _manageFormValidation();
+
+    // set original form data
+    if (formData)
+        form.model.m.set(formData);
+
+    return form;
+
+
+    function _createFormComponent() {
+        template = template || formGenerator(schema);
+        return CCForm.createOnElement(undefined, template);
+    }
+
+    function _processFormSchema() {
+        // model paths translation rules
+        formViewPaths = {};
+        formModelPaths = {};
+        modelPathTranslations = {};
+        dataTranslations = { fromModel: {}, toModel: {} };
+        dataValidations = { fromModel: {}, toModel: {} };
+
+        // process form schema
+        try {
+            processSchema.call(form, form, schema, '', formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations);
+        } catch (e) {
+            logger.debug('formViewPaths before error: ', formViewPaths);
+            logger.debug('formModelPaths before error: ', formModelPaths);
+            logger.debug('modelPathTranslations before error: ', modelPathTranslations);
+            logger.debug('dataTranslations before error: ', dataTranslations);
+            logger.debug('dataValidations before error: ', dataValidations);
+            throw (e);
+        }
+
+        form._formViewPaths = formViewPaths;
+        form._formModelPaths = formModelPaths;
+        form._modelPathTranslations = modelPathTranslations;
+        form._dataTranslations = dataTranslations;
+        form._dataValidations = dataValidations;
+    }
+
+    function _connectFormDataToModel() {
+        // connect form view to form model using translation rules from modelPath properties of form items
+        form._connector = milo.minder(form.data, '<->', form.model, { // connection depth is defined on field by field basis by pathTranslation
+            pathTranslation: modelPathTranslations,
+            dataTranslation: {
+                '<-': dataTranslations.fromModel,
+                '->': dataTranslations.toModel
+            },
+            dataValidation: {
+                '<-': dataValidations.fromModel,
+                '->': dataValidations.toModel
+            }
+        });
+    }
+
+    function _manageFormValidation() {
+        form._invalidFormControls = {};
+
+        form.model.on('validated', createOnValidated(true));
+        form.data.on('validated', createOnValidated(false));
+
+        function createOnValidated(isFromModel) {
+            var pathCompMethod = isFromModel ? 'modelPathComponent': 'viewPathComponent'
+                , pathSchemaMethod = isFromModel ? 'modelPathSchema': 'viewPathSchema';
+
+            return function(msg, response) {
+                var component = form[pathCompMethod](response.path)
+                    , schema = form[pathSchemaMethod](response.path)
+                    , label = schema.label
+                    , modelPath = schema.modelPath;
+
+                if (component) {
+                    var parentEl = component.el.parentNode;
+                    parentEl.classList.toggle(FORM_VALIDATION_FAILED_CSS_CLASS, ! response.valid);
+
+                    var reason;
+                    if (response.valid)
+                        delete form._invalidFormControls[modelPath];
+                    else {
+                        reason = {
+                            label: label || '',
+                            reason: response.reason,
+                            reasonCode: response.reasonCode
+                        };
+                        form._invalidFormControls[modelPath] = {
+                            component: component,
+                            reason: reason
+                        };
+                    }
+
+                    var data = _.clone(response);
+
+                    if (!isFromModel) data.path = form.getModelPath(data.path);
+
+                    if (reason) {
+                        data.reason = reason; // a bit hacky, replacing string with object created above
+                        delete data.reasonCode;
+                    }
+                    form.postMessage('validation', data);
+                } else
+                    logger.error('Form: component for path ' + response.path + ' not found');
+            };
+        }
+    }
+}
+
+
+/**
+ * Returns the form host object.
+ * @return {Component}
+ */
+function CCForm$getHostObject() {
+    return this._hostObject;
+}
+
+
+/**
+ * Returns current validation status of the form
+ * Will not validate fields that were never changed in view
+ *
+ * @return {Boolean}
+ */
+function CCForm$isValid() {
+    return Object.keys(this._invalidFormControls).length == 0;
+}
+
+
+/**
+ * Runs 'toModel' validators defined in schema on the current model of the form
+ * can be used to mark as invaid all required fields or to explicitely validate
+ * form when it is saved. Returns validation state of the form via callback
+ *
+ * @param {Function} callback
+ */
+function CCForm$validateModel(callback) {
+    var validations = []
+        , self = this;
+
+    _.eachKey(this._dataValidations.fromModel, function(validators, modelPath) {
+        var data = this.model.m(modelPath).get();
+        validators = Array.isArray(validators) ? validators : [validators];
+
+        if (validators && validators.length) {
+            validations.push({
+                modelPath: modelPath,
+                data: data,
+                validators: validators
+            });
+        }
+    }, this);
+
+
+    var allValid = true;
+    async.each(validations,
+        function(validation, nextValidation) {
+            var lastResponse;
+            async.every(validation.validators,
+                // call validator
+                function(validator, next) {
+                    validator(validation.data, function(err, response) {
+                        lastResponse = response || {};
+                        next(lastResponse.valid || err);
+                    });
+                },
+            // post validation result of item to form
+            function(valid) {
+                lastResponse.path = validation.modelPath;
+                lastResponse.valid = valid;
+                self.model.postMessage('validated', lastResponse);
+                if (!valid) allValid = false;
+                nextValidation(null);
+            });
+        },
+    // post form validation result
+    function(err) {
+        self.postMessage('validationcompleted', { valid: allValid });
+        callback && callback(allValid);
+    });
+}
+
+
+/**
+ * Returns map of invalid controls and reasons (view paths are keys)
+ *
+ * @return {Object}
+ */
+function CCForm$getInvalidControls() {
+    return this._invalidFormControls;
+}
+
+
+/**
+ * Returns an array of objects with all reasons for the form being invalid
+ *
+ * @return {Array[Object]}
+ */
+function CCForm$getInvalidReasons() {
+    var invalidControls = this.getInvalidControls();
+    var reasons = _.reduceKeys(invalidControls,
+        function(memo, invalidControl, compName) {
+            memo.push(invalidControl.reason);
+            return memo;
+        }, [], this);
+    return reasons;
+}
+
+
+/**
+ * Returns a multiline string with all reasons for the form being invalid
+ *
+ * @return {String}
+ */
+function CCForm$getInvalidReasonsText() {
+    var reasons = this.getInvalidReasons();
+    return reasons.reduce(function(memo, reason) {
+        return memo + (reason.label || '') + ' - ' + reason.reason + '\n';
+    }, '');
+}
+
+
+/**
+ * Returns component for a given modelPath
+ *
+ * @param {String} modelPath
+ * @return {Component}
+ */
+function CCForm$modelPathComponent(modelPath) {
+    var modelPathObj = this._formModelPaths[modelPath];
+    return modelPathObj && modelPathObj.component;
+}
+
+
+/**
+ * Returns form schema for a given modelPath
+ *
+ * @param {String} modelPath
+ * @return {Object}
+ */
+function CCForm$modelPathSchema(modelPath) {
+    var modelPathObj = this._formModelPaths[modelPath];
+    return modelPathObj && modelPathObj.schema;
+}
+
+
+/**
+ * Returns component for a given view path (path as defined in Data facet)
+ *
+ * @param {String} viewPath
+ * @return {Component}
+ */
+function CCForm$viewPathComponent(viewPath) {
+    var viewPathObj = this._formViewPaths[viewPath];
+    return viewPathObj && viewPathObj.component;
+}
+
+
+/**
+ * Returns form schema for a given view path item (path as defined in Data facet)
+ *
+ * @param {String} viewPath
+ * @return {Object}
+ */
+function CCForm$viewPathSchema(viewPath) {
+    var viewPathObj = this._formViewPaths[viewPath];
+    return viewPathObj && viewPathObj.schema;
+}
+
+
+/**
+ * Converts view path of the component in the form to the model path of the connected data
+ *
+ * @param {string} viewPath view path of the component
+ * @return {string} model path of connected data
+ */
+function CCForm$getModelPath(viewPath) {
+    return this._modelPathTranslations[viewPath];
+}
+
+
+/**
+ * Converts model path of the connected data to view path of the component in the form
+ * 
+ * @param {string} modelPath model path of connected data
+ * @return {string} view path of the component
+ */
+function CCForm$getViewPath(modelPath) {
+    return _.findKey(this._modelPathTranslations, function(mPath, vPath) {
+        return mPath == modelPath;
+    });
+}
+
+
+function CCForm$destroy() {
+    Component.prototype.destroy.apply(this, arguments);
+    this._connector && milo.minder.destroyConnector(this._connector);
+    this._connector = null;
+}
+
+
+/**
+ * See item_types.js for item classes and templates
+ * Map of items types to items components classes
+ * UI components are defined in `milo`
+ */
+
+
+/**
+ * Predefined for validation functions
+ */
+var validationFunctions = {
+    'required': validateRequired
+    // 'latin1': validateLatin1,
+    // 'standard': validateStandard,
+    // 'url': validateUrl
+};
+
+
+// var _itemsSchemaRules = _.mapKeys(itemTypes, function(className, itemType) {
+//     return {
+//         // CompClass: componentsRegistry.get(className),
+//         func: itemsFunctions[itemType] || doNothing,
+//         modelPathRule: modelPathRules[itemType] || 'required'
+//     };
+// });
+
+function doNothing() {}
+
+
+/**
+ * Processes form schema to subscribe for messages as defined in schema. Performs special processing for some types of items.
+ * Returns translation rules for Connector object.
+ * This function is called recursively for groups (and subgroups)
+ *
+ * @private
+ * @param {Component} comp form or group component
+ * @param {Object} schema form or group schema
+ * @param {String} viewPath current view path, used to generate Connector translation rules
+ * @param {Object} formViewPaths view paths accumulated so far (have component and schema properties)
+ * @param {Object} formModelPaths view paths accumulated so far (have component and schema properties)
+ * @param {Object} modelPathTranslations model path translation rules accumulated so far
+ * @param {Object} dataTranslations data translation functions so far
+ * @param {Object} dataValidations data validation functions so far
+ * @return {Object}
+ */
+function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations) {
+    viewPath = viewPath || '';
+    formViewPaths = formViewPaths || {};
+    formModelPaths = formModelPaths || {};
+    modelPathTranslations = modelPathTranslations || {};
+    dataTranslations = dataTranslations || {};
+    dataTranslations.fromModel = dataTranslations.fromModel || {};
+    dataTranslations.toModel = dataTranslations.toModel || {};
+
+    dataValidations = dataValidations || {};
+    dataValidations.fromModel = dataValidations.fromModel || {};
+    dataValidations.toModel = dataValidations.toModel || {};
+
+    if (schema.items)
+        _processSchemaItems.call(this, comp, schema.items, viewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations);
+
+    if (schema.messages)
+        _processSchemaMessages.call(this, comp, schema.messages);
+
+    var itemRule = schema.type && formRegistry.get(schema.type);
+    var hostObject = this.getHostObject();
+
+    if (viewPath) {
+        formViewPaths[viewPath] = {
+            schema: schema,
+            component: comp
+        };
+
+        if (itemRule) {
+            //check(comp.constructor, itemTypes[schema.type].CompClass);
+            itemRule.itemFunction && itemRule.itemFunction.call(hostObject, comp, schema);
+            _processItemTranslations.call(this, viewPath, schema);
+        } else
+            throw new Error('unknown item type ' + schema.type);
+    }
+
+    // TODO manage via schema extension
+    // if (schema.undoable)
+    //     _manageUndoable(hostObject, comp, schema.modelPath);
+
+    return modelPathTranslations;
+
+
+    function _processItemTranslations(viewPath, schema) {
+        var modelPath = schema.modelPath
+            , modelPattern = schema.modelPattern || ''
+            , notInModel = schema.notInModel
+            , translate = schema.translate
+            , validate = schema.validate;
+
+        if (viewPath) {
+            _addDataTranslation.call(this, translate, 'toModel', viewPath);
+
+            switch (itemRule.modelPathRule) {
+                case 'prohibited':
+                    if (modelPath)
+                        throw new Error('modelPath is prohibited for item type ' + schema.type);
+                    break;
+                case 'required':
+                    if (! (modelPath || notInModel))
+                        throw new Error('modelPath is required for item type ' + schema.type + ' . Add "notInModel: true" to override');
+                    // falling through to 'optional'
+                case 'optional':
+                    if (modelPath) {
+                        formModelPaths[modelPath] = {
+                            schema: schema,
+                            component: comp
+                        };
+
+                        if (! notInModel) {
+                            _addModelPathTranslation(viewPath, modelPath, modelPattern);
+                            _addDataTranslation.call(this, translate, 'fromModel', modelPath);
+                            _addDataValidation.call(this, validate, 'toModel', viewPath);
+                            _addDataValidation.call(this, validate, 'fromModel', modelPath);
+                        }
+                    }
+                    break;
+                default:
+                    throw new Error('unknown modelPath rule for item type ' + schema.type);
+            }
+        }
+    }
+
+    // function _manageUndoable(hostObject, inspComp, modelPath) {
+    //     var debouncedModelChange = _.debounce(executeModelChange, 500);
+    //     var el = inspComp.el;
+    //     var tagName = el.tagName.toLowerCase();
+    //     var oldValue;
+
+    //     if (isTextField())
+    //         setupTextFields();
+    //     else
+    //         setupOtherFields();
+
+
+    //     function isTextField() {
+    //         return tagName == 'textarea' || (tagName == 'input' && el.type == 'text');
+    //     }
+
+    //     function setupTextFields() {
+    //         inspComp.events.on('keydown', function (type, event) {
+    //             var keyPressed = keyboard.getKeyPressed(event);
+    //             if (!keyPressed.cmdCtrl) {
+    //                 if (typeof oldValue == 'undefined')
+    //                     oldValue = inspComp.data.get() || '';
+
+    //                 debouncedModelChange(oldValue);
+    //             }
+    //         });
+    //     }
+
+    //     function setupOtherFields() {
+    //         inspComp.data.on('', function(msg, data) {
+    //             // Keep old value up to date to be used by the change event handler
+    //             if (typeof oldValue == 'undefined') oldValue = data.oldValue;
+    //         });
+    //         inspComp.events.on('change', function () {
+    //             executeModelChange(oldValue);
+    //         });
+    //     }
+
+    //     function executeModelChange(undoValue) {
+    //         var newValue = inspComp.data.get();
+    //         if (newValue === undoValue) return;
+
+    //         var cmd = modelChangedCommand.createWithUndo(hostObject, 'inspector', modelPath, newValue, undoValue);
+    //         var rootContent = hostObject.editor.get();
+
+    //         cmd.setComment('track model change');
+    //         rootContent.editor.storeCommand(cmd);
+
+    //         oldValue = undefined;
+    //     }
+    // }
+
+    function _addModelPathTranslation(viewPath, modelPath, pathPattern) {
+        if (viewPath in modelPathTranslations)
+            throw new Error('duplicate view path ' + viewPath);
+        else if (_.keyOf(modelPathTranslations, modelPath))
+            throw new Error('duplicate model path ' + modelPath + ' for view path ' + viewPath);
+        else
+            modelPathTranslations[viewPath + pathPattern] = modelPath + pathPattern;
+    }
+
+    function _addDataTranslation(translate, direction, path) {
+        var translateFunc = translate && translate[direction];
+        if (!translateFunc) return;
+        if (typeof translateFunc == 'function') {
+            if (translate.context) {
+                var context = getFunctionContext.call(this, translate.context);
+
+                translateFunc = translateFunc.bind(context);
+            }
+            dataTranslations[direction][path] = translateFunc;
+        } else {
+            throw new Error(direction + ' translator for ' + path + ' should be function');
+        }
+    }
+
+    function _addDataValidation(validate, direction, path) {
+        var validators = validate && validate[direction];
+        if (! validators) return;
+
+        var form = this;
+        var formValidators = dataValidations[direction][path] = [];
+
+        if (Array.isArray(validators))
+            validators.forEach(_addValidatorFunc);
+        else
+            _addValidatorFunc(validators);
+
+        function _addValidatorFunc(validator) {
+            if (typeof validator == 'string')
+                var valFunc = getValidatorFunction(validator);
+            else if (validator instanceof RegExp)
+                valFunc = makeRegexValidator(validator);
+            else if (typeof validator == 'function')
+                valFunc = validator;
+            else
+                throw new Error(direction + ' validator for ' + path + ' should be function or string');
+
+            if (validate.context) {
+                var context = getFunctionContext.call(form, validate.context);
+
+                valFunc = valFunc.bind(context);
+            }
+
+            formValidators.push(valFunc);
+        }
+    }
+}
+
+function getValidatorFunction(validatorName) {
+    var valFunc = validationFunctions[validatorName];
+    if (! valFunc)
+        throw new Error('Form: unknown validator function name ' + validatorName);
+    return valFunc;
+}
+
+function makeRegexValidator(validatorRegExp) {
+    return function (data, callback) {
+        var valid = validatorRegExp.test(data)
+            , response = _validatorResponse(valid, 'should match pattern');
+        callback(null, response);
+    };
+}
+
+
+/**
+ * Processes items of the form (or group).
+ * Component that has items should have Container facet.
+ * Returns translation rules for Connector.
+ *
+ * @private
+ * @param {Component} comp form or group component
+ * @param {Array} items list of items in schema
+ * @param {String} viewPath current view path, used to generate Connector translation rules
+ * @param {Object} formViewPaths view paths accumulated so far (have component and schema properties)
+ * @param {Object} formModelPaths view paths accumulated so far (have component and schema properties)
+ * @param {Object} modelPathTranslations model path translation rules accumulated so far
+ * @param {Object} dataTranslations data translation functions so far
+ * @param {Object} dataValidations data validation functions so far
+ * @return {Object}
+ */
+function _processSchemaItems(comp, items, viewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations) {
+    if (! comp.container)
+        return logger.warn('Form Warning: schema has items but component has no container facet');
+
+    items.forEach(function(item) {
+        if (!item.compName) return; // No component, only markup
+
+        var itemComp = comp.container.scope[item.compName]
+            , compViewPath = viewPath + '.' + item.compName;
+        if (! itemComp)
+            throw new Error('component "' + item.compName + '" is not in scope (or subscope) of form');
+        processSchema.call(this, itemComp, item, compViewPath, formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations);
+    }, this);
+}
+
+
+/**
+ * Subscribes to messages on facets of items' component as defined in schema
+ */
+function _processSchemaMessages(comp, messages) {
+    var form = this;
+    _.eachKey(messages, function(facetMessages, facetName) {
+        var facet = comp[facetName];
+        if (! facet)
+            throw new Error('schema has subscriptions for facet "' + facetName + '" of form component "' + comp.name + '", but component has no facet');
+        facetMessages = _.clone(facetMessages);
+        _.eachKey(facetMessages, function(subscriber, messageType) {
+            var context = typeof subscriber == 'object' ? subscriber.context : null;
+
+            // Avoid changing event subscriptions whose context is 'facet' or 'owner'.
+            if (context && context != 'facet' && context != 'owner') {
+                context = getFunctionContext.call(form, context);
+
+                facetMessages[messageType] = {
+                    subscriber: subscriber.subscriber,
+                    context: context
+                };
+            }
+        });
+        facet.onConfigMessages(facetMessages);
+    });
+}
+
+
+/**
+ * Returns the object to bind a function to as defined by a section of the form schema.
+ *
+ * Currently supported inputs are:
+ *  - {Object} - Any object
+ *  - {String} 'form' - The form
+ *  - {String} 'host' - The form's host object
+ */
+function getFunctionContext(context) {
+    if (context == 'form')
+        context = this;
+    else if (context == 'host')
+        context = this.getHostObject();
+
+    if (context && typeof context != 'object')
+        throw new Error('Invalid context supplied - Expected {String} [host,form], or {Object}');
+
+    return context;
+}
+
+
+/**
+ * Validation functions
+ */
+// function validateLatin1(data, callback) {
+//     var valid = typeof data == 'string' && REGEX.latin1.test(data);
+
+//     var response = _validatorResponse(valid, 'needs to be latin1 characters only');
+//     callback(null, response);
+// }
+
+// function validateStandard(data, callback) {
+//     var valid = typeof data == 'string' && !data.match(REGEX.nonStandard);
+//     var errorText = valid ? '' : 'contains non-standard characters: ' + data.match(REGEX.nonStandard).join(' ')
+//     var response = _validatorResponse(valid, errorText);
+//     callback(null, response);
+// }
+
+function validateRequired(data, callback) {
+    var valid = typeof data != 'undefined'
+                && (typeof data != 'string' || data.trim() != '');
+    var response = _validatorResponse(valid, 'please enter a value', 'REQUIRED');
+    callback(null, response);
+}
+
+
+// function validateUrl(data, callback) {
+//     var valid = typeof data == 'string' && REGEX.url.test(data)
+//         , response = _validatorResponse(valid, 'not a valid URL');
+//     callback(null, response);
+// }
+
+
+function _validatorResponse(valid, reason, reasonCode) {
+    return valid
+            ? { valid: true }
+            : { valid: false, reason: reason, reasonCode: reasonCode };
+}
+
+},{"./generator":25,"./registry":27,"async":30}],25:[function(require,module,exports){
+'use strict';
+
+var doT = milo.util.doT
+    , fs = require('fs')
+    , componentsRegistry = milo.registry.components
+    , miloCount = milo.util.count
+    , componentName = milo.util.componentName
+    , formRegistry = require('./registry')
+    , itemTypes = require('./item_types');
+
+var cachedItems = {};
+
+
+module.exports = formGenerator;
+
+
+var partials = {
+    label: "{{? it.item.label }}\n    <label>{{= it.item.label}}</label>\n{{?}}\n",
+    formGroup: "<div\n    {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}\n    class=\"form-group{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\"\n>\n"
+};
+
+var dotDef = {
+    partials: partials
+};
+
+
+/*
+ * Generates form HTML based on the schema.
+ * It does not create components for the form DOM, milo.binder should be called separately on the form's element.
+ *
+ * @param {Array} schema array of form elements descriptors
+ * @return {String}
+ */
+function formGenerator(schema) {
+    //getItemsClasses();
+
+    var renderedItems = schema.items.map(renderItem);
+    return renderedItems.join('');
+
+    function renderItem(item) {
+        var itemType = cachedItems[item.type];
+
+        if (!itemType) {
+            var newItemType = formRegistry.get(item.type);
+            itemType = cachedItems[item.type] = {
+                CompClass: newItemType.compClass && componentsRegistry.get(newItemType.compClass),
+                compClass: newItemType.compClass,
+                template: doT.compile(newItemType.template, dotDef)
+            }
+        }
+
+        item.compName = itemType.CompClass ? item.compName || componentName() : null;
+
+        var domFacetConfig = itemType.CompClass && itemType.CompClass.getFacetConfig('dom')
+            , tagName = domFacetConfig && domFacetConfig.tagName || 'div';
+
+        var template = itemType.template;
+        return template({
+            item: item,
+            compName: item.compName,
+            compClass: itemType.compClass,
+            tagName: tagName,
+            formGenerator: formGenerator,
+            miloCount: miloCount,
+            disabled: item.disabled
+        });
+    }
+}
+
+},{"./item_types":26,"./registry":27,"fs":31}],26:[function(require,module,exports){
+'use strict';
+
+
+var fs = require('fs')
+    , formRegistry = require('./registry');
+
+
+var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{# def.partials.label }}\n    {{= it.formGenerator(it.item) }}\n</div>\n"
+    , wrapper_dot = "<span ml-bind=\"MLWrapper:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{= it.formGenerator(it.item) }}\n</span>\n"
+    , select_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <span class=\"custom-select\">\n        <select ml-bind=\"MLSelect:{{= it.compName }}\"\n                {{? it.disabled }}disabled {{?}}\n                class=\"form-control\">\n        </select>\n    </span>\n</div>\n"
+    , input_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"{{= it.item.inputType || 'text' }}\"\n            {{? it.item.inputName }}name=\"{{= it.item.inputName }}\"{{?}}\n            ml-bind=\"MLInput:{{= it.compName }}\"\n            {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-control\">\n</div>\n"
+    , textarea_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <textarea ml-bind=\"MLTextarea:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"form-control\"\n        {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n        {{? it.item.autoresize }}rows=\"{{= it.item.autoresize.minLines }}\"{{?}}></textarea>\n</div>"
+    , button_dot = "<div {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}class=\"btn-toolbar{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\">\n    <button ml-bind=\"MLButton:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"btn btn-default {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}\">\n        {{= it.item.label || '' }}\n    </button>\n</div>\n"
+    // , fabutton_dot = fs.readFileSync(__dirname + '/items/fabutton.dot')
+    , hyperlink_dot = "{{# def.partials.formGroup }}\n    <a {{? it.item.href}}href=\"{{= it.item.href }}\"{{?}}\n        {{? it.item.target}}target=\"{{= it.item.target }}\"{{?}}   \n        ml-bind=\"MLHyperlink:{{= it.compName }}\" \n        class=\"hyperlink hyperlink-default\">\n        {{= it.item.label || '' }}\n    </a>\n</div>"
+    , checkbox_dot = "{{# def.partials.formGroup }}\n  <input type=\"checkbox\"\n    id=\"{{= it.compName }}\"\n    ml-bind=\"MLInput:{{= it.compName }}\"\n    {{? it.disabled }}disabled {{?}}\n    class=\"{{= it.item.itemCssClass || ''}}\">\n  <label for=\"{{= it.compName }}\">{{= it.item.label}}</label>\n</div>\n"
+    , list_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <ul ml-bind=\"MLList:{{= it.compName }}\"\n            {{? it.disabled }}disabled {{?}}>\n        <li ml-bind=\"MLListItem:itemSample\" class=\"list-item\">\n            <span ml-bind=\"[data]:label\"></span>\n            {{? it.editBtn }}<button ml-bind=\"[events]:editBtn\">edit</button>{{?}}\n            <button ml-bind=\"[events]:deleteBtn\" class=\"btn btn-default glyphicon glyphicon-remove\"> </button>\n        </li>\n    </ul>\n</div>\n"
+    , time_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"time\"\n            ml-bind=\"MLTime:{{= it.compName }}\"\n            class=\"form-control\">\n</div>"
+    , date_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"date\"\n            ml-bind=\"MLDate:{{= it.compName }}\"\n            class=\"form-control\">\n</div>"
+    , combo_dot = "<div ml-bind=\"MLCombo:{{= it.compName }}\" class=\"form-group{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\">\n    {{# def.partials.label }}\n    {{ var listID = 'ml-combo-datalist-' + it.miloCount(); }}\n    <input ml-bind=\"[data, events]:input\"\n            name=\"{{= listID }}\"\n            list=\"{{= listID }}\"\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-control\">\n    <datalist id=\"{{= listID }}\" ml-bind=\"[template]:datalist\"></datalist>\n</div>"
+    , image_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n        ml-bind=\"MLImage:{{= it.compName }}\"\n        {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n        {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
+    // , previewimage_dot = fs.readFileSync(__dirname + '/items/previewimage.dot')
+    // , previewcropall_dot = fs.readFileSync(__dirname + '/items/previewcropall.dot')
+    , droptarget_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n        <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n            ml-bind=\"MLDropTarget:{{= it.compName }}\"\n            {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n            {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
+    , text_dot = "{{var tagName = it.item.tagName || 'span';}}\n<{{=tagName}} ml-bind=\"MLText:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{? it.item.label }}\n        {{= it.item.label}}\n    {{?}}\n</{{=tagName}}>\n"
+    // , previewlist_dot = fs.readFileSync(__dirname + '/items/previewlist.dot')
+    // , linklist_dot = fs.readFileSync(__dirname + '/items/linklist.dot')
+    // , relatedlist_dot = fs.readFileSync(__dirname + '/items/relatedlist.dot')
+    // , imagegroupcaptionlist_dot = fs.readFileSync(__dirname + '/items/imagegroupcaptionlist.dot')
+    , clear_dot = '<div class="cc-clear"></div>';
+    // , cc_channel_select_dot = fs.readFileSync(__dirname + '/items/channelselect.dot')
+    // , cc_article_status_select_dot = fs.readFileSync(__dirname + '/items/articlestatusselect.dot');
+
+
+formRegistry.add('group',                 { compClass: 'MLGroup',                 template: group_dot,                 modelPathRule: 'prohibited'                                           });
+formRegistry.add('wrapper',               { compClass: 'MLWrapper',               template: wrapper_dot,               modelPathRule: 'prohibited'                                           });
+formRegistry.add('select',                { compClass: 'MLSelect',                template: select_dot,                                             itemFunction: processSelectSchema        });
+formRegistry.add('input',                 { compClass: 'MLInput',                 template: input_dot,                                              itemFunction: processInputSchema         });
+formRegistry.add('inputlist',             { compClass: 'MLInputList',                                                                               itemFunction: processInputListSchema     });
+formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                           itemFunction: processTextareaSchema      });
+formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                modelPathRule: 'optional'                                             });
+// formRegistry.add('fabutton',              { compClass: 'MLButton',                template: fabutton_dot,              modelPathRule: 'optional'                                             });
+formRegistry.add('radio',                 { compClass: 'MLRadioGroup',                                                                              itemFunction: processRadioSchema         });
+formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,             modelPathRule: 'optional'                                             });
+formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                     });
+formRegistry.add('list',                  { compClass: 'MLList',                  template: list_dot                                                                                         });
+formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot,                                               itemFunction: setValue                   });
+formRegistry.add('date',                  { compClass: 'MLDate',                  template: date_dot                                                                                         });
+formRegistry.add('combo',                 { compClass: 'MLCombo',                 template: combo_dot,                                              itemFunction: processComboSchema         });
+formRegistry.add('supercombo',            { compClass: 'MLSuperCombo',                                                                              itemFunction: processSuperComboSchema    });
+formRegistry.add('combolist',             { compClass: 'MLComboList',                                                                               itemFunction: processComboListSchema     });
+formRegistry.add('image',                 { compClass: 'MLImage',                 template: image_dot                                                                                        });
+// formRegistry.add('previewimage',          { compClass: 'CCPreviewImage',          template: previewimage_dot,                                       itemFunction: processSchema              });
+// formRegistry.add('previewcropall',        { compClass: 'CCPreviewCropAll',        template: previewcropall_dot,        modelPathRule: 'prohibited'                                           });
+formRegistry.add('droptarget',            { compClass: 'MLDropTarget',            template: droptarget_dot,            modelPathRule: 'prohibited'                                           });
+formRegistry.add('text',                  { compClass: 'MLText',                  template: text_dot,                  modelPathRule: 'optional'                                             });
+// formRegistry.add('imagelist',             { compClass: 'CCPreviewList',           template: previewlist_dot                                                                                  });
+// formRegistry.add('articlehistory',        { compClass: 'CCArticleHistory',                                             modelPathRule: 'prohibited'                                           });
+// formRegistry.add('linklist',              { compClass: 'CCLinkList',              template: linklist_dot,                                           itemFunction: processLinkListSchema      });
+// formRegistry.add('relatedlist',           { compClass: 'CCRelatedList',           template: relatedlist_dot,                                        itemFunction: processRelatedListSchema   });
+// formRegistry.add('imagegroupcaptionlist', { compClass: 'CCImageGroupCaptionList', template: imagegroupcaptionlist_dot                                                                        });
+formRegistry.add('clear',                 {                                       template: clear_dot                                                                                        });
+// formRegistry.add('contextradio',          { compClass: 'CCContextRadioGroup',                                                                       itemFunction: processRadioSchema         });
+// formRegistry.add('contextcolorpicker',    { compClass: 'CCContextColorPicker',                                                                      itemFunction: processRadioSchema         });
+// formRegistry.add('channelselect',         { compClass: 'CCChannelSelect',         template: cc_channel_select_dot,                                  itemFunction: processChannelSelectSchema });
+// formRegistry.add('articlestatusselect',   { compClass: 'CCArticleStatusSelect',   template: cc_article_status_select_dot,                                                                    });
+
+
+function setValue(comp, schema) {
+    var options = schema.selectOptions;
+    if (schema.hasOwnProperty('value')) {
+        comp.data.set(schema.value);
+    }
+}
+
+function processSelectSchema(comp, schema) {
+    var options = schema.selectOptions;
+    setComponentOptions(comp, options, setComponentModel);
+}
+
+
+function processRadioSchema(comp, schema) {
+    var options = schema.radioOptions;
+    setComponentOptions(comp, options, setComponentModel);
+}
+
+
+function processComboSchema(comp, schema) {
+    var options = schema.comboOptions;
+    setComponentOptions(comp, options, setComponentModel);
+}
+
+
+function processSuperComboSchema(comp, schema) {
+    var options = schema.comboOptions
+        , optionsURL = schema.comboOptionsURL
+        , addItemPrompt = schema.addItemPrompt
+        , placeHolder = schema.placeHolder;
+
+    _.deferTicks(function() {
+        if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
+        if (placeHolder) comp.setPlaceholder(placeHolder);
+        setComponentOptions(comp, options, setComboOptions);
+        if(optionsURL)
+            comp.initOptionsURL(optionsURL);
+    }, 2);
+}
+
+
+function processComboListSchema(comp, schema) {
+    var options = schema.comboOptions
+        , addItemPrompt = schema.addItemPrompt
+        , placeHolder = schema.placeHolder;
+
+    _.deferTicks(function() {
+        if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
+        if (placeHolder) comp.setPlaceholder(placeHolder);
+        comp.setDataValidation(schema.dataValidation);
+        setComponentOptions(comp, options, setComboOptions);
+    }, 2);
+}
+
+
+function processInputListSchema(comp, schema) {
+    comp.setAsync(schema.asyncHandler);
+    comp.setPlaceHolder(schema.placeHolder);
+}
+
+
+function processTextareaSchema(comp, schema) {
+    if (schema.autoresize)
+        _.deferMethod(comp, 'startAutoresize', schema.autoresize);
+}
+
+
+// function processLinkListSchema(comp, schema) {
+//     comp.setHostComponent(this);
+// }
+
+
+// function processRelatedListSchema(comp, schema) {
+//     comp.setLinkDefaults(schema.defaultLinkData);
+// }
+
+
+function processInputSchema(comp, schema) {
+    if (_.isNumeric(schema.maxLength)) comp.setMaxLength(schema.maxLength);
+}
+
+// function processChannelSelectSchema(comp, schema) {
+//     comp.setChannelList(schema.channelList, schema.defaultChannel);
+// }
+
+function setComponentOptions(comp, options, setModelFunc) {
+    if (options) {
+        if (typeof options.then == 'function') {
+            setModelFunc(comp, [{ value: 0, label: 'loading...' }]);
+            options
+                .then(
+                    function(data) { setModelFunc(comp, data); },
+                    function() { setModelFunc(comp, [{ value: 0, label: 'loading error' }]); }
+                );
+        } else
+            setModelFunc(comp, options);
+    }
+}
+
+
+function setComponentModel(comp, data) {
+    comp.model.set(data);
+    // _.deferMethod(comp.model, 'set', data);
+    // doing it with defer makes channel not set when the article is opened
+}
+
+
+function setComboOptions(comp, data) {
+    comp.setOptions(data);
+}
+
+
+function processSchema(comp, schema) {
+    comp.processFormSchema(schema);
+}
+
+},{"./registry":27,"fs":31}],27:[function(require,module,exports){
+'use strict';
+
+var logger = milo.util.logger
+    , check = milo.util.check
+    , Component = milo.Component
+    , Match = check.Match;
+
+var formTypes = {};
+var defaults = {};
+
+var formRegistry = module.exports = {
+    get: registry_get,
+    add: registry_add,
+    setDefaults: registry_setDefaults
+};
+
+
+var DEFAULT_TEMPLATE = '{{# def.partials.formGroup }}\
+                            {{# def.partials.label }}\
+                            <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">\
+                            </{{= it.tagName}}>\
+                        </div>';
+
+formRegistry.setDefaults({
+    template: DEFAULT_TEMPLATE,
+    modelPathRule: 'required',
+    itemFunction: null
+});
+
+
+function registry_get(name) {
+    var formItem = name && formTypes[name];
+
+    if (!formItem) 
+        return logger.error('Form item ' + name + ' not registered');
+
+    return formItem;
+}
+
+function registry_add(name, newFormItem) {
+    check(name, String);
+    check(newFormItem, {
+        compClass: Match.Optional(String),
+        template: Match.Optional(String),
+        modelPathRule: Match.Optional(String),
+        itemFunction: Match.Optional(Function)
+    });
+
+    var formItem = _.clone(defaults);
+    _.extend(formItem, newFormItem);
+
+    if (name && formTypes[name]) 
+        return logger.error('Form item ' + name + ' already registered');
+
+    formTypes[name] = formItem;
+    return true;
+}
+
+function registry_setDefaults(newDefaults) {
+    check(defaults, Object);
+    defaults = newDefaults;
+}
+
+
+},{}],28:[function(require,module,exports){
+'use strict';
+
 if (!(window.milo && window.milo.milo_version))
     throw new Error('milo is not available');
 
@@ -2749,7 +3886,7 @@ if (!(window.milo && window.milo.milo_version))
 
 require('./use_components');
 
-},{"./use_components":25}],25:[function(require,module,exports){
+},{"./use_components":29}],29:[function(require,module,exports){
 'use strict';
 
 require('./components/Group');
@@ -2777,7 +3914,1294 @@ require('./components/bootstrap/Alert');
 require('./components/bootstrap/Dialog');
 require('./components/bootstrap/Dropdown');
 
-},{"./components/Button":1,"./components/Combo":2,"./components/ComboList":3,"./components/Date":4,"./components/DropTarget":5,"./components/FoldTree":6,"./components/Group":7,"./components/Hyperlink":8,"./components/Image":9,"./components/Input":10,"./components/InputList":11,"./components/List":12,"./components/ListItem":13,"./components/RadioGroup":14,"./components/Select":15,"./components/SuperCombo":16,"./components/Text":17,"./components/Textarea":18,"./components/Time":19,"./components/Wrapper":20,"./components/bootstrap/Alert":21,"./components/bootstrap/Dialog":22,"./components/bootstrap/Dropdown":23}]},{},[24])
+require('./forms/Form');
+
+},{"./components/Button":1,"./components/Combo":2,"./components/ComboList":3,"./components/Date":4,"./components/DropTarget":5,"./components/FoldTree":6,"./components/Group":7,"./components/Hyperlink":8,"./components/Image":9,"./components/Input":10,"./components/InputList":11,"./components/List":12,"./components/ListItem":13,"./components/RadioGroup":14,"./components/Select":15,"./components/SuperCombo":16,"./components/Text":17,"./components/Textarea":18,"./components/Time":19,"./components/Wrapper":20,"./components/bootstrap/Alert":21,"./components/bootstrap/Dialog":22,"./components/bootstrap/Dropdown":23,"./forms/Form":24}],30:[function(require,module,exports){
+var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};/*!
+ * async
+ * https://github.com/caolan/async
+ *
+ * Copyright 2010-2014 Caolan McMahon
+ * Released under the MIT license
+ */
+(function () {
+
+    var async = {};
+    function noop() {}
+    function identity(v) {
+        return v;
+    }
+    function toBool(v) {
+        return !!v;
+    }
+    function notId(v) {
+        return !v;
+    }
+
+    // global on the server, window in the browser
+    var previous_async;
+
+    // Establish the root object, `window` (`self`) in the browser, `global`
+    // on the server, or `this` in some virtual machines. We use `self`
+    // instead of `window` for `WebWorker` support.
+    var root = typeof self === 'object' && self.self === self && self ||
+            typeof global === 'object' && global.global === global && global ||
+            this;
+
+    if (root != null) {
+        previous_async = root.async;
+    }
+
+    async.noConflict = function () {
+        root.async = previous_async;
+        return async;
+    };
+
+    function only_once(fn) {
+        return function() {
+            if (fn === null) throw new Error("Callback was already called.");
+            fn.apply(this, arguments);
+            fn = null;
+        };
+    }
+
+    function _once(fn) {
+        return function() {
+            if (fn === null) return;
+            fn.apply(this, arguments);
+            fn = null;
+        };
+    }
+
+    //// cross-browser compatiblity functions ////
+
+    var _toString = Object.prototype.toString;
+
+    var _isArray = Array.isArray || function (obj) {
+        return _toString.call(obj) === '[object Array]';
+    };
+
+    // Ported from underscore.js isObject
+    var _isObject = function(obj) {
+        var type = typeof obj;
+        return type === 'function' || type === 'object' && !!obj;
+    };
+
+    function _isArrayLike(arr) {
+        return _isArray(arr) || (
+            // has a positive integer length property
+            typeof arr.length === "number" &&
+            arr.length >= 0 &&
+            arr.length % 1 === 0
+        );
+    }
+
+    function _each(coll, iterator) {
+        return _isArrayLike(coll) ?
+            _arrayEach(coll, iterator) :
+            _forEachOf(coll, iterator);
+    }
+
+    function _arrayEach(arr, iterator) {
+        var index = -1,
+            length = arr.length;
+
+        while (++index < length) {
+            iterator(arr[index], index, arr);
+        }
+    }
+
+    function _map(arr, iterator) {
+        var index = -1,
+            length = arr.length,
+            result = Array(length);
+
+        while (++index < length) {
+            result[index] = iterator(arr[index], index, arr);
+        }
+        return result;
+    }
+
+    function _range(count) {
+        return _map(Array(count), function (v, i) { return i; });
+    }
+
+    function _reduce(arr, iterator, memo) {
+        _arrayEach(arr, function (x, i, a) {
+            memo = iterator(memo, x, i, a);
+        });
+        return memo;
+    }
+
+    function _forEachOf(object, iterator) {
+        _arrayEach(_keys(object), function (key) {
+            iterator(object[key], key);
+        });
+    }
+
+    function _indexOf(arr, item) {
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i] === item) return i;
+        }
+        return -1;
+    }
+
+    var _keys = Object.keys || function (obj) {
+        var keys = [];
+        for (var k in obj) {
+            if (obj.hasOwnProperty(k)) {
+                keys.push(k);
+            }
+        }
+        return keys;
+    };
+
+    function _keyIterator(coll) {
+        var i = -1;
+        var len;
+        var keys;
+        if (_isArrayLike(coll)) {
+            len = coll.length;
+            return function next() {
+                i++;
+                return i < len ? i : null;
+            };
+        } else {
+            keys = _keys(coll);
+            len = keys.length;
+            return function next() {
+                i++;
+                return i < len ? keys[i] : null;
+            };
+        }
+    }
+
+    // Similar to ES6's rest param (http://ariya.ofilabs.com/2013/03/es6-and-rest-parameter.html)
+    // This accumulates the arguments passed into an array, after a given index.
+    // From underscore.js (https://github.com/jashkenas/underscore/pull/2140).
+    function _restParam(func, startIndex) {
+        startIndex = startIndex == null ? func.length - 1 : +startIndex;
+        return function() {
+            var length = Math.max(arguments.length - startIndex, 0);
+            var rest = Array(length);
+            for (var index = 0; index < length; index++) {
+                rest[index] = arguments[index + startIndex];
+            }
+            switch (startIndex) {
+                case 0: return func.call(this, rest);
+                case 1: return func.call(this, arguments[0], rest);
+            }
+            // Currently unused but handle cases outside of the switch statement:
+            // var args = Array(startIndex + 1);
+            // for (index = 0; index < startIndex; index++) {
+            //     args[index] = arguments[index];
+            // }
+            // args[startIndex] = rest;
+            // return func.apply(this, args);
+        };
+    }
+
+    function _withoutIndex(iterator) {
+        return function (value, index, callback) {
+            return iterator(value, callback);
+        };
+    }
+
+    //// exported async module functions ////
+
+    //// nextTick implementation with browser-compatible fallback ////
+
+    // capture the global reference to guard against fakeTimer mocks
+    var _setImmediate = typeof setImmediate === 'function' && setImmediate;
+
+    var _delay = _setImmediate ? function(fn) {
+        // not a direct alias for IE10 compatibility
+        _setImmediate(fn);
+    } : function(fn) {
+        setTimeout(fn, 0);
+    };
+
+    if (typeof process === 'object' && typeof process.nextTick === 'function') {
+        async.nextTick = process.nextTick;
+    } else {
+        async.nextTick = _delay;
+    }
+    async.setImmediate = _setImmediate ? _delay : async.nextTick;
+
+
+    async.forEach =
+    async.each = function (arr, iterator, callback) {
+        return async.eachOf(arr, _withoutIndex(iterator), callback);
+    };
+
+    async.forEachSeries =
+    async.eachSeries = function (arr, iterator, callback) {
+        return async.eachOfSeries(arr, _withoutIndex(iterator), callback);
+    };
+
+
+    async.forEachLimit =
+    async.eachLimit = function (arr, limit, iterator, callback) {
+        return _eachOfLimit(limit)(arr, _withoutIndex(iterator), callback);
+    };
+
+    async.forEachOf =
+    async.eachOf = function (object, iterator, callback) {
+        callback = _once(callback || noop);
+        object = object || [];
+        var size = _isArrayLike(object) ? object.length : _keys(object).length;
+        var completed = 0;
+        if (!size) {
+            return callback(null);
+        }
+        _each(object, function (value, key) {
+            iterator(object[key], key, only_once(done));
+        });
+        function done(err) {
+            if (err) {
+                callback(err);
+            }
+            else {
+                completed += 1;
+                if (completed >= size) {
+                    callback(null);
+                }
+            }
+        }
+    };
+
+    async.forEachOfSeries =
+    async.eachOfSeries = function (obj, iterator, callback) {
+        callback = _once(callback || noop);
+        obj = obj || [];
+        var nextKey = _keyIterator(obj);
+        var key = nextKey();
+        function iterate() {
+            var sync = true;
+            if (key === null) {
+                return callback(null);
+            }
+            iterator(obj[key], key, only_once(function (err) {
+                if (err) {
+                    callback(err);
+                }
+                else {
+                    key = nextKey();
+                    if (key === null) {
+                        return callback(null);
+                    } else {
+                        if (sync) {
+                            async.nextTick(iterate);
+                        } else {
+                            iterate();
+                        }
+                    }
+                }
+            }));
+            sync = false;
+        }
+        iterate();
+    };
+
+
+
+    async.forEachOfLimit =
+    async.eachOfLimit = function (obj, limit, iterator, callback) {
+        _eachOfLimit(limit)(obj, iterator, callback);
+    };
+
+    function _eachOfLimit(limit) {
+
+        return function (obj, iterator, callback) {
+            callback = _once(callback || noop);
+            obj = obj || [];
+            var nextKey = _keyIterator(obj);
+            if (limit <= 0) {
+                return callback(null);
+            }
+            var done = false;
+            var running = 0;
+            var errored = false;
+
+            (function replenish () {
+                if (done && running <= 0) {
+                    return callback(null);
+                }
+
+                while (running < limit && !errored) {
+                    var key = nextKey();
+                    if (key === null) {
+                        done = true;
+                        if (running <= 0) {
+                            callback(null);
+                        }
+                        return;
+                    }
+                    running += 1;
+                    iterator(obj[key], key, only_once(function (err) {
+                        running -= 1;
+                        if (err) {
+                            callback(err);
+                            errored = true;
+                        }
+                        else {
+                            replenish();
+                        }
+                    }));
+                }
+            })();
+        };
+    }
+
+
+    function doParallel(fn) {
+        return function (obj, iterator, callback) {
+            return fn(async.eachOf, obj, iterator, callback);
+        };
+    }
+    function doParallelLimit(fn) {
+        return function (obj, limit, iterator, callback) {
+            return fn(_eachOfLimit(limit), obj, iterator, callback);
+        };
+    }
+    function doSeries(fn) {
+        return function (obj, iterator, callback) {
+            return fn(async.eachOfSeries, obj, iterator, callback);
+        };
+    }
+
+    function _asyncMap(eachfn, arr, iterator, callback) {
+        callback = _once(callback || noop);
+        var results = [];
+        eachfn(arr, function (value, index, callback) {
+            iterator(value, function (err, v) {
+                results[index] = v;
+                callback(err);
+            });
+        }, function (err) {
+            callback(err, results);
+        });
+    }
+
+    async.map = doParallel(_asyncMap);
+    async.mapSeries = doSeries(_asyncMap);
+    async.mapLimit = doParallelLimit(_asyncMap);
+
+    // reduce only has a series version, as doing reduce in parallel won't
+    // work in many situations.
+    async.inject =
+    async.foldl =
+    async.reduce = function (arr, memo, iterator, callback) {
+        async.eachOfSeries(arr, function (x, i, callback) {
+            iterator(memo, x, function (err, v) {
+                memo = v;
+                callback(err);
+            });
+        }, function (err) {
+            callback(err || null, memo);
+        });
+    };
+
+    async.foldr =
+    async.reduceRight = function (arr, memo, iterator, callback) {
+        var reversed = _map(arr, identity).reverse();
+        async.reduce(reversed, memo, iterator, callback);
+    };
+
+    function _filter(eachfn, arr, iterator, callback) {
+        var results = [];
+        eachfn(arr, function (x, index, callback) {
+            iterator(x, function (v) {
+                if (v) {
+                    results.push({index: index, value: x});
+                }
+                callback();
+            });
+        }, function () {
+            callback(_map(results.sort(function (a, b) {
+                return a.index - b.index;
+            }), function (x) {
+                return x.value;
+            }));
+        });
+    }
+
+    async.select =
+    async.filter = doParallel(_filter);
+
+    async.selectLimit =
+    async.filterLimit = doParallelLimit(_filter);
+
+    async.selectSeries =
+    async.filterSeries = doSeries(_filter);
+
+    function _reject(eachfn, arr, iterator, callback) {
+        _filter(eachfn, arr, function(value, cb) {
+            iterator(value, function(v) {
+                cb(!v);
+            });
+        }, callback);
+    }
+    async.reject = doParallel(_reject);
+    async.rejectLimit = doParallelLimit(_reject);
+    async.rejectSeries = doSeries(_reject);
+
+    function _createTester(eachfn, check, getResult) {
+        return function(arr, limit, iterator, cb) {
+            function done() {
+                if (cb) cb(getResult(false, void 0));
+            }
+            function iteratee(x, _, callback) {
+                if (!cb) return callback();
+                iterator(x, function (v) {
+                    if (cb && check(v)) {
+                        cb(getResult(true, x));
+                        cb = iterator = false;
+                    }
+                    callback();
+                });
+            }
+            if (arguments.length > 3) {
+                eachfn(arr, limit, iteratee, done);
+            } else {
+                cb = iterator;
+                iterator = limit;
+                eachfn(arr, iteratee, done);
+            }
+        };
+    }
+
+    async.any =
+    async.some = _createTester(async.eachOf, toBool, identity);
+
+    async.someLimit = _createTester(async.eachOfLimit, toBool, identity);
+
+    async.all =
+    async.every = _createTester(async.eachOf, notId, notId);
+
+    async.everyLimit = _createTester(async.eachOfLimit, notId, notId);
+
+    function _findGetResult(v, x) {
+        return x;
+    }
+    async.detect = _createTester(async.eachOf, identity, _findGetResult);
+    async.detectSeries = _createTester(async.eachOfSeries, identity, _findGetResult);
+    async.detectLimit = _createTester(async.eachOfLimit, identity, _findGetResult);
+
+    async.sortBy = function (arr, iterator, callback) {
+        async.map(arr, function (x, callback) {
+            iterator(x, function (err, criteria) {
+                if (err) {
+                    callback(err);
+                }
+                else {
+                    callback(null, {value: x, criteria: criteria});
+                }
+            });
+        }, function (err, results) {
+            if (err) {
+                return callback(err);
+            }
+            else {
+                callback(null, _map(results.sort(comparator), function (x) {
+                    return x.value;
+                }));
+            }
+
+        });
+
+        function comparator(left, right) {
+            var a = left.criteria, b = right.criteria;
+            return a < b ? -1 : a > b ? 1 : 0;
+        }
+    };
+
+    async.auto = function (tasks, callback) {
+        callback = _once(callback || noop);
+        var keys = _keys(tasks);
+        var remainingTasks = keys.length;
+        if (!remainingTasks) {
+            return callback(null);
+        }
+
+        var results = {};
+
+        var listeners = [];
+        function addListener(fn) {
+            listeners.unshift(fn);
+        }
+        function removeListener(fn) {
+            var idx = _indexOf(listeners, fn);
+            if (idx >= 0) listeners.splice(idx, 1);
+        }
+        function taskComplete() {
+            remainingTasks--;
+            _arrayEach(listeners.slice(0), function (fn) {
+                fn();
+            });
+        }
+
+        addListener(function () {
+            if (!remainingTasks) {
+                callback(null, results);
+            }
+        });
+
+        _arrayEach(keys, function (k) {
+            var task = _isArray(tasks[k]) ? tasks[k]: [tasks[k]];
+            var taskCallback = _restParam(function(err, args) {
+                if (args.length <= 1) {
+                    args = args[0];
+                }
+                if (err) {
+                    var safeResults = {};
+                    _forEachOf(results, function(val, rkey) {
+                        safeResults[rkey] = val;
+                    });
+                    safeResults[k] = args;
+                    callback(err, safeResults);
+                }
+                else {
+                    results[k] = args;
+                    async.setImmediate(taskComplete);
+                }
+            });
+            var requires = task.slice(0, task.length - 1);
+            // prevent dead-locks
+            var len = requires.length;
+            var dep;
+            while (len--) {
+                if (!(dep = tasks[requires[len]])) {
+                    throw new Error('Has inexistant dependency');
+                }
+                if (_isArray(dep) && _indexOf(dep, k) >= 0) {
+                    throw new Error('Has cyclic dependencies');
+                }
+            }
+            function ready() {
+                return _reduce(requires, function (a, x) {
+                    return (a && results.hasOwnProperty(x));
+                }, true) && !results.hasOwnProperty(k);
+            }
+            if (ready()) {
+                task[task.length - 1](taskCallback, results);
+            }
+            else {
+                addListener(listener);
+            }
+            function listener() {
+                if (ready()) {
+                    removeListener(listener);
+                    task[task.length - 1](taskCallback, results);
+                }
+            }
+        });
+    };
+
+
+
+    async.retry = function(times, task, callback) {
+        var DEFAULT_TIMES = 5;
+        var DEFAULT_INTERVAL = 0;
+
+        var attempts = [];
+
+        var opts = {
+            times: DEFAULT_TIMES,
+            interval: DEFAULT_INTERVAL
+        };
+
+        function parseTimes(acc, t){
+            if(typeof t === 'number'){
+                acc.times = parseInt(t, 10) || DEFAULT_TIMES;
+            } else if(typeof t === 'object'){
+                acc.times = parseInt(t.times, 10) || DEFAULT_TIMES;
+                acc.interval = parseInt(t.interval, 10) || DEFAULT_INTERVAL;
+            } else {
+                throw new Error('Unsupported argument type for \'times\': ' + typeof t);
+            }
+        }
+
+        var length = arguments.length;
+        if (length < 1 || length > 3) {
+            throw new Error('Invalid arguments - must be either (task), (task, callback), (times, task) or (times, task, callback)');
+        } else if (length <= 2 && typeof times === 'function') {
+            callback = task;
+            task = times;
+        }
+        if (typeof times !== 'function') {
+            parseTimes(opts, times);
+        }
+        opts.callback = callback;
+        opts.task = task;
+
+        function wrappedTask(wrappedCallback, wrappedResults) {
+            function retryAttempt(task, finalAttempt) {
+                return function(seriesCallback) {
+                    task(function(err, result){
+                        seriesCallback(!err || finalAttempt, {err: err, result: result});
+                    }, wrappedResults);
+                };
+            }
+
+            function retryInterval(interval){
+                return function(seriesCallback){
+                    setTimeout(function(){
+                        seriesCallback(null);
+                    }, interval);
+                };
+            }
+
+            while (opts.times) {
+
+                var finalAttempt = !(opts.times-=1);
+                attempts.push(retryAttempt(opts.task, finalAttempt));
+                if(!finalAttempt && opts.interval > 0){
+                    attempts.push(retryInterval(opts.interval));
+                }
+            }
+
+            async.series(attempts, function(done, data){
+                data = data[data.length - 1];
+                (wrappedCallback || opts.callback)(data.err, data.result);
+            });
+        }
+
+        // If a callback is passed, run this as a controll flow
+        return opts.callback ? wrappedTask() : wrappedTask;
+    };
+
+    async.waterfall = function (tasks, callback) {
+        callback = _once(callback || noop);
+        if (!_isArray(tasks)) {
+            var err = new Error('First argument to waterfall must be an array of functions');
+            return callback(err);
+        }
+        if (!tasks.length) {
+            return callback();
+        }
+        function wrapIterator(iterator) {
+            return _restParam(function (err, args) {
+                if (err) {
+                    callback.apply(null, [err].concat(args));
+                }
+                else {
+                    var next = iterator.next();
+                    if (next) {
+                        args.push(wrapIterator(next));
+                    }
+                    else {
+                        args.push(callback);
+                    }
+                    ensureAsync(iterator).apply(null, args);
+                }
+            });
+        }
+        wrapIterator(async.iterator(tasks))();
+    };
+
+    function _parallel(eachfn, tasks, callback) {
+        callback = callback || noop;
+        var results = _isArrayLike(tasks) ? [] : {};
+
+        eachfn(tasks, function (task, key, callback) {
+            task(_restParam(function (err, args) {
+                if (args.length <= 1) {
+                    args = args[0];
+                }
+                results[key] = args;
+                callback(err);
+            }));
+        }, function (err) {
+            callback(err, results);
+        });
+    }
+
+    async.parallel = function (tasks, callback) {
+        _parallel(async.eachOf, tasks, callback);
+    };
+
+    async.parallelLimit = function(tasks, limit, callback) {
+        _parallel(_eachOfLimit(limit), tasks, callback);
+    };
+
+    async.series = function(tasks, callback) {
+        _parallel(async.eachOfSeries, tasks, callback);
+    };
+
+    async.iterator = function (tasks) {
+        function makeCallback(index) {
+            function fn() {
+                if (tasks.length) {
+                    tasks[index].apply(null, arguments);
+                }
+                return fn.next();
+            }
+            fn.next = function () {
+                return (index < tasks.length - 1) ? makeCallback(index + 1): null;
+            };
+            return fn;
+        }
+        return makeCallback(0);
+    };
+
+    async.apply = _restParam(function (fn, args) {
+        return _restParam(function (callArgs) {
+            return fn.apply(
+                null, args.concat(callArgs)
+            );
+        });
+    });
+
+    function _concat(eachfn, arr, fn, callback) {
+        var result = [];
+        eachfn(arr, function (x, index, cb) {
+            fn(x, function (err, y) {
+                result = result.concat(y || []);
+                cb(err);
+            });
+        }, function (err) {
+            callback(err, result);
+        });
+    }
+    async.concat = doParallel(_concat);
+    async.concatSeries = doSeries(_concat);
+
+    async.whilst = function (test, iterator, callback) {
+        callback = callback || noop;
+        if (test()) {
+            var next = _restParam(function(err, args) {
+                if (err) {
+                    callback(err);
+                } else if (test.apply(this, args)) {
+                    iterator(next);
+                } else {
+                    callback(null);
+                }
+            });
+            iterator(next);
+        } else {
+            callback(null);
+        }
+    };
+
+    async.doWhilst = function (iterator, test, callback) {
+        var calls = 0;
+        return async.whilst(function() {
+            return ++calls <= 1 || test.apply(this, arguments);
+        }, iterator, callback);
+    };
+
+    async.until = function (test, iterator, callback) {
+        return async.whilst(function() {
+            return !test.apply(this, arguments);
+        }, iterator, callback);
+    };
+
+    async.doUntil = function (iterator, test, callback) {
+        return async.doWhilst(iterator, function() {
+            return !test.apply(this, arguments);
+        }, callback);
+    };
+
+    async.during = function (test, iterator, callback) {
+        callback = callback || noop;
+
+        var next = _restParam(function(err, args) {
+            if (err) {
+                callback(err);
+            } else {
+                args.push(check);
+                test.apply(this, args);
+            }
+        });
+
+        var check = function(err, truth) {
+            if (err) {
+                callback(err);
+            } else if (truth) {
+                iterator(next);
+            } else {
+                callback(null);
+            }
+        };
+
+        test(check);
+    };
+
+    async.doDuring = function (iterator, test, callback) {
+        var calls = 0;
+        async.during(function(next) {
+            if (calls++ < 1) {
+                next(null, true);
+            } else {
+                test.apply(this, arguments);
+            }
+        }, iterator, callback);
+    };
+
+    function _queue(worker, concurrency, payload) {
+        if (concurrency == null) {
+            concurrency = 1;
+        }
+        else if(concurrency === 0) {
+            throw new Error('Concurrency must not be zero');
+        }
+        function _insert(q, data, pos, callback) {
+            if (callback != null && typeof callback !== "function") {
+                throw new Error("task callback must be a function");
+            }
+            q.started = true;
+            if (!_isArray(data)) {
+                data = [data];
+            }
+            if(data.length === 0 && q.idle()) {
+                // call drain immediately if there are no tasks
+                return async.setImmediate(function() {
+                    q.drain();
+                });
+            }
+            _arrayEach(data, function(task) {
+                var item = {
+                    data: task,
+                    callback: callback || noop
+                };
+
+                if (pos) {
+                    q.tasks.unshift(item);
+                } else {
+                    q.tasks.push(item);
+                }
+
+                if (q.tasks.length === q.concurrency) {
+                    q.saturated();
+                }
+            });
+            async.setImmediate(q.process);
+        }
+        function _next(q, tasks) {
+            return function(){
+                workers -= 1;
+                var args = arguments;
+                _arrayEach(tasks, function (task) {
+                    task.callback.apply(task, args);
+                });
+                if (q.tasks.length + workers === 0) {
+                    q.drain();
+                }
+                q.process();
+            };
+        }
+
+        var workers = 0;
+        var q = {
+            tasks: [],
+            concurrency: concurrency,
+            payload: payload,
+            saturated: noop,
+            empty: noop,
+            drain: noop,
+            started: false,
+            paused: false,
+            push: function (data, callback) {
+                _insert(q, data, false, callback);
+            },
+            kill: function () {
+                q.drain = noop;
+                q.tasks = [];
+            },
+            unshift: function (data, callback) {
+                _insert(q, data, true, callback);
+            },
+            process: function () {
+                if (!q.paused && workers < q.concurrency && q.tasks.length) {
+                    while(workers < q.concurrency && q.tasks.length){
+                        var tasks = q.payload ?
+                            q.tasks.splice(0, q.payload) :
+                            q.tasks.splice(0, q.tasks.length);
+
+                        var data = _map(tasks, function (task) {
+                            return task.data;
+                        });
+
+                        if (q.tasks.length === 0) {
+                            q.empty();
+                        }
+                        workers += 1;
+                        var cb = only_once(_next(q, tasks));
+                        worker(data, cb);
+                    }
+                }
+            },
+            length: function () {
+                return q.tasks.length;
+            },
+            running: function () {
+                return workers;
+            },
+            idle: function() {
+                return q.tasks.length + workers === 0;
+            },
+            pause: function () {
+                q.paused = true;
+            },
+            resume: function () {
+                if (q.paused === false) { return; }
+                q.paused = false;
+                var resumeCount = Math.min(q.concurrency, q.tasks.length);
+                // Need to call q.process once per concurrent
+                // worker to preserve full concurrency after pause
+                for (var w = 1; w <= resumeCount; w++) {
+                    async.setImmediate(q.process);
+                }
+            }
+        };
+        return q;
+    }
+
+    async.queue = function (worker, concurrency) {
+        var q = _queue(function (items, cb) {
+            worker(items[0], cb);
+        }, concurrency, 1);
+
+        return q;
+    };
+
+    async.priorityQueue = function (worker, concurrency) {
+
+        function _compareTasks(a, b){
+            return a.priority - b.priority;
+        }
+
+        function _binarySearch(sequence, item, compare) {
+            var beg = -1,
+                end = sequence.length - 1;
+            while (beg < end) {
+                var mid = beg + ((end - beg + 1) >>> 1);
+                if (compare(item, sequence[mid]) >= 0) {
+                    beg = mid;
+                } else {
+                    end = mid - 1;
+                }
+            }
+            return beg;
+        }
+
+        function _insert(q, data, priority, callback) {
+            if (callback != null && typeof callback !== "function") {
+                throw new Error("task callback must be a function");
+            }
+            q.started = true;
+            if (!_isArray(data)) {
+                data = [data];
+            }
+            if(data.length === 0) {
+                // call drain immediately if there are no tasks
+                return async.setImmediate(function() {
+                    q.drain();
+                });
+            }
+            _arrayEach(data, function(task) {
+                var item = {
+                    data: task,
+                    priority: priority,
+                    callback: typeof callback === 'function' ? callback : noop
+                };
+
+                q.tasks.splice(_binarySearch(q.tasks, item, _compareTasks) + 1, 0, item);
+
+                if (q.tasks.length === q.concurrency) {
+                    q.saturated();
+                }
+                async.setImmediate(q.process);
+            });
+        }
+
+        // Start with a normal queue
+        var q = async.queue(worker, concurrency);
+
+        // Override push to accept second parameter representing priority
+        q.push = function (data, priority, callback) {
+            _insert(q, data, priority, callback);
+        };
+
+        // Remove unshift function
+        delete q.unshift;
+
+        return q;
+    };
+
+    async.cargo = function (worker, payload) {
+        return _queue(worker, 1, payload);
+    };
+
+    function _console_fn(name) {
+        return _restParam(function (fn, args) {
+            fn.apply(null, args.concat([_restParam(function (err, args) {
+                if (typeof console === 'object') {
+                    if (err) {
+                        if (console.error) {
+                            console.error(err);
+                        }
+                    }
+                    else if (console[name]) {
+                        _arrayEach(args, function (x) {
+                            console[name](x);
+                        });
+                    }
+                }
+            })]));
+        });
+    }
+    async.log = _console_fn('log');
+    async.dir = _console_fn('dir');
+    /*async.info = _console_fn('info');
+    async.warn = _console_fn('warn');
+    async.error = _console_fn('error');*/
+
+    async.memoize = function (fn, hasher) {
+        var memo = {};
+        var queues = {};
+        hasher = hasher || identity;
+        var memoized = _restParam(function memoized(args) {
+            var callback = args.pop();
+            var key = hasher.apply(null, args);
+            if (key in memo) {
+                async.nextTick(function () {
+                    callback.apply(null, memo[key]);
+                });
+            }
+            else if (key in queues) {
+                queues[key].push(callback);
+            }
+            else {
+                queues[key] = [callback];
+                fn.apply(null, args.concat([_restParam(function (args) {
+                    memo[key] = args;
+                    var q = queues[key];
+                    delete queues[key];
+                    for (var i = 0, l = q.length; i < l; i++) {
+                        q[i].apply(null, args);
+                    }
+                })]));
+            }
+        });
+        memoized.memo = memo;
+        memoized.unmemoized = fn;
+        return memoized;
+    };
+
+    async.unmemoize = function (fn) {
+        return function () {
+            return (fn.unmemoized || fn).apply(null, arguments);
+        };
+    };
+
+    function _times(mapper) {
+        return function (count, iterator, callback) {
+            mapper(_range(count), iterator, callback);
+        };
+    }
+
+    async.times = _times(async.map);
+    async.timesSeries = _times(async.mapSeries);
+    async.timesLimit = function (count, limit, iterator, callback) {
+        return async.mapLimit(_range(count), limit, iterator, callback);
+    };
+
+    async.seq = function (/* functions... */) {
+        var fns = arguments;
+        return _restParam(function (args) {
+            var that = this;
+
+            var callback = args[args.length - 1];
+            if (typeof callback == 'function') {
+                args.pop();
+            } else {
+                callback = noop;
+            }
+
+            async.reduce(fns, args, function (newargs, fn, cb) {
+                fn.apply(that, newargs.concat([_restParam(function (err, nextargs) {
+                    cb(err, nextargs);
+                })]));
+            },
+            function (err, results) {
+                callback.apply(that, [err].concat(results));
+            });
+        });
+    };
+
+    async.compose = function (/* functions... */) {
+        return async.seq.apply(null, Array.prototype.reverse.call(arguments));
+    };
+
+
+    function _applyEach(eachfn) {
+        return _restParam(function(fns, args) {
+            var go = _restParam(function(args) {
+                var that = this;
+                var callback = args.pop();
+                return eachfn(fns, function (fn, _, cb) {
+                    fn.apply(that, args.concat([cb]));
+                },
+                callback);
+            });
+            if (args.length) {
+                return go.apply(this, args);
+            }
+            else {
+                return go;
+            }
+        });
+    }
+
+    async.applyEach = _applyEach(async.eachOf);
+    async.applyEachSeries = _applyEach(async.eachOfSeries);
+
+
+    async.forever = function (fn, callback) {
+        var done = only_once(callback || noop);
+        var task = ensureAsync(fn);
+        function next(err) {
+            if (err) {
+                return done(err);
+            }
+            task(next);
+        }
+        next();
+    };
+
+    function ensureAsync(fn) {
+        return _restParam(function (args) {
+            var callback = args.pop();
+            args.push(function () {
+                var innerArgs = arguments;
+                if (sync) {
+                    async.setImmediate(function () {
+                        callback.apply(null, innerArgs);
+                    });
+                } else {
+                    callback.apply(null, innerArgs);
+                }
+            });
+            var sync = true;
+            fn.apply(this, args);
+            sync = false;
+        });
+    }
+
+    async.ensureAsync = ensureAsync;
+
+    async.constant = _restParam(function(values) {
+        var args = [null].concat(values);
+        return function (callback) {
+            return callback.apply(this, args);
+        };
+    });
+
+    async.wrapSync =
+    async.asyncify = function asyncify(func) {
+        return _restParam(function (args) {
+            var callback = args.pop();
+            var result;
+            try {
+                result = func.apply(this, args);
+            } catch (e) {
+                return callback(e);
+            }
+            // if result is Promise object
+            if (_isObject(result) && typeof result.then === "function") {
+                result.then(function(value) {
+                    callback(null, value);
+                })["catch"](function(err) {
+                    callback(err.message ? err : new Error(err));
+                });
+            } else {
+                callback(null, result);
+            }
+        });
+    };
+
+    // Node.js
+    if (typeof module === 'object' && module.exports) {
+        module.exports = async;
+    }
+    // AMD / RequireJS
+    else if (typeof define === 'function' && define.amd) {
+        define([], function () {
+            return async;
+        });
+    }
+    // included directly via <script> tag
+    else {
+        root.async = async;
+    }
+
+}());
+
+},{"__browserify_process":32}],31:[function(require,module,exports){
+
+// not implemented
+// The reason for having an empty file and not throwing is to allow
+// untraditional implementation of this module.
+
+},{}],32:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+
+process.nextTick = (function () {
+    var canSetImmediate = typeof window !== 'undefined'
+    && window.setImmediate;
+    var canPost = typeof window !== 'undefined'
+    && window.postMessage && window.addEventListener
+    ;
+
+    if (canSetImmediate) {
+        return function (f) { return window.setImmediate(f) };
+    }
+
+    if (canPost) {
+        var queue = [];
+        window.addEventListener('message', function (ev) {
+            var source = ev.source;
+            if ((source === window || source === null) && ev.data === 'process-tick') {
+                ev.stopPropagation();
+                if (queue.length > 0) {
+                    var fn = queue.shift();
+                    fn();
+                }
+            }
+        }, true);
+
+        return function nextTick(fn) {
+            queue.push(fn);
+            window.postMessage('process-tick', '*');
+        };
+    }
+
+    return function nextTick(fn) {
+        setTimeout(fn, 0);
+    };
+})();
+
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+}
+
+// TODO(shtylman)
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+
+},{}]},{},[28])
 
 ;
 //# sourceMappingURL=milo-ui.bundle.map
