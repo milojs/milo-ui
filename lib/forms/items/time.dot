@@ -1,0 +1,6 @@
+{{# def.partials.formGroup }}
+    {{# def.partials.label }}
+    <input type="time"
+            ml-bind="MLTime:{{= it.compName }}"
+            class="form-control">
+</div>

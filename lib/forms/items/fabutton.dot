@@ -1,0 +1,5 @@
+<button ml-bind="MLButton:{{= it.compName }}" {{? it.item.altText }}title="{{= it.item.altText}}" {{?}}
+        {{? it.disabled }}disabled {{?}}
+        class="fabtn {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}">
+        {{= it.item.label || '' }}
+</button>

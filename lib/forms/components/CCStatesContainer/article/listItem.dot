@@ -1,0 +1,4 @@
+<div ml-bind="LELinkItem:{{= it.compName }}">
+    <div role="preview"></div>
+    <div role="form"></div>
+</div>

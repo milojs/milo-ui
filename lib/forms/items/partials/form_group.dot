@@ -1,0 +1,4 @@
+<div
+    {{? it.item.altText }}title="{{= it.item.altText}}" {{?}}
+    class="form-group{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}"
+>

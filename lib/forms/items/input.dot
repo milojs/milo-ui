@@ -1,0 +1,9 @@
+{{# def.partials.formGroup }}
+    {{# def.partials.label }}
+    <input type="{{= it.item.inputType || 'text' }}"
+            {{? it.item.inputName }}name="{{= it.item.inputName }}"{{?}}
+            ml-bind="MLInput:{{= it.compName }}"
+            {{? it.item.placeholder }}placeholder="{{= it.item.placeholder}}"{{?}}
+            {{? it.disabled }}disabled {{?}}
+            class="form-control">
+</div>

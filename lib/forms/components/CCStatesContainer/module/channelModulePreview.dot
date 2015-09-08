@@ -1,0 +1,2 @@
+<div ml-bind="{{= it.compClass }}:{{= it.compName }}"></div>
+
