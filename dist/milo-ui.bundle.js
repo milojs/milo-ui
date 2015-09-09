@@ -2744,10 +2744,6 @@ var formGenerator = require('./generator')
     , check = milo.util.check
     , logger = milo.util.logger
     , formRegistry = require('./registry')
-    // , keyboard = require('../keyboard') - needed for undoable
-    // , modelChangedCommand = require('../commands/model_changed') - needed for undoable
-    // , ccCommon = require('cc-common')
-    // , REGEX = ccCommon.util.REGEX
     , async = require('async');
 
 
@@ -2848,6 +2844,7 @@ _.extend(MLForm, {
     createForm: MLForm$$createForm,
     registerSchemaKey: MLForm$$registerSchemaKey,
     registerValidation: MLForm$$registerValidation,
+    validatorResponse: MLForm$$validatorResponse,
     generator: formGenerator,
     registry: formRegistry
 });
@@ -3024,9 +3021,6 @@ function MLForm$$registerSchemaKey(keyword, processKeywordFunc, replaceKeyword) 
  */
 var validationFunctions = {
     'required': validateRequired
-    // 'latin1': validateLatin1,
-    // 'standard': validateStandard,
-    // 'url': validateUrl
 };
 function MLForm$$registerValidation(name, func, replaceFunc) {
     if (!replaceFunc && validationFunctions[name])
@@ -3301,13 +3295,9 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
     for (var keyword in schemaKeywordsRegistry) {
         if (schema.hasOwnProperty(keyword)) {
             var processKeywordFunc = schemaKeywordsRegistry[keyword];
-            processKeywordFunc(hostObject, comp, schema[keyword], schema);
+            processKeywordFunc(hostObject, comp, schema);
         }
     }
-
-    // TODO manage undoable via schema extension (see above)
-    // if (schema.undoable)
-    //     _manageUndoable(hostObject, comp, schema.modelPath);
 
     return modelPathTranslations;
 
@@ -3351,58 +3341,6 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             }
         }
     }
-
-    // function _manageUndoable(hostObject, inspComp, modelPath) {
-    //     var debouncedModelChange = _.debounce(executeModelChange, 500);
-    //     var el = inspComp.el;
-    //     var tagName = el.tagName.toLowerCase();
-    //     var oldValue;
-
-    //     if (isTextField())
-    //         setupTextFields();
-    //     else
-    //         setupOtherFields();
-
-
-    //     function isTextField() {
-    //         return tagName == 'textarea' || (tagName == 'input' && el.type == 'text');
-    //     }
-
-    //     function setupTextFields() {
-    //         inspComp.events.on('keydown', function (type, event) {
-    //             var keyPressed = keyboard.getKeyPressed(event);
-    //             if (!keyPressed.cmdCtrl) {
-    //                 if (typeof oldValue == 'undefined')
-    //                     oldValue = inspComp.data.get() || '';
-
-    //                 debouncedModelChange(oldValue);
-    //             }
-    //         });
-    //     }
-
-    //     function setupOtherFields() {
-    //         inspComp.data.on('', function(msg, data) {
-    //             // Keep old value up to date to be used by the change event handler
-    //             if (typeof oldValue == 'undefined') oldValue = data.oldValue;
-    //         });
-    //         inspComp.events.on('change', function () {
-    //             executeModelChange(oldValue);
-    //         });
-    //     }
-
-    //     function executeModelChange(undoValue) {
-    //         var newValue = inspComp.data.get();
-    //         if (newValue === undoValue) return;
-
-    //         var cmd = modelChangedCommand.createWithUndo(hostObject, 'inspector', modelPath, newValue, undoValue);
-    //         var rootContent = hostObject.editor.get();
-
-    //         cmd.setComment('track model change');
-    //         rootContent.editor.storeCommand(cmd);
-
-    //         oldValue = undefined;
-    //     }
-    // }
 
     function _addModelPathTranslation(viewPath, modelPath, pathPattern) {
         if (viewPath in modelPathTranslations)
@@ -3473,7 +3411,7 @@ function getValidatorFunction(validatorName) {
 function makeRegexValidator(validatorRegExp) {
     return function (data, callback) {
         var valid = validatorRegExp.test(data)
-            , response = _validatorResponse(valid, 'should match pattern');
+            , response = MLForm$$validatorResponse(valid, 'should match pattern');
         callback(null, response);
     };
 }
@@ -3563,36 +3501,15 @@ function getFunctionContext(context) {
 /**
  * Validation functions
  */
-// function validateLatin1(data, callback) {
-//     var valid = typeof data == 'string' && REGEX.latin1.test(data);
-
-//     var response = _validatorResponse(valid, 'needs to be latin1 characters only');
-//     callback(null, response);
-// }
-
-// function validateStandard(data, callback) {
-//     var valid = typeof data == 'string' && !data.match(REGEX.nonStandard);
-//     var errorText = valid ? '' : 'contains non-standard characters: ' + data.match(REGEX.nonStandard).join(' ')
-//     var response = _validatorResponse(valid, errorText);
-//     callback(null, response);
-// }
-
 function validateRequired(data, callback) {
     var valid = typeof data != 'undefined'
                 && (typeof data != 'string' || data.trim() != '');
-    var response = _validatorResponse(valid, 'please enter a value', 'REQUIRED');
+    var response = MLForm$$validatorResponse(valid, 'please enter a value', 'REQUIRED');
     callback(null, response);
 }
 
 
-// function validateUrl(data, callback) {
-//     var valid = typeof data == 'string' && REGEX.url.test(data)
-//         , response = _validatorResponse(valid, 'not a valid URL');
-//     callback(null, response);
-// }
-
-
-function _validatorResponse(valid, reason, reasonCode) {
+function MLForm$$validatorResponse(valid, reason, reasonCode) {
     return valid
             ? { valid: true }
             : { valid: false, reason: reason, reasonCode: reasonCode };
