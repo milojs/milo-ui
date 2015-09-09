@@ -179,7 +179,7 @@ function onOptionsChange(path, data) {
         _renderOptions: this._renderOptions
     });
 
-    var radioEls = this.el.querySelectorAll('input[type="radio"]')
+    var radioEls = this.el.querySelectorAll('input[type="checkbox"]')
         , options = _.toArray(radioEls);
 
     this._checkList.length = 0;
