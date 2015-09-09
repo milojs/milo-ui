@@ -35,6 +35,167 @@ function MLButton$isDisabled() {
 'use strict';
 
 var Component = milo.Component
+    , componentsRegistry = milo.registry.components
+    , uniqueId = milo.util.uniqueId;
+
+
+var CHECKED_CHANGE_MESSAGE = 'mlcheckgroupchange'
+    , ELEMENT_NAME_PROPERTY = '_mlCheckGroupElementID'
+    , ELEMENT_NAME_PREFIX = 'ml-check-group-';
+
+var MLCheckGroup = Component.createComponentClass('MLCheckGroup', {
+    data: {
+        set: MLCheckGroup_set,
+        get: MLCheckGroup_get,
+        del: MLCheckGroup_del,
+        splice: undefined,
+        event: CHECKED_CHANGE_MESSAGE
+    },
+    model: {
+        messages: {
+            '***': { subscriber: onOptionsChange, context: 'owner' }
+        }
+    },
+    events: {
+        messages: {
+            'click': { subscriber: onGroupClick, context: 'owner' }
+        }
+    },
+    container: undefined,
+    dom: {
+        cls: 'ml-ui-radio-group'
+    },
+    template: {
+        template: '{{~ it.checkOptions :option }} \
+                        {{##def.elID:{{= it.elementName }}-{{= option.value }}#}} \
+                        <span class="{{= it._renderOptions.optionCssClass || "' + ELEMENT_NAME_PREFIX + 'option" }}"> \
+                            <input id="{{# def.elID }}" type="checkbox" value="{{= option.value }}" name="{{= it.elementName }}"> \
+                            <label for="{{# def.elID }}">{{= option.label }}</label> \
+                        </span> \
+                   {{~}}'
+    }
+});
+
+componentsRegistry.add(MLCheckGroup);
+
+module.exports = MLCheckGroup;
+
+
+_.extendProto(MLCheckGroup, {
+    init: MLCheckGroup$init,
+    destroy: MLCheckGroup$destroy,
+    setRenderOptions: MLCheckGroup$setRenderOptions
+});
+
+
+/**
+ * Component instance method
+ * Initialize radio group and setup
+ */
+function MLCheckGroup$init() {
+    _.defineProperty(this, '_checkList', [], _.CONF);
+    _.defineProperty(this, ELEMENT_NAME_PROPERTY, ELEMENT_NAME_PREFIX + uniqueId());
+    this._renderOptions = {};
+    Component.prototype.init.apply(this, arguments);
+}
+
+
+function MLCheckGroup$setRenderOptions(options) {
+    this._renderOptions = options;
+}
+
+
+/**
+ * Sets group value
+ * Replaces the data set operation to deal with radio buttons
+ *
+ * @param {Mixed} value The value to be set
+ */
+function MLCheckGroup_set(value) {
+    var options = this._checkList
+        , setResult;
+    if (options.length) {
+        options.forEach(function(radio) {
+            radio.checked = radio.value == value;
+            if (radio.checked)
+                setResult = value;
+        });
+
+        dispatchChangeMessage.call(this);
+
+        return setResult;
+    }
+}
+
+
+/**
+ * Gets group value
+ * Retrieves the selected value of the group
+ *
+ * @return {String}
+ */
+function MLCheckGroup_get() {
+    return this._checkList.map(function (checkbox) {
+        return checkbox.checked && checkbox.value;
+    }).filter(_.identity);
+}
+
+
+/**
+ * Deleted group value
+ * Deletes the value of the group, setting it to empty
+ */
+function MLCheckGroup_del() {
+    var options = this._checkList;
+    if (options.length)
+        options.forEach(function(radio) {
+            radio.checked = false;
+        });
+
+    dispatchChangeMessage.call(this);
+    return undefined;
+}
+
+
+/**
+ * Manage radio children clicks
+ */
+function onGroupClick(eventType, event) {
+    if (event.target.type == 'checkbox')
+        dispatchChangeMessage.call(this);
+}
+
+// Post the data change
+function dispatchChangeMessage() {
+    this.data.dispatchSourceMessage(CHECKED_CHANGE_MESSAGE);
+}
+
+
+// Set radio button children on model change
+function onOptionsChange(path, data) {
+    this.template.render({
+        checkOptions: this.model.get(),
+        elementName: this[ELEMENT_NAME_PROPERTY],
+        _renderOptions: this._renderOptions
+    });
+
+    var radioEls = this.el.querySelectorAll('input[type="radio"]')
+        , options = _.toArray(radioEls);
+
+    this._checkList.length = 0;
+    this._checkList.splice.apply(this._checkList, [0, 0].concat(options));
+}
+
+
+function MLCheckGroup$destroy() {
+    delete this._checkList;
+    Component.prototype.destroy.apply(this, arguments);
+}
+
+},{}],3:[function(require,module,exports){
+'use strict';
+
+var Component = milo.Component
     , componentsRegistry = milo.registry.components;
 
 
@@ -123,7 +284,7 @@ function onOptionsChange(msg, data) {
     });
 }
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -275,7 +436,7 @@ function onAddItem(msg, data) {
     this.events.postMessage('milo_combolistadditem', data);
 }
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -367,7 +528,7 @@ function toISO8601Format(date) {
 
     function pad(n) { return n < 10 ? '0' + n : n; }
 }
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 
@@ -382,7 +543,7 @@ componentsRegistry.add(MLDropTarget);
 
 module.exports = MLDropTarget;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 var doT = milo.util.doT
@@ -512,7 +673,7 @@ function MLFoldTree$toggleItem(id, opened) {
 
 
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -532,7 +693,7 @@ componentsRegistry.add(MLGroup);
 
 module.exports = MLGroup;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -551,7 +712,7 @@ componentsRegistry.add(MLHyperlink);
 
 module.exports = MLHyperlink;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -644,7 +805,7 @@ function onModelChange(path, data) {
     dispatchChangeMessage.call(this);
 }
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -681,7 +842,7 @@ function MLInput$setMaxLength(length) {
     this.el.setAttribute('maxlength', length);
 }
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -803,7 +964,7 @@ function MLInputList_del() {
 function MLInputList_splice() { // ... arguments
     this.model.splice.apply(this.model, arguments);
 }
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -866,7 +1027,7 @@ function onChildrenBound() {
     this._connector = milo.minder(this.model, '<<<-', this.data).deferChangeMode('<<<->>>');
 }
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -1059,7 +1220,7 @@ function _sendChangeMessage() {
     this.data.dispatchSourceMessage(LISTITEM_CHANGE_MESSAGE);
 }
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -1222,7 +1383,7 @@ function MLRadioGroup$destroy() {
     Component.prototype.destroy.apply(this, arguments);
 }
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -1280,7 +1441,7 @@ function onOptionsChange(path, data) {
     this.template.render({ selectOptions: this.model.get() });
 }
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1922,7 +2083,7 @@ function _setData() {
     this.setFilteredOptions(this._optionsData);
 }
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -1941,7 +2102,7 @@ componentsRegistry.add(MLText);
 
 module.exports = MLText;
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2029,7 +2190,7 @@ function MLTextarea$destroy() {
 function MLTextarea$disable(disable) {
     this.el.disabled = disable;
 }
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2091,7 +2252,7 @@ function MLTime_del() {
     this.el.value = '';
 }
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2111,7 +2272,7 @@ componentsRegistry.add(MLWrapper);
 
 module.exports = MLWrapper;
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2280,7 +2441,7 @@ function _toggleAlert(doShow) {
     this.el[doShow ? 'focus' : 'blur']();
 }
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2622,7 +2783,7 @@ function MLDialog$destroy() {
     Component.prototype.destroy.apply(this, arguments);
 }
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2735,7 +2896,7 @@ function MLDropdown$toggleMenu(doShow) {
                             : 'none';
 }
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var formGenerator = require('./generator')
@@ -3515,7 +3676,7 @@ function MLForm$$validatorResponse(valid, reason, reasonCode) {
             : { valid: false, reason: reason, reasonCode: reasonCode };
 }
 
-},{"./generator":25,"./registry":27,"async":30}],25:[function(require,module,exports){
+},{"./generator":26,"./registry":28,"async":31}],26:[function(require,module,exports){
 'use strict';
 
 var doT = milo.util.doT
@@ -3585,7 +3746,7 @@ function formGenerator(schema) {
     }
 }
 
-},{"./item_types":26,"./registry":27,"fs":31}],26:[function(require,module,exports){
+},{"./item_types":27,"./registry":28,"fs":32}],27:[function(require,module,exports){
 'use strict';
 
 
@@ -3619,6 +3780,7 @@ formRegistry.add('inputlist',             { compClass: 'MLInputList',           
 formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                           itemFunction: processTextareaSchema      });
 formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                modelPathRule: 'optional'                                             });
 formRegistry.add('radio',                 { compClass: 'MLRadioGroup',                                                                              itemFunction: processRadioSchema         });
+formRegistry.add('checkgroup',            { compClass: 'MLCheckGroup',                                                                              itemFunction: processCheckSchema         });
 formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,             modelPathRule: 'optional'                                             });
 formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                     });
 formRegistry.add('list',                  { compClass: 'MLList',                  template: list_dot                                                                                         });
@@ -3648,6 +3810,12 @@ function processSelectSchema(comp, schema) {
 
 function processRadioSchema(comp, schema) {
     var options = schema.radioOptions;
+    setComponentOptions(comp, options, setComponentModel);
+}
+
+
+function processCheckSchema(comp, schema) {
+    var options = schema.checkOptions;
     setComponentOptions(comp, options, setComponentModel);
 }
 
@@ -3735,7 +3903,7 @@ function processSchema(comp, schema) {
     comp.processFormSchema(schema);
 }
 
-},{"./registry":27,"fs":31}],27:[function(require,module,exports){
+},{"./registry":28,"fs":32}],28:[function(require,module,exports){
 'use strict';
 
 var logger = milo.util.logger
@@ -3800,7 +3968,7 @@ function registry_setDefaults(newDefaults) {
 }
 
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 if (!(window.milo && window.milo.milo_version))
@@ -3814,7 +3982,7 @@ if (!(window.milo && window.milo.milo_version))
 
 require('./use_components');
 
-},{"./use_components":29}],29:[function(require,module,exports){
+},{"./use_components":30}],30:[function(require,module,exports){
 'use strict';
 
 require('./components/Group');
@@ -3825,6 +3993,7 @@ require('./components/Input');
 require('./components/InputList');
 require('./components/Textarea');
 require('./components/RadioGroup');
+require('./components/CheckGroup');
 require('./components/Button');
 require('./components/Hyperlink');
 require('./components/List');
@@ -3844,7 +4013,7 @@ require('./components/bootstrap/Dropdown');
 
 require('./forms/Form');
 
-},{"./components/Button":1,"./components/Combo":2,"./components/ComboList":3,"./components/Date":4,"./components/DropTarget":5,"./components/FoldTree":6,"./components/Group":7,"./components/Hyperlink":8,"./components/Image":9,"./components/Input":10,"./components/InputList":11,"./components/List":12,"./components/ListItem":13,"./components/RadioGroup":14,"./components/Select":15,"./components/SuperCombo":16,"./components/Text":17,"./components/Textarea":18,"./components/Time":19,"./components/Wrapper":20,"./components/bootstrap/Alert":21,"./components/bootstrap/Dialog":22,"./components/bootstrap/Dropdown":23,"./forms/Form":24}],30:[function(require,module,exports){
+},{"./components/Button":1,"./components/CheckGroup":2,"./components/Combo":3,"./components/ComboList":4,"./components/Date":5,"./components/DropTarget":6,"./components/FoldTree":7,"./components/Group":8,"./components/Hyperlink":9,"./components/Image":10,"./components/Input":11,"./components/InputList":12,"./components/List":13,"./components/ListItem":14,"./components/RadioGroup":15,"./components/Select":16,"./components/SuperCombo":17,"./components/Text":18,"./components/Textarea":19,"./components/Time":20,"./components/Wrapper":21,"./components/bootstrap/Alert":22,"./components/bootstrap/Dialog":23,"./components/bootstrap/Dropdown":24,"./forms/Form":25}],31:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};/*!
  * async
  * https://github.com/caolan/async
@@ -5068,13 +5237,13 @@ var process=require("__browserify_process"),global=typeof self !== "undefined" ?
 
 }());
 
-},{"__browserify_process":32}],31:[function(require,module,exports){
+},{"__browserify_process":33}],32:[function(require,module,exports){
 
 // not implemented
 // The reason for having an empty file and not throwing is to allow
 // untraditional implementation of this module.
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -5129,7 +5298,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}]},{},[28])
+},{}]},{},[29])
 
 ;
 //# sourceMappingURL=milo-ui.bundle.map
