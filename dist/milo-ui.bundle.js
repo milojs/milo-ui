@@ -3599,7 +3599,6 @@ var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssC
     , input_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"{{= it.item.inputType || 'text' }}\"\n            {{? it.item.inputName }}name=\"{{= it.item.inputName }}\"{{?}}\n            ml-bind=\"MLInput:{{= it.compName }}\"\n            {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-control\">\n</div>\n"
     , textarea_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <textarea ml-bind=\"MLTextarea:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"form-control\"\n        {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n        {{? it.item.autoresize }}rows=\"{{= it.item.autoresize.minLines }}\"{{?}}></textarea>\n</div>"
     , button_dot = "<div {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}class=\"btn-toolbar{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\">\n    <button ml-bind=\"MLButton:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"btn btn-default {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}\">\n        {{= it.item.label || '' }}\n    </button>\n</div>\n"
-    // , fabutton_dot = fs.readFileSync(__dirname + '/items/fabutton.dot')
     , hyperlink_dot = "{{# def.partials.formGroup }}\n    <a {{? it.item.href}}href=\"{{= it.item.href }}\"{{?}}\n        {{? it.item.target}}target=\"{{= it.item.target }}\"{{?}}   \n        ml-bind=\"MLHyperlink:{{= it.compName }}\" \n        class=\"hyperlink hyperlink-default\">\n        {{= it.item.label || '' }}\n    </a>\n</div>"
     , checkbox_dot = "{{# def.partials.formGroup }}\n  <input type=\"checkbox\"\n    id=\"{{= it.compName }}\"\n    ml-bind=\"MLInput:{{= it.compName }}\"\n    {{? it.disabled }}disabled {{?}}\n    class=\"{{= it.item.itemCssClass || ''}}\">\n  <label for=\"{{= it.compName }}\">{{= it.item.label}}</label>\n</div>\n"
     , list_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <ul ml-bind=\"MLList:{{= it.compName }}\"\n            {{? it.disabled }}disabled {{?}}>\n        <li ml-bind=\"MLListItem:itemSample\" class=\"list-item\">\n            <span ml-bind=\"[data]:label\"></span>\n            {{? it.editBtn }}<button ml-bind=\"[events]:editBtn\">edit</button>{{?}}\n            <button ml-bind=\"[events]:deleteBtn\" class=\"btn btn-default glyphicon glyphicon-remove\"> </button>\n        </li>\n    </ul>\n</div>\n"
@@ -3607,17 +3606,9 @@ var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssC
     , date_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"date\"\n            ml-bind=\"MLDate:{{= it.compName }}\"\n            class=\"form-control\">\n</div>"
     , combo_dot = "<div ml-bind=\"MLCombo:{{= it.compName }}\" class=\"form-group{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\">\n    {{# def.partials.label }}\n    {{ var listID = 'ml-combo-datalist-' + it.miloCount(); }}\n    <input ml-bind=\"[data, events]:input\"\n            name=\"{{= listID }}\"\n            list=\"{{= listID }}\"\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-control\">\n    <datalist id=\"{{= listID }}\" ml-bind=\"[template]:datalist\"></datalist>\n</div>"
     , image_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n        ml-bind=\"MLImage:{{= it.compName }}\"\n        {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n        {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
-    // , previewimage_dot = fs.readFileSync(__dirname + '/items/previewimage.dot')
-    // , previewcropall_dot = fs.readFileSync(__dirname + '/items/previewcropall.dot')
     , droptarget_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n        <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n            ml-bind=\"MLDropTarget:{{= it.compName }}\"\n            {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n            {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , text_dot = "{{var tagName = it.item.tagName || 'span';}}\n<{{=tagName}} ml-bind=\"MLText:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{? it.item.label }}\n        {{= it.item.label}}\n    {{?}}\n</{{=tagName}}>\n"
-    // , previewlist_dot = fs.readFileSync(__dirname + '/items/previewlist.dot')
-    // , linklist_dot = fs.readFileSync(__dirname + '/items/linklist.dot')
-    // , relatedlist_dot = fs.readFileSync(__dirname + '/items/relatedlist.dot')
-    // , imagegroupcaptionlist_dot = fs.readFileSync(__dirname + '/items/imagegroupcaptionlist.dot')
     , clear_dot = '<div class="cc-clear"></div>';
-    // , cc_channel_select_dot = fs.readFileSync(__dirname + '/items/channelselect.dot')
-    // , cc_article_status_select_dot = fs.readFileSync(__dirname + '/items/articlestatusselect.dot');
 
 
 formRegistry.add('group',                 { compClass: 'MLGroup',                 template: group_dot,                 modelPathRule: 'prohibited'                                           });
@@ -3627,7 +3618,6 @@ formRegistry.add('input',                 { compClass: 'MLInput',               
 formRegistry.add('inputlist',             { compClass: 'MLInputList',                                                                               itemFunction: processInputListSchema     });
 formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                           itemFunction: processTextareaSchema      });
 formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                modelPathRule: 'optional'                                             });
-// formRegistry.add('fabutton',              { compClass: 'MLButton',                template: fabutton_dot,              modelPathRule: 'optional'                                             });
 formRegistry.add('radio',                 { compClass: 'MLRadioGroup',                                                                              itemFunction: processRadioSchema         });
 formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,             modelPathRule: 'optional'                                             });
 formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                     });
@@ -3638,20 +3628,9 @@ formRegistry.add('combo',                 { compClass: 'MLCombo',               
 formRegistry.add('supercombo',            { compClass: 'MLSuperCombo',                                                                              itemFunction: processSuperComboSchema    });
 formRegistry.add('combolist',             { compClass: 'MLComboList',                                                                               itemFunction: processComboListSchema     });
 formRegistry.add('image',                 { compClass: 'MLImage',                 template: image_dot                                                                                        });
-// formRegistry.add('previewimage',          { compClass: 'CCPreviewImage',          template: previewimage_dot,                                       itemFunction: processSchema              });
-// formRegistry.add('previewcropall',        { compClass: 'CCPreviewCropAll',        template: previewcropall_dot,        modelPathRule: 'prohibited'                                           });
 formRegistry.add('droptarget',            { compClass: 'MLDropTarget',            template: droptarget_dot,            modelPathRule: 'prohibited'                                           });
 formRegistry.add('text',                  { compClass: 'MLText',                  template: text_dot,                  modelPathRule: 'optional'                                             });
-// formRegistry.add('imagelist',             { compClass: 'CCPreviewList',           template: previewlist_dot                                                                                  });
-// formRegistry.add('articlehistory',        { compClass: 'CCArticleHistory',                                             modelPathRule: 'prohibited'                                           });
-// formRegistry.add('linklist',              { compClass: 'CCLinkList',              template: linklist_dot,                                           itemFunction: processLinkListSchema      });
-// formRegistry.add('relatedlist',           { compClass: 'CCRelatedList',           template: relatedlist_dot,                                        itemFunction: processRelatedListSchema   });
-// formRegistry.add('imagegroupcaptionlist', { compClass: 'CCImageGroupCaptionList', template: imagegroupcaptionlist_dot                                                                        });
 formRegistry.add('clear',                 {                                       template: clear_dot                                                                                        });
-// formRegistry.add('contextradio',          { compClass: 'CCContextRadioGroup',                                                                       itemFunction: processRadioSchema         });
-// formRegistry.add('contextcolorpicker',    { compClass: 'CCContextColorPicker',                                                                      itemFunction: processRadioSchema         });
-// formRegistry.add('channelselect',         { compClass: 'CCChannelSelect',         template: cc_channel_select_dot,                                  itemFunction: processChannelSelectSchema });
-// formRegistry.add('articlestatusselect',   { compClass: 'CCArticleStatusSelect',   template: cc_article_status_select_dot,                                                                    });
 
 
 function setValue(comp, schema) {
@@ -3721,23 +3700,9 @@ function processTextareaSchema(comp, schema) {
 }
 
 
-// function processLinkListSchema(comp, schema) {
-//     comp.setHostComponent(this);
-// }
-
-
-// function processRelatedListSchema(comp, schema) {
-//     comp.setLinkDefaults(schema.defaultLinkData);
-// }
-
-
 function processInputSchema(comp, schema) {
     if (_.isNumeric(schema.maxLength)) comp.setMaxLength(schema.maxLength);
 }
-
-// function processChannelSelectSchema(comp, schema) {
-//     comp.setChannelList(schema.channelList, schema.defaultChannel);
-// }
 
 function setComponentOptions(comp, options, setModelFunc) {
     if (options) {
