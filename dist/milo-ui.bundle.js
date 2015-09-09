@@ -2755,7 +2755,7 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
 
 /**
  * A component class for generating forms from schema
- * To create form class method [createForm](#CCForm$$createForm) should be used.
+ * To create form class method [createForm](#MLForm$$createForm) should be used.
  * Form schema has the following format:
  * ```
  * var schema = {
@@ -2787,6 +2787,10 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *                             // This property allows to have fixed form model structure
  *                             // while changing view structure of the form
  *                             // See Model.
+ *             modelPattern: 'mapping extension pattern',
+ *                            // (string)
+ *             notInModel: true,
+ *                             //allows to NOT include modelPath where otherwise it would be required
  *             messages: {                      // to subscribe to messages on item's component facets
  *                 events: {                    // facet to subscribe to
  *                     '<message1>': onMessage1 // message and subscriber function
@@ -2825,7 +2829,7 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *     ]
  * }
  */
-var CCForm = Component.createComponentClass('CCForm', {
+var MLForm = Component.createComponentClass('MLForm', {
     dom: {
         cls: 'cc-module-inspector'
     },
@@ -2835,36 +2839,48 @@ var CCForm = Component.createComponentClass('CCForm', {
     events: undefined
 });
 
-componentsRegistry.add(CCForm);
+componentsRegistry.add(MLForm);
 
-module.exports = CCForm;
+module.exports = MLForm;
 
 
-_.extend(CCForm, {
-    createForm: CCForm$$createForm,
+_.extend(MLForm, {
+    createForm: MLForm$$createForm,
+    registerSchemaKey: MLForm$$registerSchemaKey,
+    registerValidation: MLForm$$registerValidation,
     generator: formGenerator,
     registry: formRegistry
 });
 
-_.extendProto(CCForm, {
-    getHostObject: CCForm$getHostObject,
-    isValid: CCForm$isValid,
-    validateModel: CCForm$validateModel,
-    getInvalidControls: CCForm$getInvalidControls,
-    getInvalidReasons: CCForm$getInvalidReasons,
-    getInvalidReasonsText: CCForm$getInvalidReasonsText,
-    modelPathComponent: CCForm$modelPathComponent,
-    modelPathSchema: CCForm$modelPathSchema,
-    viewPathComponent: CCForm$viewPathComponent,
-    viewPathSchema: CCForm$viewPathSchema,
-    getModelPath: CCForm$getModelPath,
-    getViewPath: CCForm$getViewPath,
-    destroy: CCForm$destroy
+_.extendProto(MLForm, {
+    getHostObject: MLForm$getHostObject,
+    isValid: MLForm$isValid,
+    validateModel: MLForm$validateModel,
+    getInvalidControls: MLForm$getInvalidControls,
+    getInvalidReasons: MLForm$getInvalidReasons,
+    getInvalidReasonsText: MLForm$getInvalidReasonsText,
+    modelPathComponent: MLForm$modelPathComponent,
+    modelPathSchema: MLForm$modelPathSchema,
+    viewPathComponent: MLForm$viewPathComponent,
+    viewPathSchema: MLForm$viewPathSchema,
+    getModelPath: MLForm$getModelPath,
+    getViewPath: MLForm$getViewPath,
+    destroy: MLForm$destroy,
 });
 
 
+var SCHEMA_KEYWORDS = _.object([
+    'type', 'compName', 'label', 'altText',
+    'modelPath', 'modelPattern', 'notInModel',
+    'messages', 'translate', 'validate', 'items',
+    'selectOptions', 'radioOptions', 'comboOptions',
+    'comboOptionsURL', 'addItemPrompt', 'placeHolder',
+    'value', 'dataValidation', 'asyncHandler', 'autoresize',
+    'maxLength'
+], true);
+
 /**
- * CCForm class method
+ * MLForm class method
  * Creates form from schema.
  * Form data can be obtained from its Model (`form.model`), reactive connection to form's model can also be used.
  *
@@ -2872,9 +2888,9 @@ _.extendProto(CCForm, {
  * @param {Object} hostObject form host object, used to define as message subscriber context in schema - by convention the context should be defined as "host"
  * @param {Object} formData data to initialize the form with
  * @param {String} template optional form template, will be used instead of automatically generated from schema. Not recommended to use, as it will have to be maintained to be consistent with schema for bindings.
- * @return {CCForm}
+ * @return {MLForm}
  */
-function CCForm$$createForm(schema, hostObject, formData, template) {
+function MLForm$$createForm(schema, hostObject, formData, template) {
     var form = _createFormComponent();
     _.defineProperty(form, '_hostObject', hostObject);
     var formViewPaths, formModelPaths, modelPathTranslations, dataTranslations, dataValidations;
@@ -2891,7 +2907,7 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
     function _createFormComponent() {
         template = template || formGenerator(schema);
-        return CCForm.createOnElement(undefined, template);
+        return MLForm.createOnElement(undefined, template);
     }
 
     function _processFormSchema() {
@@ -2989,10 +3005,42 @@ function CCForm$$createForm(schema, hostObject, formData, template) {
 
 
 /**
+ * Custom schema keywords
+ */
+var schemaKeywordsRegistry = {};
+function MLForm$$registerSchemaKey(keyword, processKeywordFunc, replaceKeyword) {
+    if (SCHEMA_KEYWORDS[keyword])
+        throw new Error('Keyword', keyword, 'is used by MLForm class or one of pre-registered form items and cannot be overridden');
+
+    if (!replaceKeyword && schemaKeywordsRegistry[keyword])
+        throw new Error('Keyword', keyword, 'is already registered. Pass true as the third parameter to replace it');
+
+    schemaKeywordsRegistry[keyword] = processKeywordFunc;
+}
+
+
+/**
+ * Predefined form validation functions
+ */
+var validationFunctions = {
+    'required': validateRequired
+    // 'latin1': validateLatin1,
+    // 'standard': validateStandard,
+    // 'url': validateUrl
+};
+function MLForm$$registerValidation(name, func, replaceFunc) {
+    if (!replaceFunc && validationFunctions[name])
+        throw new Error('Validating function', name, 'is already registered. Pass true as the third parameter to replace it');
+
+    validationFunctions[name] = func;
+}
+
+
+/**
  * Returns the form host object.
  * @return {Component}
  */
-function CCForm$getHostObject() {
+function MLForm$getHostObject() {
     return this._hostObject;
 }
 
@@ -3003,7 +3051,7 @@ function CCForm$getHostObject() {
  *
  * @return {Boolean}
  */
-function CCForm$isValid() {
+function MLForm$isValid() {
     return Object.keys(this._invalidFormControls).length == 0;
 }
 
@@ -3015,7 +3063,7 @@ function CCForm$isValid() {
  *
  * @param {Function} callback
  */
-function CCForm$validateModel(callback) {
+function MLForm$validateModel(callback) {
     var validations = []
         , self = this;
 
@@ -3067,7 +3115,7 @@ function CCForm$validateModel(callback) {
  *
  * @return {Object}
  */
-function CCForm$getInvalidControls() {
+function MLForm$getInvalidControls() {
     return this._invalidFormControls;
 }
 
@@ -3077,7 +3125,7 @@ function CCForm$getInvalidControls() {
  *
  * @return {Array[Object]}
  */
-function CCForm$getInvalidReasons() {
+function MLForm$getInvalidReasons() {
     var invalidControls = this.getInvalidControls();
     var reasons = _.reduceKeys(invalidControls,
         function(memo, invalidControl, compName) {
@@ -3093,7 +3141,7 @@ function CCForm$getInvalidReasons() {
  *
  * @return {String}
  */
-function CCForm$getInvalidReasonsText() {
+function MLForm$getInvalidReasonsText() {
     var reasons = this.getInvalidReasons();
     return reasons.reduce(function(memo, reason) {
         return memo + (reason.label || '') + ' - ' + reason.reason + '\n';
@@ -3107,7 +3155,7 @@ function CCForm$getInvalidReasonsText() {
  * @param {String} modelPath
  * @return {Component}
  */
-function CCForm$modelPathComponent(modelPath) {
+function MLForm$modelPathComponent(modelPath) {
     var modelPathObj = this._formModelPaths[modelPath];
     return modelPathObj && modelPathObj.component;
 }
@@ -3119,7 +3167,7 @@ function CCForm$modelPathComponent(modelPath) {
  * @param {String} modelPath
  * @return {Object}
  */
-function CCForm$modelPathSchema(modelPath) {
+function MLForm$modelPathSchema(modelPath) {
     var modelPathObj = this._formModelPaths[modelPath];
     return modelPathObj && modelPathObj.schema;
 }
@@ -3131,7 +3179,7 @@ function CCForm$modelPathSchema(modelPath) {
  * @param {String} viewPath
  * @return {Component}
  */
-function CCForm$viewPathComponent(viewPath) {
+function MLForm$viewPathComponent(viewPath) {
     var viewPathObj = this._formViewPaths[viewPath];
     return viewPathObj && viewPathObj.component;
 }
@@ -3143,7 +3191,7 @@ function CCForm$viewPathComponent(viewPath) {
  * @param {String} viewPath
  * @return {Object}
  */
-function CCForm$viewPathSchema(viewPath) {
+function MLForm$viewPathSchema(viewPath) {
     var viewPathObj = this._formViewPaths[viewPath];
     return viewPathObj && viewPathObj.schema;
 }
@@ -3155,7 +3203,7 @@ function CCForm$viewPathSchema(viewPath) {
  * @param {string} viewPath view path of the component
  * @return {string} model path of connected data
  */
-function CCForm$getModelPath(viewPath) {
+function MLForm$getModelPath(viewPath) {
     return this._modelPathTranslations[viewPath];
 }
 
@@ -3166,14 +3214,14 @@ function CCForm$getModelPath(viewPath) {
  * @param {string} modelPath model path of connected data
  * @return {string} view path of the component
  */
-function CCForm$getViewPath(modelPath) {
+function MLForm$getViewPath(modelPath) {
     return _.findKey(this._modelPathTranslations, function(mPath, vPath) {
         return mPath == modelPath;
     });
 }
 
 
-function CCForm$destroy() {
+function MLForm$destroy() {
     Component.prototype.destroy.apply(this, arguments);
     this._connector && milo.minder.destroyConnector(this._connector);
     this._connector = null;
@@ -3185,17 +3233,6 @@ function CCForm$destroy() {
  * Map of items types to items components classes
  * UI components are defined in `milo`
  */
-
-
-/**
- * Predefined for validation functions
- */
-var validationFunctions = {
-    'required': validateRequired
-    // 'latin1': validateLatin1,
-    // 'standard': validateStandard,
-    // 'url': validateUrl
-};
 
 
 // var _itemsSchemaRules = _.mapKeys(itemTypes, function(className, itemType) {
@@ -3261,7 +3298,14 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
             throw new Error('unknown item type ' + schema.type);
     }
 
-    // TODO manage via schema extension
+    for (var keyword in schemaKeywordsRegistry) {
+        if (schema.hasOwnProperty(keyword)) {
+            var processKeywordFunc = schemaKeywordsRegistry[keyword];
+            processKeywordFunc(hostObject, comp, schema[keyword], schema);
+        }
+    }
+
+    // TODO manage undoable via schema extension (see above)
     // if (schema.undoable)
     //     _manageUndoable(hostObject, comp, schema.modelPath);
 
@@ -3417,12 +3461,14 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
     }
 }
 
+
 function getValidatorFunction(validatorName) {
     var valFunc = validationFunctions[validatorName];
     if (! valFunc)
         throw new Error('Form: unknown validator function name ' + validatorName);
     return valFunc;
 }
+
 
 function makeRegexValidator(validatorRegExp) {
     return function (data, callback) {
