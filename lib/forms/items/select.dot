@@ -3,6 +3,7 @@
     <span class="custom-select">
         <select ml-bind="MLSelect:{{= it.compName }}"
                 {{? it.disabled }}disabled {{?}}
+                {{? it.multiple }}multiple {{?}}
                 class="form-control">
         </select>
     </span>

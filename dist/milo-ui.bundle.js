@@ -1389,13 +1389,24 @@ function MLRadioGroup$destroy() {
 var Component = milo.Component
     , componentsRegistry = milo.registry.components;
 
+var SELECT_CHANGE_MESSAGE = 'mlselectchange';
 
 var MLSelect = Component.createComponentClass('MLSelect', {
     dom: {
         cls: 'ml-ui-select'
     },
-    data: undefined,
-    events: undefined,
+    data: {
+        set: MLSelect_set,
+        get: MLSelect_get,
+        del: MLSelect_del,
+        splice: undefined,
+        event: SELECT_CHANGE_MESSAGE
+    },
+    events: {
+        messages: {
+            'change': { subscriber: dispatchChangeMessage, context: 'owner' }
+        }
+    },
     model: {
         messages: {
             '**': { subscriber: onOptionsChange, context: 'owner' }
@@ -1415,9 +1426,17 @@ module.exports = MLSelect;
 
 
 _.extendProto(MLSelect, {
+    init: MLSelect$init,
     setOptions: MLSelect$setOptions,
     disable: MLSelect$disable
 });
+
+
+function MLSelect$init() {
+    Component.prototype.init.apply(this, arguments);
+    this._optionEls = {};
+    this._isMultiple = this.el.hasAttribute('multiple');
+}
 
 
 function MLSelect$setOptions(options) {
@@ -1437,8 +1456,52 @@ function MLSelect$disable(disable) {
 }
 
 
+function MLSelect_set(strOrObj) {
+    if (!this._isMultiple) this.el.value = strOrObj;
+    else {
+        var valueObj = {};
+        if (strOrObj && typeof strOrObj == 'object') valueObj = strOrObj;
+        else valueObj[strOrObj] = true;
+        _.eachKey(this._optionEls, function (el, key) {
+            el.selected = !!valueObj[key];
+        });
+    }
+}
+
+
+function MLSelect_get() {
+    if (!this._isMultiple) return this.el.value;
+    else {
+        return _.mapKeys(this._optionEls, function (el) {
+            return el.selected;
+        });
+    }
+}
+
+
+function MLSelect_del() {
+    if (!this._isMultiple) this.el.value = undefined;
+    else {
+        _.eachKey(this._optionEls, function (el) {
+            el.selected = false;
+        });
+    }
+}
+
+
+function dispatchChangeMessage() {
+    this.data.dispatchSourceMessage(SELECT_CHANGE_MESSAGE);
+}
+
+
 function onOptionsChange(path, data) {
     this.template.render({ selectOptions: this.model.get() });
+    this._optionEls = {};
+    var self = this;
+    _.forEach(this.el.querySelectorAll('option'), function (el) {
+        self._optionEls[el.value] = el;
+    });
+    //dispatchChangeMessage.call(this);
 }
 
 },{}],17:[function(require,module,exports){
@@ -3741,7 +3804,8 @@ function formGenerator(schema) {
             tagName: tagName,
             formGenerator: formGenerator,
             miloCount: miloCount,
-            disabled: item.disabled
+            disabled: item.disabled,
+            multiple: item.multiple
         });
     }
 }
@@ -3756,7 +3820,7 @@ var fs = require('fs')
 
 var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{# def.partials.label }}\n    {{= it.formGenerator(it.item) }}\n</div>\n"
     , wrapper_dot = "<span ml-bind=\"MLWrapper:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{= it.formGenerator(it.item) }}\n</span>\n"
-    , select_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <span class=\"custom-select\">\n        <select ml-bind=\"MLSelect:{{= it.compName }}\"\n                {{? it.disabled }}disabled {{?}}\n                class=\"form-control\">\n        </select>\n    </span>\n</div>\n"
+    , select_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <span class=\"custom-select\">\n        <select ml-bind=\"MLSelect:{{= it.compName }}\"\n                {{? it.disabled }}disabled {{?}}\n                {{? it.multiple }}multiple {{?}}\n                class=\"form-control\">\n        </select>\n    </span>\n</div>\n"
     , input_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"{{= it.item.inputType || 'text' }}\"\n            {{? it.item.inputName }}name=\"{{= it.item.inputName }}\"{{?}}\n            ml-bind=\"MLInput:{{= it.compName }}\"\n            {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-control\">\n</div>\n"
     , textarea_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <textarea ml-bind=\"MLTextarea:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"form-control\"\n        {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n        {{? it.item.autoresize }}rows=\"{{= it.item.autoresize.minLines }}\"{{?}}></textarea>\n</div>"
     , button_dot = "<div {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}class=\"btn-toolbar{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\">\n    <button ml-bind=\"MLButton:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"btn btn-default {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}\">\n        {{= it.item.label || '' }}\n    </button>\n</div>\n"
