@@ -1,12 +1,12 @@
 {
   "name": "milo-ui",
   "version": "1.0.1",
-  "homepage": "https://github.com/milojs/milo",
+  "homepage": "https://github.com/milojs/milo-ui",
   "authors": [
     "MOL Technical <MOL_Technical@assocnews.co.uk>"
   ],
   "description": "UI components and schema-based form generator for [milo.js](https://github.com/milojs/milo) framework",
-  "main": "dist/milo-ui.bundle.js",
+  "main": "dist/milo_ui.bundle.js",
   "license": "BSD",
   "ignore": [
     "**/.*",

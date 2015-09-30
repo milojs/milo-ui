@@ -12,7 +12,7 @@ module.exports = function(grunt) {
         browserify: {
             milo_ui: {
                 files: {
-                    'dist/milo-ui.bundle.js': 'lib/milo-ui.js'
+                    'dist/milo_ui.bundle.js': 'lib/milo_ui.js'
                 },
                 options: {
                     transform: ['brfs'],
@@ -34,7 +34,7 @@ module.exports = function(grunt) {
             build: {
                 options: {},
                 files: {
-                    'dist/milo-ui.bundle.map': 'dist/milo-ui.bundle.js'
+                    'dist/milo_ui.bundle.map': 'dist/milo_ui.bundle.js'
                 }
             }
         },
@@ -47,7 +47,7 @@ module.exports = function(grunt) {
             },
             milo: {
                 files: {
-                    'dist/milo-ui.min.js': 'dist/milo-ui.bundle.js'
+                    'dist/milo_ui.min.js': 'dist/milo_ui.bundle.js'
                 }
             }
         },

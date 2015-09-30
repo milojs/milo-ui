@@ -16,7 +16,7 @@
     "messenger",
     "one-page app"
   ],
-  "main": "lib/milo-ui.js",
+  "main": "lib/milo_ui.js",
   "scripts": {
     "test": "grunt test"
   },

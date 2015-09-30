@@ -12,7 +12,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'node_modules/milojs/dist/milo.bundle.js',
-      'dist/milo-ui.bundle.js',
+      'dist/milo_ui.bundle.js',
       '.tmp-test-browser/**/*.js'
     ],
 
