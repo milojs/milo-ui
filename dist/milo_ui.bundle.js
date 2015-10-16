@@ -3086,7 +3086,7 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  */
 var MLForm = Component.createComponentClass('MLForm', {
     dom: {
-        cls: 'cc-module-inspector'
+        cls: 'ml-form'
     },
     css: undefined, // Facet config can be set via form schema
     model: undefined,
@@ -3894,7 +3894,7 @@ formRegistry.add('checkgroup',            { compClass: 'MLCheckGroup',          
 formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,             modelPathRule: 'optional'                                             });
 formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                     });
 formRegistry.add('list',                  { compClass: 'MLList',                  template: list_dot                                                                                         });
-formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot,                                               itemFunction: setValue                   });
+formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot,                                                                                        });
 formRegistry.add('date',                  { compClass: 'MLDate',                  template: date_dot                                                                                         });
 formRegistry.add('combo',                 { compClass: 'MLCombo',                 template: combo_dot,                                              itemFunction: processComboSchema         });
 formRegistry.add('supercombo',            { compClass: 'MLSuperCombo',                                                                              itemFunction: processSuperComboSchema    });
@@ -3904,13 +3904,6 @@ formRegistry.add('droptarget',            { compClass: 'MLDropTarget',          
 formRegistry.add('text',                  { compClass: 'MLText',                  template: text_dot,                  modelPathRule: 'optional'                                             });
 formRegistry.add('clear',                 {                                       template: clear_dot                                                                                        });
 
-
-function setValue(comp, schema) {
-    var options = schema.selectOptions;
-    if (schema.hasOwnProperty('value')) {
-        comp.data.set(schema.value);
-    }
-}
 
 function processSelectSchema(comp, schema) {
     var options = schema.selectOptions;
