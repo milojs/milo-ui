@@ -1497,6 +1497,7 @@ function MLSelect_set(strOrObj) {
             el.selected = !!valueObj[key];
         });
     }
+    dispatchChangeMessage.call(this);
 }
 
 
@@ -1517,6 +1518,7 @@ function MLSelect_del() {
             el.selected = false;
         });
     }
+    dispatchChangeMessage.call(this);
 }
 
 
