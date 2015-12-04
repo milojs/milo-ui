@@ -1,6 +1,6 @@
 {
   "name": "milo-ui",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "UI components and schema-based form generator for [milo.js](https://github.com/milojs/milo) framework",
   "keywords": [
     "framework",
@@ -47,7 +47,7 @@
     "karma-mocha": "~0.1.1",
     "karma-spec-reporter": "0.0.6",
     "karma-webdriver-launcher": "^0.2.0",
-    "milojs": "^0.2.9",
+    "milojs": "^1.0.4",
     "mocha": "~1.16.2"
   }
 }
