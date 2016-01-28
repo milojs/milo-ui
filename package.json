@@ -1,6 +1,6 @@
 {
   "name": "milo-ui",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "UI components and schema-based form generator for [milo.js](https://github.com/milojs/milo) framework",
   "keywords": [
     "framework",
