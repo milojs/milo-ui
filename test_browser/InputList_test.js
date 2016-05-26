@@ -26,7 +26,7 @@ function getListComponentList(scope) {
 describe('InputList UI', function() {
     this.timeout(10000);
 
-    var testHtml = fs.readFileSync(__dirname + '/InputList_test.html');
+    var testHtml = fs.readFileSync(__dirname + '/InputList_test.html', 'utf-8');
     var element, scope,
         testData = [
             { label: 'Jason Green', contact: '07123123'},

@@ -4,7 +4,7 @@ var fs = require('fs')
     , assert = require('assert');
 
 describe('Foldtree UI', function() {
-    var testHtml = fs.readFileSync(__dirname + '/FoldTree_test.html');
+    var testHtml = fs.readFileSync(__dirname + '/FoldTree_test.html', 'utf-8');
     var element, scope,
         testData = { items: [
             { label: 'Jason Green', id: '001', items:
