@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-env browser, commonjs, node, mocha */
+
 var assert = require('assert')
     , exec = require('child_process').exec
     , async = require('async');
@@ -17,7 +19,7 @@ describe('\'use strict\'; statements', function() {
             assert.ok(files.length == 0, '\'use strict\'; statements should be added to the first line of the following files: ' + files);
             
             next();
-        })
+        });
     };
 
     function JSfiles(file) {

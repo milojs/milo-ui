@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-env browser, commonjs, node, mocha */
+
 var assert = require('assert')
     , exec = require('child_process').exec
     , async = require('async');
@@ -17,7 +19,7 @@ describe('console.log statements', function() {
             assert.ok(files.length == 0, 'console.log statements should be removed or excluded from the following files: ' + files);
             
             next();
-        })
+        });
     };
 
     function notExcluded(file) {

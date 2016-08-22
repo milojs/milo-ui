@@ -1,5 +1,6 @@
 'use strict';
 
+/* eslint-env browser, commonjs, node, mocha */
 
 var assert = require('assert')
     , MLDialog = milo.registry.components.get('MLDialog');
