@@ -1,5 +1,6 @@
 'use strict';
 
+/* eslint-env browser, commonjs, node, mocha */
 
 var fs = require('fs')
     , assert = require('assert')
@@ -27,7 +28,7 @@ describe('InputList UI', function() {
     this.timeout(10000);
 
     var testHtml = fs.readFileSync(__dirname + '/InputList_test.html', 'utf-8');
-    var element, scope,
+    var scope,
         testData = [
             { label: 'Jason Green', contact: '07123123'},
             { label: 'Luis Fetzner', contact: '07123124'},

@@ -1,11 +1,13 @@
 'use strict';
 
+/* eslint-env browser, commonjs, node, mocha */
+
 var fs = require('fs')
     , assert = require('assert');
 
 describe('Foldtree UI', function() {
     var testHtml = fs.readFileSync(__dirname + '/FoldTree_test.html', 'utf-8');
-    var element, scope,
+    var scope,
         testData = { items: [
             { label: 'Jason Green', id: '001', items:
                 [

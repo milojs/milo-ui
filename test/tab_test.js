@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-env browser, commonjs, node, mocha */
+
 var assert = require('assert')
     , exec = require('child_process').exec
     , async = require('async');
@@ -17,7 +19,7 @@ describe('tab characters', function() {
             assert.ok(files.length == 0, 'tab characters should be replaced with 4 spaces (use ./expandTabs) in the following files: ' + files);
             
             next();
-        })
+        });
     };
 
     function notExcluded(file) {
