@@ -15,7 +15,7 @@ module.exports = function(grunt) {
                     'dist/milo_ui.bundle.js': 'lib/milo_ui.js'
                 },
                 options: {
-                    transform: ['eslintify', 'brfs'],
+                    transform: ['flowify', 'eslintify', 'brfs'],
                     debug: true
                 }
             },
@@ -26,7 +26,7 @@ module.exports = function(grunt) {
                     dest: '.tmp-test-browser'
                 }],
                 options: {
-                    transform: ['eslintify', 'brfs']
+                    transform: ['flowify', 'eslintify', 'brfs']
                 }
             }
         },
