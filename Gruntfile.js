@@ -81,13 +81,12 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-mocha-test');
     grunt.loadNpmTasks('grunt-karma');
-    grunt.loadNpmTasks('grunt-exorcise');
 
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('karma', 'browserify:tests');
     grunt.registerTask('karmatest', 'karma');
     grunt.registerTask('tests', ['mochaTest', 'browserify', 'karmatest']);
-    grunt.registerTask('build', ['test', 'browserify', 'uglify', 'exorcise']);
+    grunt.registerTask('build', ['test', 'browserify', 'uglify']);
     grunt.registerTask('default', ['build', 'watch']);
     grunt.registerTask('skiptest', ['browserify', 'watch']);
 };
