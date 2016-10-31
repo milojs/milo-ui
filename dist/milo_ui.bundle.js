@@ -2534,13 +2534,9 @@ function _toggleAlert(doShow) {
 },{}],24:[function(require,module,exports){
 'use strict';
 
-var Component = milo.Component
-    , componentsRegistry = milo.registry.components
-    , componentName = milo.util.componentName
-    , logger = milo.util.logger
+var componentName = milo.util.componentName
     , check = milo.util.check
     , Match = check.Match;
-
 
 var DEFAULT_BUTTONS = [ { type: 'default', label: 'OK', result: 'OK' } ];
 
@@ -2558,22 +2554,26 @@ var BUTTON_CSS_CLASSES = {
 };
 */
 
+var openedDialogs = [];
+
 /**
  * Dialog class to show custom dialog boxes based on configuration - see [createDialog](#MLDialog$$createDialog) method.
  * Only one dialog can be opened at a time - trying to open another will log error to console. Currently opened dialog can be retrieved using [getCurrentDialog](#MLDialog$$getCurrentDialog) class method.
  */
-var MLDialog = Component.createComponentClass('MLDialog', {
-    container: undefined,
-    events: undefined,
-    dom: {
-        cls: ['ml-bs-dialog', 'modal', 'fade'],
-        attributes: {
-            'role': 'dialog',
-            'aria-hidden': 'true'
-        }
-    },
-    template: {
-        template: '\
+var MLDialog = module.exports = milo.createComponentClass({
+    className: 'MLDialog',
+    facets: {
+        container: undefined,
+        events: undefined,
+        dom: {
+            cls: ['ml-bs-dialog', 'modal', 'fade'],
+            attributes: {
+                'role': 'dialog',
+                'aria-hidden': 'true'
+            }
+        },
+        template: {
+            template: '\
             <div class="modal-dialog {{= it.cssClass }}">\
                 <div class="modal-content">\
                     {{? it.title }}\
@@ -2604,27 +2604,19 @@ var MLDialog = Component.createComponentClass('MLDialog', {
                     {{?}}\
                 </div>\
             </div>'
+        }
+    },
+    staticMethods: {
+        createDialog: MLDialog$$createDialog,
+        openDialog: MLDialog$$openDialog,
+        getOpenedDialog: MLDialog$$getOpenedDialog
+    },
+    methods: {
+        openDialog: MLDialog$openDialog,
+        closeDialog: MLDialog$closeDialog,
+        destroy: MLDialog$destroy
     }
 });
-
-componentsRegistry.add(MLDialog);
-
-module.exports = MLDialog;
-
-
-_.extend(MLDialog, {
-    createDialog: MLDialog$$createDialog,
-    openDialog: MLDialog$$openDialog,
-    getOpenedDialog: MLDialog$$getOpenedDialog
-});
-
-
-_.extendProto(MLDialog, {
-    openDialog: MLDialog$openDialog,
-    closeDialog: MLDialog$closeDialog,
-    destroy: MLDialog$destroy
-});
-
 
 /**
  * Creates and returns dialog instance. To create and open at the same time [openDialog](#MLDialog$$openDialog)
@@ -2642,7 +2634,7 @@ _.extendProto(MLDialog, {
  *         button: false or true (default), show close button in the header (won't be shown if there is no header when title is not passed)
  *     buttons: optional array of buttons configurations, where each button config is an object
  *         name:   optional name of component, should be unique and should not be `closeBtn`, if not passed a timestamp based name will be used
- *         type:   button type, will determine button CSS style. Possible types are: defult, primary, success, info, warning, danger, link (map to related bootstrap button styles)
+ *         type:   button type, will determine button CSS style. Possible types are: default, primary, success, info, warning, danger, link (map to related bootstrap button styles)
  *         label:  button label
  *         close:  optional false to prevent this button from closing dialog
  *         result: string with dialog close result that will be passed to dialog subscriber as the first parameter
@@ -2653,7 +2645,7 @@ _.extendProto(MLDialog, {
  *     If neither `text` nor `html` is passed, dialog will not have body section.
  *     If `buttons` are not passed, there will only be OK button.
  *
- * When dialog is closed, the subscriber is called with reault and optional data as defined in buttons configurations.
+ * When dialog is closed, the subscriber is called with result and optional data as defined in buttons configurations.
  * If backdrop is clicked or ESC key is pressed the result will be 'dismissed'
  * If close button in the top right corner is clicked, the result will be 'closed' (default result)
  *
@@ -2717,6 +2709,29 @@ function MLDialog$$createDialog(options, initialize) {
 }
 
 
+/**
+ * Create and show dialog popup
+ *
+ * @param {Object} options object with title, text and buttons. See [createDialog](#MLDialog$$createDialog) for more information.
+ * @param {Function|Object} subscriber optional subscriber function or object that is passed result and optional data. Unless context is defined, dialog will be the context.
+ */
+function MLDialog$$openDialog(options, subscriber, initialize) {
+    var dialog = MLDialog.createDialog(options, initialize);
+    dialog.openDialog(subscriber);
+    return dialog;
+}
+
+
+/**
+ * Returns currently opened dialog
+ *
+ * @return {MLDialog}
+ */
+function MLDialog$$getOpenedDialog() {
+    return openedDialogs[openedDialogs.length - 1];
+}
+
+
 function _dialogButtonClick(button) {
     if (button.close !== false)
         _toggleDialog.call(this, false);
@@ -2747,10 +2762,11 @@ function _onCloseBtnClick() {
 
 
 function _onKeyDown(event) {
-    if (openedDialog
-            && openedDialog._dialog.options.close.keyboard
-            && event.keyCode == 27) // esc key
+    var openedDialog = MLDialog.getOpenedDialog();
+
+    if (openedDialog && openedDialog._dialog.options.close.keyboard && event.keyCode == 27) { // esc key
         openedDialog.closeDialog('dismissed');
+    }
 }
 
 
@@ -2770,21 +2786,6 @@ function _prepareOptions(options) {
 
     return options;
 }
-
-
-/**
- * Create and show dialog popup
- *
- * @param {Object} options object with title, text and buttons. See [createDialog](#MLDialog$$createDialog) for more information.
- * @param {Function|Object} subscriber optional subscriber function or object that is passed result and optional data. Unless context is defined, dialog will be the context.
- */
-function MLDialog$$openDialog(options, subscriber, initialize) {
-    var dialog = MLDialog.createDialog(options, initialize);
-    dialog.openDialog(subscriber);
-    return dialog;
-}
-
-
 
 function _toggleDialog(doShow) {
     doShow = typeof doShow == 'undefined'
@@ -2806,8 +2807,6 @@ function _toggleDialog(doShow) {
     this.el.setAttribute('aria-hidden', !doShow);
     document.body.classList[addRemove]('modal-open');
     this.el.classList[addRemove]('in');
-
-    openedDialog = doShow ? this : undefined;
     this.el[doShow ? 'focus' : 'blur']();
 }
 
@@ -2822,8 +2821,6 @@ function _initializeDialogs() {
 }
 
 
-var openedDialog;
-
 /**
  * Opens dialog instance.
  * Subscriber object should have the same format as the subscriber for the Messenger (although Messenger is not used) - either function or object with subscriber and context properties.
@@ -2833,8 +2830,9 @@ var openedDialog;
 function MLDialog$openDialog(subscriber) {
     check(subscriber, Match.OneOf(Function, { subscriber: Function, context: Match.Any }));
 
-    if (openedDialog)
-        return logger.warn('MLDialog openDialog: can\'t open dialog, another dialog is already open');
+    openedDialogs.forEach(dialog => {
+        _toggleDialog.call(dialog, false);
+    });
 
     this._dialog.subscriber = subscriber;
     _toggleDialog.call(this, true);
@@ -2845,12 +2843,12 @@ function MLDialog$openDialog(subscriber) {
  * Closes dialog instance, optionally passing result and data to dialog subscriber.
  * If no result is passed, 'closed' will be passed to subscriber.
  *
- * @param {String} result dialog result, passed as the first parameter to subcsriber
+ * @param {String} result dialog result, passed as the first parameter to subscriber
  * @param {Any} data optional dialog data, passed as the second parameter to subscriber
  */
 function MLDialog$closeDialog(result, data) {
-    if (! openedDialog)
-        return logger.warn('MLDialog closeDialog: can\'t close dialog, no dialog open');
+    var dialogIndex = openedDialogs.indexOf(this);
+    openedDialogs.splice(dialogIndex, 1);
 
     result = result || 'closed';
 
@@ -2859,19 +2857,9 @@ function MLDialog$closeDialog(result, data) {
 }
 
 
-/**
- * Returns currently opened dialog
- *
- * @return {MLDialog}
- */
-function MLDialog$$getOpenedDialog() {
-    return openedDialog;
-}
-
-
 function MLDialog$destroy() {
     document.removeEventListener('keydown', _onKeyDown);
-    Component.prototype.destroy.apply(this, arguments);
+    MLDialog.destroy.apply(this, arguments);
 }
 
 },{}],25:[function(require,module,exports){
@@ -2990,12 +2978,14 @@ function MLDropdown$toggleMenu(doShow) {
 },{}],26:[function(require,module,exports){
 'use strict';
 
-var formGenerator = require('./generator')
+var restyle = require('restyle')
+    , formGenerator = require('./generator')
     , Component = milo.Component
     , componentsRegistry = milo.registry.components
     , logger = milo.util.logger
     , formRegistry = require('./registry')
-    , async = require('async');
+    , async = require('async')
+    , counter = 1;
 
 
 var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
@@ -3158,6 +3148,23 @@ function MLForm$$createForm(schema, hostObject, formData, template) {
 
     if (schema.css)
         form.css.config = schema.css;
+
+    // allow schema to define confined CSS per form
+    if (schema.style) {
+        // an inspector might change the form element document
+        // if available, wait for its 'formshown' signal
+        var
+            inspector = hostObject.inspector,
+            id = form.el.id || ('ml-form-' + counter++),
+            onFormShown = function () {
+                if (inspector) inspector.off('formshown', onFormShown);
+                form.style = restyle('#' + id, schema.style, [], form.el.ownerDocument);
+                form.el.id = id;
+            }
+        ;
+        if (inspector) inspector.on('formshown', onFormShown);
+        else onFormShown();
+    }
 
     return form;
 
@@ -3485,7 +3492,8 @@ function MLForm$getViewPath(modelPath) {
 
 function MLForm$destroy() {
     Component.prototype.destroy.apply(this, arguments);
-
+    // clean up the style related node, if any
+    if (this.style) this.style.remove();
     this._connectors && this._connectors.forEach(milo.minder.destroyConnector);
     this._connectors = null;
 }
@@ -3783,7 +3791,7 @@ function MLForm$$validatorResponse(valid, reason, reasonCode) {
             : { valid: false, reason: reason, reasonCode: reasonCode };
 }
 
-},{"./generator":27,"./registry":29,"async":32}],27:[function(require,module,exports){
+},{"./generator":27,"./registry":29,"async":32,"restyle":34}],27:[function(require,module,exports){
 'use strict';
 
 var doT = milo.util.doT
@@ -9678,4 +9686,493 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
+},{}],34:[function(require,module,exports){
+/*jslint forin: true, plusplus: true, indent: 2, browser: true, unparam: true */
+/*!
+Copyright (C) 2014-2015 by Andrea Giammarchi - @WebReflection
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+module.exports = (function (O) {
+  'use strict';
+
+  var
+    toString = O.toString,
+    has = O.hasOwnProperty,
+    camelFind = /([a-z])([A-Z])/g,
+    ignoreSpecial = /^@(?:page|font-face)/,
+    isMedia = /^@(?:media)/,
+    isArray = Array.isArray || function (arr) {
+      return toString.call(arr) === '[object Array]';
+    },
+    empty = [],
+    restyle;
+
+  function ReStyle(component, node, css, prefixes, doc) {
+    this.component = component;
+    this.node = node;
+    this.css = css;
+    this.prefixes = prefixes;
+    this.doc = doc;
+  }
+
+  function replace(substitute) {
+    if (!(substitute instanceof ReStyle)) {
+      substitute = restyle(
+        this.component, substitute, this.prefixes, this.doc
+      );
+    }
+    this.remove();
+    ReStyle.call(
+      this,
+      substitute.component,
+      substitute.node,
+      substitute.css,
+      substitute.prefixes,
+      substitute.doc
+    );
+  }
+
+  ReStyle.prototype = {
+    overwrite: replace,
+    replace: replace,
+    set: replace,
+    remove: function () {
+      var node = this.node,
+        parentNode = node.parentNode;
+      if (parentNode) {
+        parentNode.removeChild(node);
+      }
+    },
+    valueOf: function () {
+      return this.css;
+    }
+  };
+
+  function camelReplace(m, $1, $2) {
+    return $1 + '-' + $2.toLowerCase();
+  }
+
+  function create(key, value, prefixes) {
+    var
+      css = [],
+      pixels = typeof value === 'number' ? 'px' : '',
+      k = key.replace(camelFind, camelReplace),
+      i;
+    for (i = 0; i < prefixes.length; i++) {
+      css.push('-', prefixes[i], '-', k, ':', value, pixels, ';');
+    }
+    css.push(k, ':', value, pixels, ';');
+    return css.join('');
+  }
+
+  function property(previous, key) {
+    return previous.length ? previous + '-' + key : key;
+  }
+
+  function generate(css, previous, obj, prefixes) {
+    var key, value, i;
+    for (key in obj) {
+      if (has.call(obj, key)) {
+        if (typeof obj[key] === 'object') {
+          if (isArray(obj[key])) {
+            value = obj[key];
+            for (i = 0; i < value.length; i++) {
+              css.push(
+                create(property(previous, key), value[i], prefixes)
+              );
+            }
+          } else {
+            generate(
+              css,
+              property(previous, key),
+              obj[key],
+              prefixes
+            );
+          }
+        } else {
+          css.push(
+            create(property(previous, key), obj[key], prefixes)
+          );
+        }
+      }
+    }
+    return css.join('');
+  }
+
+  function parse(component, obj, prefixes) {
+    var
+      css = [],
+      at, cmp, special, k, v,
+      same, key, value, i, j;
+    for (key in obj) {
+      if (has.call(obj, key)) {
+        j = key.length;
+        if (!j) key = component.slice(0, -1);
+        at = key.charAt(0) === '@';
+        same = at || !component.indexOf(key + ' ');
+        cmp = at && isMedia.test(key) ? component : '';
+        special = at && !ignoreSpecial.test(key);
+        k = special ? key.slice(1) : key;
+        value = empty.concat(obj[j ? key : '']);
+        for (i = 0; i < value.length; i++) {
+          v = value[i];
+          if (special) {
+            j = prefixes.length;
+            while (j--) {
+              css.push('@-', prefixes[j], '-', k, '{',
+                parse(cmp, v, [prefixes[j]]),
+                '}');
+            }
+            css.push(key, '{', parse(cmp, v, prefixes), '}');
+          } else {
+            css.push(
+              same ? key : component + key,
+              '{', generate([], '', v, prefixes), '}'
+            );
+          }
+        }
+      }
+    }
+    return css.join('');
+  }
+
+  // hack to avoid JSLint shenanigans
+  if ({undefined: true}[typeof document]) {
+    // in node, by default, no prefixes are used
+    restyle = function (component, obj, prefixes) {
+      if (typeof component === 'object') {
+        prefixes = obj;
+        obj = component;
+        component = '';
+      } else {
+        component += ' ';
+      }
+      return parse(component, obj, prefixes || empty);
+    };
+    // useful for different style of require
+    restyle.restyle = restyle;
+  } else {
+    restyle = function (component, obj, prefixes, doc) {
+      if (typeof component === 'object') {
+        doc = prefixes;
+        prefixes = obj;
+        obj = component;
+        c = (component = '');
+      } else {
+        c = component + ' ';
+      }
+      var c, d = doc || (doc = document),
+        css = parse(c, obj, prefixes || (prefixes = restyle.prefixes)),
+        head = d.head ||
+          d.getElementsByTagName('head')[0] ||
+          d.documentElement,
+        node = head.insertBefore(
+          d.createElement('style'),
+          head.lastChild
+        );
+      node.type = 'text/css';
+      // it should have been
+      // if ('styleSheet' in node) {}
+      // but JSLint bothers in that way
+      if (node.styleSheet) {
+        node.styleSheet.cssText = css;
+      } else {
+        node.appendChild(d.createTextNode(css));
+      }
+      return new ReStyle(component, node, css, prefixes, doc);
+    };
+  }
+
+  // bringing animation utility in window-aware world only
+  if (!{undefined: true}[typeof window]) {
+    restyle.animate = (function (g) {
+
+      var
+        rAF = window.requestAnimationFrame ||
+              window.webkitRequestAnimationFrame ||
+              window.mozRequestAnimationFrame ||
+              window.msRequestAnimationFrame ||
+              function (fn) { setTimeout(fn, 10); },
+        liveStyles = {},
+        uid = 'restyle-'.concat(Math.random() * (+new Date()), '-'),
+        uidIndex = 0,
+        animationType,
+        transitionType
+      ;
+
+      switch (true) {
+        case !!g.AnimationEvent:
+          animationType = 'animationend';
+          break;
+        case !!g.WebKitAnimationEvent:
+          animationType = 'webkitAnimationEnd';
+          break;
+        case !!g.MSAnimationEvent:
+          animationType = 'MSAnimationEnd';
+          break;
+        case !!g.OAnimationEvent:
+          animationType = 'oanimationend';
+          break;
+      }
+
+      switch (true) {
+        case !!g.TransitionEvent:
+          transitionType = 'transitionend';
+          break;
+        case !!g.WebKitTransitionEvent:
+          transitionType = 'webkitTransitionEnd';
+          break;
+        case !!g.MSTransitionEvent:
+          transitionType = 'MSTransitionEnd';
+          break;
+        case !!g.OTransitionEvent:
+          transitionType = 'oTransitionEnd';
+          break;
+      }
+
+      restyle.transition = function (el, info, callback) {
+        var
+          transition = info.transition || 'all .3s ease-out',
+          id = el.getAttribute('id'),
+          to = [].concat(info.to),
+          from = update({}, info.from),
+          noID = !id,
+          style = {},
+          currentID,
+          result,
+          live,
+          t
+        ;
+        function drop() {
+          if (transitionType) {
+            el.removeEventListener(transitionType, onTransitionEnd, false);
+          } else {
+            clearTimeout(t);
+            t = 0;
+          }
+        }
+        function next() {
+          style[currentID] = (live.last = update(from, to.shift()));
+          live.css.replace(style);
+          if (transitionType) {
+            el.addEventListener(transitionType, onTransitionEnd, false);
+          } else {
+            t = setTimeout(onTransitionEnd, 10);
+          }
+        }
+        function onTransitionEnd(e) {
+          drop();
+          if (to.length) {
+            rAF(next);
+          } else {
+            if (!e) e = new CustomEvent('transitionend', {detail: result});
+            else e.detail = result;
+            if (callback) callback.call(el, e);
+          }
+        }
+        function update(target, source) {
+          for (var k in source) target[k] = source[k];
+          return target;
+        }
+        if (noID) el.setAttribute('id', id = (uid + uidIndex++).replace('.','-'));
+        currentID = '#' + id;
+        if (liveStyles.hasOwnProperty(id)) {
+          live = liveStyles[id];
+          from = (live.last = update(live.last, from));
+          style[currentID] = from;
+          live.transition.remove();
+          live.css.replace(style);
+        } else {
+          live = liveStyles[id] = {
+            last: (style[currentID] = from),
+            css: restyle(style)
+          };
+        }
+        rAF(function() {
+          style[currentID] = {transition: transition};
+          live.transition = restyle(style);
+          rAF(next);
+        });
+        return (result = {
+          clean: function () {
+            if (noID) el.removeAttribute('id');
+            drop();
+            live.transition.remove();
+            live.css.remove();
+            delete liveStyles[id];
+          },
+          drop: drop
+        });
+      };
+
+      ReStyle.prototype.getAnimationDuration = function (el, name) {
+        for (var
+          chunk, duration,
+          classes = el.className.split(/\s+/),
+          i = classes.length; i--;
+        ) {
+          chunk = classes[i];
+          if (
+            chunk.length &&
+            (new RegExp('\\.' + chunk + '(?:|\\{|\\,)([^}]+?)\\}')).test(this.css)
+          ) {
+            chunk = RegExp.$1;
+            if (
+              (new RegExp(
+                'animation-name:' +
+                name +
+                ';.*?animation-duration:([^;]+?);'
+              )).test(chunk) ||
+              (new RegExp(
+                'animation:\\s*' + name + '\\s+([^\\s]+?);'
+              )).test(chunk)
+            ) {
+              chunk = RegExp.$1;
+              duration = parseFloat(chunk);
+              if (duration) {
+                return duration * (/[^m]s$/.test(chunk) ? 1000 : 1);
+              }
+            }
+          }
+        }
+        return -1;
+      };
+
+      ReStyle.prototype.getTransitionDuration = function (el) {
+        var
+          cs = getComputedStyle(el),
+          duration = cs.getPropertyValue('transition-duration') ||
+                     /\s(\d+(?:ms|s))/.test(
+                       cs.getPropertyValue('transition')
+                     ) && RegExp.$1
+        ;
+        return parseFloat(duration) * (/[^m]s$/.test(duration) ? 1000 : 1);
+      };
+
+      ReStyle.prototype.transit = transitionType ?
+        function (el, callback) {
+          function onTransitionEnd(e) {
+            drop();
+            callback.call(el, e);
+          }
+          function drop() {
+            el.removeEventListener(transitionType, onTransitionEnd, false);
+          }
+          el.addEventListener(transitionType, onTransitionEnd, false);
+          return {drop: drop};
+        } :
+        function (el, callback) {
+          var i = setTimeout(callback, this.getTransitionDuration(el));
+          return {drop: function () {
+            clearTimeout(i);
+          }};
+        }
+      ;
+
+      ReStyle.prototype.animate = animationType ?
+        function animate(el, name, callback) {
+          function onAnimationEnd(e) {
+            if (e.animationName === name) {
+              drop();
+              callback.call(el, e);
+            }
+          }
+          function drop() {
+            el.removeEventListener(animationType, onAnimationEnd, false);
+          }
+          el.addEventListener(animationType, onAnimationEnd, false);
+          return {drop: drop};
+        } :
+        function animate(el, name, callback) {
+          var i, drop, duration = this.getAnimationDuration(el, name);
+          if (duration < 0) {
+            drop = O;
+          } else {
+            i = setTimeout(
+              function () {
+                callback.call(el, {
+                  type: 'animationend',
+                  animationName: name,
+                  currentTarget: el,
+                  target: el,
+                  stopImmediatePropagation: O,
+                  stopPropagation: O,
+                  preventDefault: O
+                });
+              },
+              duration
+            );
+            drop = function () {
+              clearTimeout(i);
+            };
+          }
+          return {drop: drop};
+        }
+      ;
+    }(window));
+  }
+
+  restyle.customElement = function (name, constructor, proto) {
+    var
+      key,
+      ext = 'extends',
+      prototype = Object.create(constructor.prototype),
+      descriptor = {prototype: prototype},
+      has = descriptor.hasOwnProperty,
+      isExtending = proto && has.call(proto, ext)
+    ;
+    if (isExtending) {
+      descriptor[ext] = proto[ext];
+    }
+    for (key in proto) {
+      if (key !== ext) {
+        prototype[key] = (
+          key === 'css' ?
+            restyle(
+              isExtending ?
+               (proto[ext] + '[is=' + name + ']') :
+               name,
+              proto[key]
+            ) :
+            proto[key]
+        );
+      }
+    }
+    return document.registerElement(name, descriptor);
+  };
+
+  restyle.prefixes = [
+    'webkit',
+    'moz',
+    'ms',
+    'o'
+  ];
+
+  return restyle;
+
+/**
+ * not sure if TODO since this might be prependend regardless the parser
+ *  @namespace url(http://www.w3.org/1999/xhtml);
+ *  @charset "UTF-8";
+ */
+
+}({}));
 },{}]},{},[30]);
