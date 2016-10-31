@@ -32,6 +32,7 @@ describe('Dialog', function() {
         button.events.postMessage('click');
         _.defer(function() {
             assert(clicked);
+            dialog.closeDialog();
             dialog.destroy();
             done();
         });
@@ -43,4 +44,36 @@ describe('Dialog', function() {
             });
         }
     });
+
+    it('should open and close', (done) => {
+        const dialog = createDialog("dialog");
+
+        dialog.openDialog((result) => {
+            done();
+            dialog.closeDialog();
+            assert(document.querySelector('#dialog') == null);
+        });
+
+        assert(document.querySelector('#dialog') != null);
+
+        document.querySelector('.close').click();
+    });
+
+    it('should not allow multiple dialogs to be open', () => {
+        const dialog = createDialog("dialog");
+        const dialog2 = createDialog("dialog2");
+
+        dialog.openDialog(() => {});
+        dialog2.openDialog(() => {});
+
+        assert(document.querySelector('#dialog') != null);
+        assert(document.querySelector('#dialog2') == null);
+    });
 });
+
+function createDialog(id) {
+    return MLDialog.createDialog({
+        title: 'Dialog title',
+        html: `<p id="${id}">Dialog body</p>`
+    });
+}
