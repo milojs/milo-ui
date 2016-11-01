@@ -2859,7 +2859,7 @@ function MLDialog$closeDialog(result, data) {
 
 function MLDialog$destroy() {
     document.removeEventListener('keydown', _onKeyDown);
-    MLDialog.destroy.apply(this, arguments);
+    MLDialog.super.destroy.apply(this, arguments);
 }
 
 },{}],25:[function(require,module,exports){

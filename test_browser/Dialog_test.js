@@ -59,7 +59,7 @@ describe('Dialog', function() {
         document.querySelector('.close').click();
     });
 
-    it('should not allow multiple dialogs to be open', () => {
+    it('should allow multiple dialogs to be open', () => {
         const dialog = createDialog("dialog");
         const dialog2 = createDialog("dialog2");
 
@@ -67,7 +67,7 @@ describe('Dialog', function() {
         dialog2.openDialog(() => {});
 
         assert(document.querySelector('#dialog') != null);
-        assert(document.querySelector('#dialog2') == null);
+        assert(document.querySelector('#dialog2') != null);
     });
 });
 
