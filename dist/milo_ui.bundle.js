@@ -2733,11 +2733,17 @@ function MLDialog$$getOpenedDialog() {
 
 
 function _dialogButtonClick(button) {
-    if (button.close !== false)
-        _toggleDialog.call(this, false);
-
     var data = _.result(button.data, this, button);
-    _dispatchResult.call(this, button.result, data);
+
+    if (button.close !== false) {
+        this.closeDialog(button.result, data); 
+    } else {
+        _dispatchResult.call(this, button.result, data);
+    }
+
+
+
+
 }
 
 
@@ -2801,8 +2807,7 @@ function _toggleDialog(doShow) {
         _initializeDialogs();
 
     document.body[appendRemove](this.el);
-    if (backdropEl)
-        document.body[appendRemove](backdropEl);
+
     this.dom.toggle(doShow);
     this.el.setAttribute('aria-hidden', !doShow);
     document.body.classList[addRemove]('modal-open');
@@ -2834,6 +2839,8 @@ function MLDialog$openDialog(subscriber) {
         _toggleDialog.call(dialog, false);
     });
 
+    openedDialogs.push(this);
+
     this._dialog.subscriber = subscriber;
     _toggleDialog.call(this, true);
 }
@@ -2853,6 +2860,13 @@ function MLDialog$closeDialog(result, data) {
     result = result || 'closed';
 
     _toggleDialog.call(this, false);
+
+    var parentDialog = openedDialogs[openedDialogs.length - 1];
+
+    if (parentDialog) {
+        _toggleDialog.call(parentDialog, true);
+    }
+
     _dispatchResult.call(this, result, data);
 }
 
