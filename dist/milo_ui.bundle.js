@@ -2736,14 +2736,10 @@ function _dialogButtonClick(button) {
     var data = _.result(button.data, this, button);
 
     if (button.close !== false) {
-        this.closeDialog(button.result, data); 
+        this.closeDialog(button.result, data);
     } else {
         _dispatchResult.call(this, button.result, data);
     }
-
-
-
-
 }
 
 
@@ -2798,15 +2794,20 @@ function _toggleDialog(doShow) {
                 ? ! this._dialog.visible
                 : !! doShow;
 
-    var addRemove = doShow ? 'add' : 'remove'
-        , appendRemove = doShow ? 'appendChild' : 'removeChild';
+    var addRemove = doShow ? 'add' : 'remove';
+    var appendRemove = doShow ? 'appendChild' : 'removeChild';
 
     this._dialog.visible = doShow;
 
-    if (doShow && ! dialogsInitialized)
+    if (doShow && ! dialogsInitialized) {
         _initializeDialogs();
+    }
 
     document.body[appendRemove](this.el);
+
+    if (backdropEl) {
+        document.body[appendRemove](backdropEl);
+    }
 
     this.dom.toggle(doShow);
     this.el.setAttribute('aria-hidden', !doShow);
