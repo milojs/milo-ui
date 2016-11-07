@@ -2836,7 +2836,7 @@ function _initializeDialogs() {
 function MLDialog$openDialog(subscriber) {
     check(subscriber, Match.OneOf(Function, { subscriber: Function, context: Match.Any }));
 
-    openedDialogs.forEach(dialog => {
+    openedDialogs.forEach(function(dialog) {
         _toggleDialog.call(dialog, false);
     });
 
