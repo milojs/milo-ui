@@ -3172,12 +3172,11 @@ function MLForm$$createForm(schema, hostObject, formData, template) {
             inspector = hostObject.inspector,
             id = form.el.id || ('ml-form-' + counter++),
             onFormShown = function () {
-                if (inspector) inspector.off('formshown', onFormShown);
                 form.style = restyle('#' + id, schema.style, [], form.el.ownerDocument);
                 form.el.id = id;
             }
         ;
-        if (inspector) inspector.on('formshown', onFormShown);
+        if (inspector) inspector.once('formshown', onFormShown);
         else onFormShown();
     }
 
@@ -3566,6 +3565,9 @@ function processSchema(comp, schema, viewPath, formViewPaths, formModelPaths, mo
     if (schema.messages)
         _processSchemaMessages.call(this, comp, schema.messages);
 
+    if (schema.subscriptions)
+        _processSchemaSubscriptions.call(this, comp, schema.subscriptions);
+
     var itemRule = schema.type && formRegistry.get(schema.type);
     var hostObject = this.getHostObject();
 
@@ -3764,6 +3766,24 @@ function _processSchemaMessages(comp, messages) {
             }
         });
         facet.onConfigMessages(facetMessages);
+    });
+}
+
+
+/**
+ * Subscribes to messages on component model as defined in schema
+ */
+function _processSchemaSubscriptions(comp, subscriptions) {
+    var form = this;
+    _.eachKey(subscriptions, function (subscriber, name) {
+        var context = typeof subscriber == 'object' ? subscriber.context : null;
+        if (context && context != 'facet' && context != 'owner') {
+            subscriber = Object.assign(
+                {}, subscriber,
+                {context: getFunctionContext.call(form, context)}
+            );
+        }
+        form.model.on(name, subscriber);
     });
 }
 
