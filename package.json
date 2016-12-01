@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "async": "^2.0.1",
-    "restyle": "^0.5.1"
+    "restyle": "^0.6.0"
   },
   "devDependencies": {
     "brfs": "^1.4.3",
