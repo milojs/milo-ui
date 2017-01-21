@@ -67,6 +67,29 @@ function getFormSchema() {
                     toModel: function (val) {
                         return val && val.toUpperCase()
                     }
+                },
+
+                // Event subscriptions go in here
+                messages: {
+
+                    // these are native events
+                    events: {
+
+                        // subscriber can be a function, or an object that
+                        // configures the context of the subscriber like so
+                        'input': { context: 'owner', subscriber: function (e) {
+                            console.log(event);
+                        }}
+                    },
+
+                    // these are data changes
+                    data: {
+                        // empty string because we are subscribing to this
+                        // level, not deeper, otherwise '.prop'
+                        '': function (msg, data) {
+                            console.log(msg, data);
+                        }
+                    }
                 }
             },
 
@@ -114,26 +137,18 @@ function getFormSchema() {
             // Clears floats
             { type: 'clear' },
 
-//https://raw.githubusercontent.com/milojs/slack-clone/master/client/taglist.json
             // Combolist - Type ahead list composition
             {
                 type: 'combolist',
                 label: 'Combo list',
                 modelPath: '.comboList',
-                comboOptions: [
-                    { label: 'eclipse1', value: 'eclipse1' },
-                    { label: 'string2', value: 'string2' },
-                    { label: 'windows3', value: 'windows3' },
-                    { label: 'eclipse4', value: 'eclipse4' },
-                    { label: 'string5', value: 'string5' },
-                    { label: 'windows6', value: 'windows6' },
-                    { label: 'eclipse7', value: 'eclipse7' },
-                    { label: 'string8', value: 'string8' },
-                    { label: 'windows9', value: 'windows9' },
-                    { label: 'eclipse10', value: 'eclipse10' },
-                    { label: 'string11', value: 'string11' },
-                    { label: 'windows12', value: 'windows12' }
-                ],
+
+                // options can also be a promise that returns array of objects
+                comboOptions: fetch('https://jsonplaceholder.typicode.com/users')
+                    .then((res) => res.json())
+                    .then((data) => data.map((u) => ({label: u.name, value: u.username}))),
+
+                // This translation transforms list of objects to list of strings
                 translate: {
                     toModel: function (val) {
                         return val && val.map(function (v) { return v.value; });
@@ -141,16 +156,26 @@ function getFormSchema() {
                 }
             },
 
+            // Time type
             {
                 type: 'time',
                 label: 'Time',
                 modelPath: '.time'
             },
 
+            // Date type
             {
                 type: 'date',
                 label: 'Date',
                 modelPath: '.date'
+            },
+
+            // Any native input type can be realised with inputType option
+            {
+                type: 'input',
+                label: 'Colour',
+                inputType: 'color',
+                modelPath: '.color'
             },
 
             // Checkbox type
