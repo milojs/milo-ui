@@ -3,7 +3,6 @@ body, html {
     margin: 0px;
     font-family: sans-serif;
     height: 100%;
-    overflow: hidden;
 }
 
 h2 {
@@ -29,7 +28,7 @@ button {
 }
 
 
-input:not([type="radio"]), textarea {
+input:not([type="radio"]), textarea, select {
     font-size: 1.2em;
     padding: 0.5em;
     color: #454545;
@@ -179,10 +178,9 @@ input:not([type="radio"]), textarea {
     padding-bottom: 8px;
 }
 
-.form-group label {
+.form-group label, .ml-ui-check-group {
     width: 160px;
     display: block;
-    text-align: right;
     padding-right: 10px;
     float: left;
     padding-top: 14px;
@@ -205,7 +203,7 @@ input:not([type="radio"]), textarea {
     float: none;
 }
 
-.form-group > input, .form-group .ml-ui-combo-list {
+.form-group > input, .form-group > textarea, .form-group select, .form-group .ml-ui-combo-list {
     width: calc(100% - 180px);
     display: inline-block;
 }
@@ -261,6 +259,28 @@ input:not([type="radio"]), textarea {
     content: "x";
     cursor: pointer;
     color: red;
+}
+
+.ml-check-group-option {
+    display: block;
+}
+
+.ml-check-group-option label {
+    width: auto;
+    text-align: left;
+}
+
+.ml-check-group-option input {
+    width: auto;
+    text-align: left;
+}
+
+.ml-check-group-all label {
+    width: 61px;
+}
+
+.ml-ui-group > label {
+    font-size: 1.4em;
 }
 
 .cc-clear {

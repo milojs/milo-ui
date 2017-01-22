@@ -18,7 +18,7 @@ function getFormSchema() {
         // Css class rules based on data changes
         css: {
             classes: {
-                
+                '.textInput': 'css-$'
             }
         },
 
@@ -137,6 +137,21 @@ function getFormSchema() {
             // Clears floats
             { type: 'clear' },
 
+            // Supercombo, can take thousands of items
+            {
+                type: 'supercombo',
+                label: 'Combo label',
+                modelPath: '.combo',
+
+                // Combo options list
+                comboOptions: [
+                    { label: 'select', value: '' },
+                    { label: 'Option 1', value: 'opt1' },
+                    { label: 'Option 2', value: 'opt2' },
+                    { label: 'Option 3', value: 'opt3' }
+                ]
+            },
+
             // Combolist - Type ahead list composition
             {
                 type: 'combolist',
@@ -145,8 +160,8 @@ function getFormSchema() {
 
                 // options can also be a promise that returns array of objects
                 comboOptions: fetch('https://jsonplaceholder.typicode.com/users')
-                    .then((res) => res.json())
-                    .then((data) => data.map((u) => ({label: u.name, value: u.username}))),
+                    .then(r => r.json())
+                    .then(d => d.map((u) => ({label: u.name, value: u.username}))),
 
                 // This translation transforms list of objects to list of strings
                 translate: {
@@ -184,6 +199,47 @@ function getFormSchema() {
                 label: 'Checkbox',
                 wrapCssClass: 'checkbox',
                 modelPath: '.isCheckbox'
+            },
+
+            // Check box group with select all option
+            {
+                type: 'checkgroup',
+                label: 'Check group',
+                modelPath: '.checkGroup',
+                selectAll: true,
+                checkOptions: [
+                    { label: 'Option 1', value: 'opt1' },
+                    { label: 'Option 2', value: 'opt2' },
+                    { label: 'Option 3', value: 'opt3' }
+                ]
+            },
+
+            // Non input items
+
+            // Clear
+            {
+                type: 'clear'
+            },
+
+            // Groups
+            {
+                type: 'group',
+                label: 'A group',
+                items: [
+                    { type: 'input', label: 'Sub item 1', modelPath: '.group.item1' },
+                    { type: 'input', label: 'Sub item 2', modelPath: '.group.item2' },
+                    { type: 'input', label: 'Sub item 3', modelPath: '.group.item3' }
+                ]
+            },
+
+            // Wrapper, similar to group but with simpler markup and no title
+            {
+                type: 'wrapper',
+                items: [
+                    { type: 'input', label: 'Wrap item 1', modelPath: '.wrapper.item1' },
+                    { type: 'input', label: 'Wrap item 2', modelPath: '.wrapper.item2' },
+                    { type: 'input', label: 'Wrap item 3', modelPath: '.wrapper.item3' }
+                ]
             }
         ]
     };
