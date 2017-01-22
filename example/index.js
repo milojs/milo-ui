@@ -82,7 +82,9 @@ function getFormSchema() {
                         }}
                     },
 
-                    // these are data changes
+                    // these are data changes, in general it is better to subscribe
+                    // to the form model above like this
+                    // form.model.m.on('.prop', subscriber)
                     data: {
                         // empty string because we are subscribing to this
                         // level, not deeper, otherwise '.prop'
