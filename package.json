@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "brfs": "^1.4.3",
-    "browserify": "^13.1.0",
+    "browserify": "^13.1.1",
     "eslintify": "^2.1.0",
     "grunt": "^1.0.1",
     "grunt-browserify": "^5.0.0",
