@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint-env browser, commonjs, node, mocha */
-
 var assert = require('assert')
     , MLDialog = milo.registry.components.get('MLDialog');
 
@@ -66,8 +64,8 @@ describe('Dialog', function() {
         dialog.openDialog(() => {});
         dialog2.openDialog(() => {});
 
-        assert(document.querySelector('#dialog') != null);
-        assert(document.querySelector('#dialog2') != null);
+        assert(document.querySelector('#dialog') == null, 'first dialog in DOM');
+        assert(document.querySelector('#dialog2') != null, 'second dialog in DOM');
     });
 });
 

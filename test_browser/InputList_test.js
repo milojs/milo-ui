@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint-env browser, commonjs, node, mocha */
-
 var fs = require('fs')
     , assert = require('assert')
     , Model = milo.Model;
@@ -75,7 +73,7 @@ describe('InputList UI', function() {
             });
             callback(testData[index].label, testData[index]);
         });
-        
+
         var input = getInputComponent(scope);
         var button = getButtonComponent(scope);
         var list = getListComponentList(scope);
@@ -114,7 +112,7 @@ describe('InputList UI', function() {
                 deleteBtn.el.dispatchEvent(new Event('click'));
                 cloneTest.splice(value, 1);
             });
-            
+
 
             _.deferTicks(function() {
 
@@ -144,7 +142,7 @@ describe('InputList UI', function() {
             getListComponent(scope),
             scope.myList
         ];
-        
+
         _.deferTicks(function() {
             //get data
             assert.deepEqual(scope.inputList.model.get(), testData.slice());
@@ -195,7 +193,7 @@ describe('InputList UI', function() {
                 cloneTest.push(newRow);
                 scope.inputList.model.push(newRow);
             });
-           
+
             _.deferTicks(function() {
                 testEqualData();
 

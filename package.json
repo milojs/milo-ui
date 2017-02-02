@@ -18,8 +18,14 @@
   ],
   "main": "lib/milo_ui.js",
   "scripts": {
-    "test": "grunt test"
+    "lint": "eslint lib test_browser",
+    "test": "echo 'No tests'",
+    "test-browser": "node_modules/.bin/grunt tests",
+    "posttest": "npm run lint"
   },
+  "pre-commit": [
+    "lint"
+  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/milojs/milo-ui.git"
@@ -35,20 +41,20 @@
   },
   "devDependencies": {
     "brfs": "^1.4.3",
-    "browserify": "^13.1.0",
-    "eslintify": "^2.1.0",
+    "browserify": "^14.0.0",
+    "eslint": "^3.14.1",
     "grunt": "^1.0.1",
     "grunt-browserify": "^5.0.0",
     "grunt-contrib-uglify": "^2.0.0",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-karma": "^2.0.0",
-    "grunt-mocha-test": "^0.13.2",
-    "karma": "^1.3.0",
+    "karma": "^1.4.1",
     "karma-chrome-launcher": "^2.0.0",
     "karma-mocha": "^1.1.1",
     "karma-spec-reporter": "0.0.26",
-    "karma-webdriver-launcher": "^1.0.4",
+    "karma-webdriver-launcher": "^1.0.5",
     "milojs": "^1.0.4",
-    "mocha": "^3.0.2"
+    "mocha": "^3.2.0",
+    "pre-commit": "^1.2.2"
   }
 }

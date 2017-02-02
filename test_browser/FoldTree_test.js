@@ -1,6 +1,6 @@
 'use strict';
 
-/* eslint-env browser, commonjs, node, mocha */
+/* eslint indent: 0 */
 
 var fs = require('fs')
     , assert = require('assert');
@@ -11,7 +11,7 @@ describe('Foldtree UI', function() {
         testData = { items: [
             { label: 'Jason Green', id: '001', items:
                 [
-                    { label: 'child01', id: '005', items: 
+                    { label: 'child01', id: '005', items:
                         [
                             { label: 'subchild01', id: '006', item: []}
                         ]
@@ -21,7 +21,7 @@ describe('Foldtree UI', function() {
             { label: 'Luis Fetzner', id: '002'},
             { label: 'Tom Burnell', id: '003', items:
                 [
-                    { label: 'child02', id: '007', items: 
+                    { label: 'child02', id: '007', items:
                         [
                             { label: 'subchild02', id: '008', item: []}
                         ]
