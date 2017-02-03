@@ -74,8 +74,9 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-karma');
 
-    grunt.registerTask('tests', ['browserify', 'karma']);
-    grunt.registerTask('build', ['test', 'browserify', 'uglify']);
+    grunt.registerTask('tests', ['karma']);
+    grunt.registerTask('karma', ['browserify']);
+    grunt.registerTask('build', ['browserify', 'uglify']);
     grunt.registerTask('default', ['build', 'watch']);
     grunt.registerTask('skiptest', ['browserify', 'watch']);
 };

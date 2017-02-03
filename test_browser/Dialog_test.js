@@ -67,6 +67,25 @@ describe('Dialog', function() {
         assert(document.querySelector('#dialog') == null, 'first dialog in DOM');
         assert(document.querySelector('#dialog2') != null, 'second dialog in DOM');
     });
+
+    it('should allow more than two dialog', () => {
+        const dialog = createDialog("dialog");
+        const dialog2 = createDialog("dialog2");
+        const dialog3 = createDialog("dialog3");
+
+        dialog.openDialog(() => {});
+        dialog2.openDialog(() => {});
+        dialog3.openDialog(() => {});
+
+        // Only the last dialog is in DOM
+        assert(document.querySelector('#dialog3') != null, 'third dialog in DOM');
+        // Closing it should show the second dialog
+        dialog3.closeDialog();
+        assert(document.querySelector('#dialog2') != null, 'second dialog in DOM');
+        // and the first
+        dialog2.closeDialog();
+        assert(document.querySelector('#dialog') != null, 'first dialog in DOM');
+    });
 });
 
 function createDialog(id) {
