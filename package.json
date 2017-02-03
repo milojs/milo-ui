@@ -20,7 +20,7 @@
   "scripts": {
     "lint": "eslint lib test_browser",
     "test": "echo 'No tests'",
-    "test-browser": "node_modules/.bin/grunt tests",
+    "test-browser": "node_modules/.bin/grunt karma && node_modules/.bin/karma start",
     "posttest": "npm run lint"
   },
   "pre-commit": [
