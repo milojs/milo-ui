@@ -1,21 +1,14 @@
+'use strict';
 module.exports = function(grunt) {
 
     grunt.initConfig({
-        mochaTest: {
-            test: {
-                options: {
-                    reporter: 'spec'
-                },
-                src: 'test/**/*.js'
-            }
-        },
         browserify: {
             milo_ui: {
                 files: {
                     'dist/milo_ui.bundle.js': 'lib/milo_ui.js'
                 },
                 options: {
-                    transform: ['eslintify', 'brfs'],
+                    transform: ['brfs'],
                     debug: true
                 }
             },
@@ -26,7 +19,7 @@ module.exports = function(grunt) {
                     dest: '.tmp-test-browser'
                 }],
                 options: {
-                    transform: ['eslintify', 'brfs']
+                    transform: ['brfs']
                 }
             }
         },
@@ -79,13 +72,9 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-browserify');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-mocha-test');
     grunt.loadNpmTasks('grunt-karma');
 
-    grunt.registerTask('test', 'mochaTest');
-    grunt.registerTask('karma', 'browserify:tests');
-    grunt.registerTask('karmatest', 'karma');
-    grunt.registerTask('tests', ['mochaTest', 'browserify', 'karmatest']);
+    grunt.registerTask('tests', ['browserify', 'karma']);
     grunt.registerTask('build', ['test', 'browserify', 'uglify']);
     grunt.registerTask('default', ['build', 'watch']);
     grunt.registerTask('skiptest', ['browserify', 'watch']);
