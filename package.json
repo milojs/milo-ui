@@ -36,7 +36,7 @@
     "url": "https://github.com/milojs/milo-ui/issues"
   },
   "dependencies": {
-    "async": "^2.0.1",
+    "async": "^2.4.0",
     "restyle": "^0.7.0"
   },
   "devDependencies": {
