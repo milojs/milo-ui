@@ -1,7 +1,7 @@
 'use strict';
 
 const MLForm = milo.registry.components.get('MLForm');
-const form = MLForm.createForm(getFormSchema());
+const form = MLForm.createForm(getFormSchema(), this);
 const dataEl = document.getElementById('data');
 const formEl = document.getElementById('form');
 
@@ -15,10 +15,18 @@ form.model.m.on('***', function () {
 
 function getFormSchema() {
     return {
+        // You can define css styles here and use them below in your form
+        // elements with the wrapCssClass property
+        style: {
+            '.some-class label': {
+                color: 'blue'
+            }
+        },
+
         // Css class rules based on data changes
         css: {
             classes: {
-                '.textInput': 'css-$'
+                '.textArea': 'css-$'
             }
         },
 
