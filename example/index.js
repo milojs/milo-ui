@@ -1,7 +1,7 @@
 'use strict';
 
 const MLForm = milo.registry.components.get('MLForm');
-const form = MLForm.createForm(getFormSchema(), this);
+const form = MLForm.createForm(getFormSchema());
 const dataEl = document.getElementById('data');
 const formEl = document.getElementById('form');
 
