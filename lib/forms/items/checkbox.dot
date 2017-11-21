@@ -5,4 +5,5 @@
     {{? it.disabled }}disabled {{?}}
     class="{{= it.item.itemCssClass || ''}}">
   <label for="{{= it.compName }}">{{= it.item.label}}</label>
+  {{# def.partials.tooltip }}
 </div>

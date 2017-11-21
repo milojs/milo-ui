@@ -1,5 +1,6 @@
 {{# def.partials.formGroup }}
     {{# def.partials.label }}
+    {{# def.partials.tooltip }}
     <span class="custom-select">
         <select ml-bind="MLSelect:{{= it.compName }}"
                 {{? it.disabled }}disabled {{?}}

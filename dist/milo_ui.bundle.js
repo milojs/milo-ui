@@ -3179,21 +3179,73 @@ function MLForm$$createForm(schema, hostObject, formData, template) {
     if (schema.css)
         form.css.config = schema.css;
 
-    // allow schema to define confined CSS per form
-    if (schema.style) {
-        // an inspector might change the form element document
-        // if available, wait for its 'formshown' signal
-        var
-            inspector = hostObject && hostObject.inspector,
-            id = form.el.id || ('ml-form-' + counter++),
-            onFormShown = function () {
-                form.style = restyle('#' + id, schema.style, [], form.el.ownerDocument);
-                form.el.id = id;
-            };
+    // an inspector might change the form element document
+    // if available, wait for its 'formshown' signal
+    const inspector = hostObject && hostObject.inspector,
+        id = form.el.id || ('ml-form-' + counter++),
+        onFormShown = function () {
+            // allow schema to define confined CSS per form
+            form.style = restyle('#' + id, Object.assign({
+                '.centered-tooltip .form-tooltip-content-wrapper': {
+                    left: '50% !important',
+                    transform: 'translateX(-50%)'
+                },
+                '.form-tooltip:hover .form-tooltip-anchor-bottom': {
+                    display: 'inline-block'
+                },
+                '.form-tooltip:hover .form-tooltip-content-wrapper': {
+                    display: 'inline-block'
+                },
+                '.form-tooltip': {
+                    cursor: 'help',
+                    display: 'inline-block'
+                },
+                '.form-tooltip-anchor': {
+                    position: 'relative',
+                    'z-index': '-1'
+                },
+                '.form-tooltip-anchor-bottom': {
+                    display: 'none',
+                    position: 'absolute',
+                    left: '0.22em',
+                    top: '1em',
+                    'letter-spacing': '-0.5',
+                    'color': '#4D4D4D'
+                },
+                '.form-tooltip-content-wrapper': {
+                    display: 'none',
+                    position: 'absolute',
+                    left: '10px',
+                    'max-width': 'calc(100% - 20px)',
+                    'z-index': '999'
+                },
+                '.form-tooltip-content': {
+                    'font-weight': 'bold',
+                    color: '#ffffff',
+                    'min-width': '100px',
+                    width: '100%',
+                    'z-index': '999',
+                    background: '#4D4D4D',
+                    'margin-top': '5px',
+                    padding: '10px 15px'
+                }
+            }, schema.style || {}), [], form.el.ownerDocument);
+            form.el.id = id;
+            form.el.querySelectorAll('.form-tooltip').forEach(function (tooltip) {
+                const tooltipbb = tooltip.getBoundingClientRect();
+                const wrapper = tooltip.querySelector('.form-tooltip-content-wrapper');
+                wrapper.style.display = 'inline-block';
+                const wrapbb = wrapper.getBoundingClientRect();
+                wrapper.setAttribute('style', undefined);
+                if (!(tooltipbb.right < wrapbb.right)) {
+                    tooltip.classList.add('centered-tooltip');
+                    wrapper.style.marginLeft = (wrapbb.right - tooltipbb.right) + 'px';
+                }
+            });
+        };
 
-        if (inspector) inspector.once('formshown', onFormShown);
-        else onFormShown();
-    }
+    if (inspector) inspector.once('formshown', onFormShown);
+    else onFormShown();
 
     return form;
 
@@ -3201,7 +3253,7 @@ function MLForm$$createForm(schema, hostObject, formData, template) {
     function _createFormComponent(FormClass) {
         template = template || formGenerator(schema);
         return FormClass.createOnElement(undefined, template);
-    }
+    };
 
     function _processFormSchema() {
         // model paths translation rules
@@ -3860,7 +3912,8 @@ module.exports = formGenerator;
 
 var partials = {
     label: "{{? it.item.label }}\n    <label>{{= it.item.label}}</label>\n{{?}}\n",
-    formGroup: "<div\n    {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}\n    class=\"form-group{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\"\n>\n"
+    formGroup: "<div\n    {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}\n    class=\"form-group{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\"\n>\n",
+    tooltip: "{{? it.item.tooltip }}\n  <div class=\"form-tooltip\">\n      <div class=\"form-tooltip-anchor\">\n          {{=it.item.tooltipAnchor || '?'}}\n          <span class=\"form-tooltip-anchor-bottom\">◢◣</span>\n      </div>\n      <div class=\"form-tooltip-content-wrapper\">\n          <div class=\"form-tooltip-content\">\n              {{= it.item.tooltip }}\n          </div>\n      </div>\n  </div>\n{{?}}\n"
 };
 
 var dotDef = {
@@ -3921,12 +3974,12 @@ var formRegistry = require('./registry');
 
 var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{# def.partials.label }}\n    {{= it.formGenerator(it.item) }}\n</div>\n"
     , wrapper_dot = "<span ml-bind=\"MLWrapper:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{= it.formGenerator(it.item) }}\n</span>\n"
-    , select_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <span class=\"custom-select\">\n        <select ml-bind=\"MLSelect:{{= it.compName }}\"\n                {{? it.disabled }}disabled {{?}}\n                {{? it.multiple }}multiple {{?}}\n                class=\"form-control\">\n        </select>\n    </span>\n</div>\n"
-    , input_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"{{= it.item.inputType || 'text' }}\"\n            {{? it.item.inputName }}name=\"{{= it.item.inputName }}\"{{?}}\n            ml-bind=\"MLInput:{{= it.compName }}\"\n            {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-control\">\n</div>\n"
-    , textarea_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <textarea ml-bind=\"MLTextarea:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"form-control\"\n        {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}></textarea>\n</div>"
+    , select_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <span class=\"custom-select\">\n        <select ml-bind=\"MLSelect:{{= it.compName }}\"\n                {{? it.disabled }}disabled {{?}}\n                {{? it.multiple }}multiple {{?}}\n                class=\"form-control\">\n        </select>\n    </span>\n</div>\n"
+    , input_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <input type=\"{{= it.item.inputType || 'text' }}\"\n            {{? it.item.inputName }}name=\"{{= it.item.inputName }}\"{{?}}\n            ml-bind=\"MLInput:{{= it.compName }}\"\n            {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-control\">\n</div>\n"
+    , textarea_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <textarea ml-bind=\"MLTextarea:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"form-control\"\n        {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}></textarea>\n</div>\n"
     , button_dot = "<div {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}class=\"btn-toolbar{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\">\n    <button ml-bind=\"MLButton:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"btn btn-default {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}\">\n        {{= it.item.label || '' }}\n    </button>\n</div>\n"
     , hyperlink_dot = "{{# def.partials.formGroup }}\n    <a {{? it.item.href}}href=\"{{= it.item.href }}\"{{?}}\n        {{? it.item.target}}target=\"{{= it.item.target }}\"{{?}}   \n        ml-bind=\"MLHyperlink:{{= it.compName }}\" \n        class=\"hyperlink hyperlink-default\">\n        {{= it.item.label || '' }}\n    </a>\n</div>"
-    , checkbox_dot = "{{# def.partials.formGroup }}\n  <input type=\"checkbox\"\n    id=\"{{= it.compName }}\"\n    ml-bind=\"MLInput:{{= it.compName }}\"\n    {{? it.disabled }}disabled {{?}}\n    class=\"{{= it.item.itemCssClass || ''}}\">\n  <label for=\"{{= it.compName }}\">{{= it.item.label}}</label>\n</div>\n"
+    , checkbox_dot = "{{# def.partials.formGroup }}\n  <input type=\"checkbox\"\n    id=\"{{= it.compName }}\"\n    ml-bind=\"MLInput:{{= it.compName }}\"\n    {{? it.disabled }}disabled {{?}}\n    class=\"{{= it.item.itemCssClass || ''}}\">\n  <label for=\"{{= it.compName }}\">{{= it.item.label}}</label>\n  {{# def.partials.tooltip }}\n</div>\n"
     , list_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <ul ml-bind=\"MLList:{{= it.compName }}\"\n            {{? it.disabled }}disabled {{?}}>\n        <li ml-bind=\"MLListItem:itemSample\" class=\"list-item\">\n            <span ml-bind=\"[data]:label\"></span>\n            {{? it.editBtn }}<button ml-bind=\"[events]:editBtn\">edit</button>{{?}}\n            <button ml-bind=\"[events]:deleteBtn\" class=\"btn btn-default glyphicon glyphicon-remove\"> </button>\n        </li>\n    </ul>\n</div>\n"
     , time_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"time\"\n            ml-bind=\"MLTime:{{= it.compName }}\"\n            class=\"form-control\">\n</div>"
     , date_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"date\"\n            ml-bind=\"MLDate:{{= it.compName }}\"\n            class=\"form-control\">\n</div>"
@@ -4079,6 +4132,7 @@ var DEFAULT_TEMPLATE = '{{# def.partials.formGroup }}\
                             {{# def.partials.label }}\
                             <{{= it.tagName}} ml-bind="{{= it.compClass}}:{{= it.compName }}">\
                             </{{= it.tagName}}>\
+                            {{# def.partials.tooltip }}\
                         </div>';
 
 formRegistry.setDefaults({
@@ -4091,7 +4145,7 @@ formRegistry.setDefaults({
 function registry_get(name) {
     var formItem = name && formTypes[name];
 
-    if (!formItem) 
+    if (!formItem)
         return logger.error('Form item ' + name + ' not registered');
 
     return formItem;
@@ -4109,7 +4163,7 @@ function registry_add(name, newFormItem) {
     var formItem = _.clone(defaults);
     _.extend(formItem, newFormItem);
 
-    if (name && formTypes[name]) 
+    if (name && formTypes[name])
         return logger.error('Form item ' + name + ' already registered');
 
     formTypes[name] = formItem;
@@ -6407,9 +6461,10 @@ function queue(worker, concurrency, payload) {
 
             for (var i = 0, l = tasks.length; i < l; i++) {
                 var task = tasks[i];
+
                 var index = baseIndexOf(workersList, task, 0);
                 if (index >= 0) {
-                    workersList.splice(index);
+                    workersList.splice(index, 1);
                 }
 
                 task.callback.apply(task, arguments);
@@ -6470,11 +6525,11 @@ function queue(worker, concurrency, payload) {
                 for (var i = 0; i < l; i++) {
                     var node = q._tasks.shift();
                     tasks.push(node);
+                    workersList.push(node);
                     data.push(node.data);
                 }
 
                 numRunning += 1;
-                workersList.push(tasks[0]);
 
                 if (q._tasks.length === 0) {
                     q.empty();
@@ -6768,17 +6823,45 @@ var compose = function(/*...args*/) {
     return seq.apply(null, slice(arguments).reverse());
 };
 
-function concat$1(eachfn, arr, fn, callback) {
-    var result = [];
-    eachfn(arr, function (x, index, cb) {
-        fn(x, function (err, y) {
-            result = result.concat(y || []);
-            cb(err);
+var _concat = Array.prototype.concat;
+
+/**
+ * The same as [`concat`]{@link module:Collections.concat} but runs a maximum of `limit` async operations at a time.
+ *
+ * @name concatLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.concat]{@link module:Collections.concat}
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {AsyncFunction} iteratee - A function to apply to each item in `coll`,
+ * which should use an array as its result. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished, or an error occurs. Results is an array
+ * containing the concatenated results of the `iteratee` function. Invoked with
+ * (err, results).
+ */
+var concatLimit = function(coll, limit, iteratee, callback) {
+    callback = callback || noop;
+    var _iteratee = wrapAsync(iteratee);
+    mapLimit(coll, limit, function(val, callback) {
+        _iteratee(val, function(err /*, ...args*/) {
+            if (err) return callback(err);
+            return callback(null, slice(arguments, 1));
         });
-    }, function (err) {
-        callback(err, result);
+    }, function(err, mapResults) {
+        var result = [];
+        for (var i = 0; i < mapResults.length; i++) {
+            if (mapResults[i]) {
+                result = _concat.apply(result, mapResults[i]);
+            }
+        }
+
+        return callback(err, result);
     });
-}
+};
 
 /**
  * Applies `iteratee` to each item in `coll`, concatenating the results. Returns
@@ -6805,13 +6888,7 @@ function concat$1(eachfn, arr, fn, callback) {
  *     // files is now a list of filenames that exist in the 3 directories
  * });
  */
-var concat = doParallel(concat$1);
-
-function doSeries(fn) {
-    return function (obj, iteratee, callback) {
-        return fn(eachOfSeries, obj, wrapAsync(iteratee), callback);
-    };
-}
+var concat = doLimit(concatLimit, Infinity);
 
 /**
  * The same as [`concat`]{@link module:Collections.concat} but runs only a single async operation at a time.
@@ -6831,7 +6908,7 @@ function doSeries(fn) {
  * containing the concatenated results of the `iteratee` function. Invoked with
  * (err, results).
  */
-var concatSeries = doSeries(concat$1);
+var concatSeries = doLimit(concatLimit, 1);
 
 /**
  * Returns a function that when called, calls-back with the values provided.
@@ -8157,7 +8234,8 @@ function parallelLimit$1(tasks, limit, callback) {
  * @property {Function} resume - a function that resumes the processing of
  * queued tasks when the queue is paused. Invoke with `queue.resume()`.
  * @property {Function} kill - a function that removes the `drain` callback and
- * empties remaining tasks from the queue forcing it to go idle. Invoke with `queue.kill()`.
+ * empties remaining tasks from the queue forcing it to go idle. No more tasks
+ * should be pushed to the queue after calling this function. Invoke with `queue.kill()`.
  */
 
 /**
@@ -9530,6 +9608,7 @@ var index = {
     cargo: cargo,
     compose: compose,
     concat: concat,
+    concatLimit: concatLimit,
     concatSeries: concatSeries,
     constant: constant,
     detect: detect,
@@ -9626,6 +9705,7 @@ exports.autoInject = autoInject;
 exports.cargo = cargo;
 exports.compose = compose;
 exports.concat = concat;
+exports.concatLimit = concatLimit;
 exports.concatSeries = concatSeries;
 exports.constant = constant;
 exports.detect = detect;

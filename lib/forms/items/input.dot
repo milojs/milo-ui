@@ -1,5 +1,6 @@
 {{# def.partials.formGroup }}
     {{# def.partials.label }}
+    {{# def.partials.tooltip }}
     <input type="{{= it.item.inputType || 'text' }}"
             {{? it.item.inputName }}name="{{= it.item.inputName }}"{{?}}
             ml-bind="MLInput:{{= it.compName }}"
