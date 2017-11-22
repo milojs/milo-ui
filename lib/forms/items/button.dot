@@ -4,4 +4,5 @@
         class="btn btn-default {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}">
         {{= it.item.label || '' }}
     </button>
+    {{# def.partials.tooltip }}
 </div>
