@@ -4094,7 +4094,7 @@ function processInputSchema(comp, schema) {
 function setComponentOptions(comp, options, setModelFunc) {
     function trySetModelFunc(comp, data) {
         if (! comp.isDestroyed()) setModelFunc(comp, data);
-    };
+    }
 
     if (options) {
         if (typeof options.then == 'function') {
