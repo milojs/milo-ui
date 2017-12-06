@@ -2950,11 +2950,17 @@ function MLDropdown$start() {
             , relatedTarget = event.relatedTarget
             , listeners = self._dropdown.listeners;
 
-        if (isIframe(target))
-            listeners.remove(target.contentWindow.document, 'click', onClick);
+        if (isIframe(target)) {
+            try {
+                listeners.remove(target.contentWindow.document, 'click', onClick);
+            } catch (e) {}
+        }
 
-        if (isIframe(relatedTarget))
-            listeners.add(relatedTarget.contentWindow.document, 'click', onClick);
+        if (isIframe(relatedTarget)) {
+            try {
+                listeners.add(relatedTarget.contentWindow.document, 'click', onClick);
+            } catch (e) {}
+        }
     }
 
     function onClick(event) {
@@ -3977,7 +3983,7 @@ var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssC
     , select_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <span class=\"custom-select\">\n        <select ml-bind=\"MLSelect:{{= it.compName }}\"\n                {{? it.disabled }}disabled {{?}}\n                {{? it.multiple }}multiple {{?}}\n                class=\"form-control\">\n        </select>\n    </span>\n</div>\n"
     , input_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <input type=\"{{= it.item.inputType || 'text' }}\"\n            {{? it.item.inputName }}name=\"{{= it.item.inputName }}\"{{?}}\n            ml-bind=\"MLInput:{{= it.compName }}\"\n            {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-control\">\n</div>\n"
     , textarea_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <textarea ml-bind=\"MLTextarea:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"form-control\"\n        {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}></textarea>\n</div>\n"
-    , button_dot = "<div {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}class=\"btn-toolbar{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\">\n    <button ml-bind=\"MLButton:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"btn btn-default {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}\">\n        {{= it.item.label || '' }}\n    </button>\n</div>\n"
+    , button_dot = "<div {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}class=\"btn-toolbar{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\">\n    <button ml-bind=\"MLButton:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"btn btn-default {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}\">\n        {{= it.item.label || '' }}\n    </button>\n    {{# def.partials.tooltip }}\n</div>\n"
     , hyperlink_dot = "{{# def.partials.formGroup }}\n    <a {{? it.item.href}}href=\"{{= it.item.href }}\"{{?}}\n        {{? it.item.target}}target=\"{{= it.item.target }}\"{{?}}   \n        ml-bind=\"MLHyperlink:{{= it.compName }}\" \n        class=\"hyperlink hyperlink-default\">\n        {{= it.item.label || '' }}\n    </a>\n</div>"
     , checkbox_dot = "{{# def.partials.formGroup }}\n  <input type=\"checkbox\"\n    id=\"{{= it.compName }}\"\n    ml-bind=\"MLInput:{{= it.compName }}\"\n    {{? it.disabled }}disabled {{?}}\n    class=\"{{= it.item.itemCssClass || ''}}\">\n  <label for=\"{{= it.compName }}\">{{= it.item.label}}</label>\n  {{# def.partials.tooltip }}\n</div>\n"
     , list_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <ul ml-bind=\"MLList:{{= it.compName }}\"\n            {{? it.disabled }}disabled {{?}}>\n        <li ml-bind=\"MLListItem:itemSample\" class=\"list-item\">\n            <span ml-bind=\"[data]:label\"></span>\n            {{? it.editBtn }}<button ml-bind=\"[events]:editBtn\">edit</button>{{?}}\n            <button ml-bind=\"[events]:deleteBtn\" class=\"btn btn-default glyphicon glyphicon-remove\"> </button>\n        </li>\n    </ul>\n</div>\n"
@@ -4086,16 +4092,21 @@ function processInputSchema(comp, schema) {
 }
 
 function setComponentOptions(comp, options, setModelFunc) {
+    function trySetModelFunc(comp, data) {
+        if (! comp.isDestroyed()) setModelFunc(comp, data);
+    }
+
     if (options) {
         if (typeof options.then == 'function') {
-            setModelFunc(comp, [{ value: 0, label: 'loading...' }]);
+            trySetModelFunc(comp, [{ value: 0, label: 'loading...' }]);
             options
                 .then(
-                    function(data) { setModelFunc(comp, data); },
-                    function() { setModelFunc(comp, [{ value: 0, label: 'loading error' }]); }
+                    function(data) { trySetModelFunc(comp, data); },
+                    function() { trySetModelFunc(comp, [{ value: 0, label: 'loading error' }]); }
                 );
-        } else
-            setModelFunc(comp, options);
+        } else {
+            trySetModelFunc(comp, options);
+        }
     }
 }
 
@@ -6461,10 +6472,9 @@ function queue(worker, concurrency, payload) {
 
             for (var i = 0, l = tasks.length; i < l; i++) {
                 var task = tasks[i];
-
                 var index = baseIndexOf(workersList, task, 0);
                 if (index >= 0) {
-                    workersList.splice(index, 1);
+                    workersList.splice(index);
                 }
 
                 task.callback.apply(task, arguments);
@@ -6525,11 +6535,11 @@ function queue(worker, concurrency, payload) {
                 for (var i = 0; i < l; i++) {
                     var node = q._tasks.shift();
                     tasks.push(node);
-                    workersList.push(node);
                     data.push(node.data);
                 }
 
                 numRunning += 1;
+                workersList.push(tasks[0]);
 
                 if (q._tasks.length === 0) {
                     q.empty();
@@ -6823,45 +6833,17 @@ var compose = function(/*...args*/) {
     return seq.apply(null, slice(arguments).reverse());
 };
 
-var _concat = Array.prototype.concat;
-
-/**
- * The same as [`concat`]{@link module:Collections.concat} but runs a maximum of `limit` async operations at a time.
- *
- * @name concatLimit
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.concat]{@link module:Collections.concat}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {number} limit - The maximum number of async operations at a time.
- * @param {AsyncFunction} iteratee - A function to apply to each item in `coll`,
- * which should use an array as its result. Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished, or an error occurs. Results is an array
- * containing the concatenated results of the `iteratee` function. Invoked with
- * (err, results).
- */
-var concatLimit = function(coll, limit, iteratee, callback) {
-    callback = callback || noop;
-    var _iteratee = wrapAsync(iteratee);
-    mapLimit(coll, limit, function(val, callback) {
-        _iteratee(val, function(err /*, ...args*/) {
-            if (err) return callback(err);
-            return callback(null, slice(arguments, 1));
+function concat$1(eachfn, arr, fn, callback) {
+    var result = [];
+    eachfn(arr, function (x, index, cb) {
+        fn(x, function (err, y) {
+            result = result.concat(y || []);
+            cb(err);
         });
-    }, function(err, mapResults) {
-        var result = [];
-        for (var i = 0; i < mapResults.length; i++) {
-            if (mapResults[i]) {
-                result = _concat.apply(result, mapResults[i]);
-            }
-        }
-
-        return callback(err, result);
+    }, function (err) {
+        callback(err, result);
     });
-};
+}
 
 /**
  * Applies `iteratee` to each item in `coll`, concatenating the results. Returns
@@ -6888,7 +6870,13 @@ var concatLimit = function(coll, limit, iteratee, callback) {
  *     // files is now a list of filenames that exist in the 3 directories
  * });
  */
-var concat = doLimit(concatLimit, Infinity);
+var concat = doParallel(concat$1);
+
+function doSeries(fn) {
+    return function (obj, iteratee, callback) {
+        return fn(eachOfSeries, obj, wrapAsync(iteratee), callback);
+    };
+}
 
 /**
  * The same as [`concat`]{@link module:Collections.concat} but runs only a single async operation at a time.
@@ -6908,7 +6896,7 @@ var concat = doLimit(concatLimit, Infinity);
  * containing the concatenated results of the `iteratee` function. Invoked with
  * (err, results).
  */
-var concatSeries = doLimit(concatLimit, 1);
+var concatSeries = doSeries(concat$1);
 
 /**
  * Returns a function that when called, calls-back with the values provided.
@@ -8234,8 +8222,7 @@ function parallelLimit$1(tasks, limit, callback) {
  * @property {Function} resume - a function that resumes the processing of
  * queued tasks when the queue is paused. Invoke with `queue.resume()`.
  * @property {Function} kill - a function that removes the `drain` callback and
- * empties remaining tasks from the queue forcing it to go idle. No more tasks
- * should be pushed to the queue after calling this function. Invoke with `queue.kill()`.
+ * empties remaining tasks from the queue forcing it to go idle. Invoke with `queue.kill()`.
  */
 
 /**
@@ -9608,7 +9595,6 @@ var index = {
     cargo: cargo,
     compose: compose,
     concat: concat,
-    concatLimit: concatLimit,
     concatSeries: concatSeries,
     constant: constant,
     detect: detect,
@@ -9705,7 +9691,6 @@ exports.autoInject = autoInject;
 exports.cargo = cargo;
 exports.compose = compose;
 exports.concat = concat;
-exports.concatLimit = concatLimit;
 exports.concatSeries = concatSeries;
 exports.constant = constant;
 exports.detect = detect;
