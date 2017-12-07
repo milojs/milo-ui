@@ -2322,7 +2322,8 @@ function MLTime_get() {
     var hours = match[1]
         , mins = match[2];
     if (hours > 23 || mins > 59) return;
-    var time = new Date(1970, 0, 1, hours, mins);
+
+    var time = this.utc ? new Date(Date.UTC(1970, 0, 1, hours, mins)) : new Date(1970, 0, 1, hours, mins);
 
     return _.toDate(time);
 }
@@ -2335,9 +2336,11 @@ function MLTime_set(value) {
         return;
     }
 
+    var hours = this.utc ? time.getUTCHours() : time.getHours();
+    var minutes = this.utc ? time.getUTCMinutes() : time.getMinutes();
     var timeStr = TIME_TEMPLATE
-            .replace('hh', pad(time.getHours()))
-            .replace('mm', pad(time.getMinutes()));
+            .replace('hh', pad(hours))
+            .replace('mm', pad(minutes));
 
     this.el.value = timeStr;
     return timeStr;
@@ -4004,11 +4007,11 @@ formRegistry.add('inputlist',             { compClass: 'MLInputList',           
 formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                           itemFunction: processTextareaSchema      });
 formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                modelPathRule: 'optional'                                             });
 formRegistry.add('radio',                 { compClass: 'MLRadioGroup',                                                                              itemFunction: processRadioSchema         });
-formRegistry.add('checkgroup',            { compClass: 'MLCheckGroup',                                                                              itemFunction: processCheckGroupSchema         });
+formRegistry.add('checkgroup',            { compClass: 'MLCheckGroup',                                                                              itemFunction: processCheckGroupSchema    });
 formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,             modelPathRule: 'optional'                                             });
 formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                     });
 formRegistry.add('list',                  { compClass: 'MLList',                  template: list_dot                                                                                         });
-formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot,                                                                                        });
+formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot,                                               itemFunction: processTimeSchema          });
 formRegistry.add('date',                  { compClass: 'MLDate',                  template: date_dot                                                                                         });
 formRegistry.add('combo',                 { compClass: 'MLCombo',                 template: combo_dot,                                              itemFunction: processComboSchema         });
 formRegistry.add('supercombo',            { compClass: 'MLSuperCombo',                                                                              itemFunction: processSuperComboSchema    });
@@ -4035,6 +4038,11 @@ function processCheckGroupSchema(comp, schema) {
     var options = schema.checkOptions;
     comp.setSelectAll(!!schema.selectAll);
     setComponentOptions(comp, options, setComponentModel);
+}
+
+
+function processTimeSchema(comp, schema) {
+    comp.utc = schema.utc;
 }
 
 
