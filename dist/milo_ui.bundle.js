@@ -1051,7 +1051,9 @@ var MLListItem = module.exports = milo.createComponentClass({
                 'dragenter': { subscriber: onDragHover, context: 'owner' },
                 'dragover': { subscriber: onDragHover, context: 'owner' },
                 'dragleave': { subscriber: onDragOut, context: 'owner' },
-                'drop': { subscriber: onItemDrop, context: 'owner' }
+                'drop': { context: 'owner', subscriber: function() {
+                    this.onItemDrop.apply(this, arguments);
+                }}
             },
             allow: {
                 components: isComponentAllowed
@@ -1063,7 +1065,8 @@ var MLListItem = module.exports = milo.createComponentClass({
         moveItem: MLListItem$moveItem,
         removeItem: MLListItem$removeItem,
         getMetaData: MLListItem$getMetaData,
-        isDropAllowed: MLListItem$isDropAllowed
+        isDropAllowed: MLListItem$isDropAllowed,
+        onItemDrop: MLListItem$onItemDrop
     }
 });
 
@@ -1071,6 +1074,7 @@ var MLListItem = module.exports = milo.createComponentClass({
 function MLListItem$init() {
     MLListItem.super.init.apply(this, arguments);
     this.on('childrenbound', onChildrenBound);
+
 }
 
 
@@ -1113,7 +1117,7 @@ function isComponentAllowed() {
 }
 
 
-function onItemDrop(eventType, event) {
+function MLListItem$onItemDrop(eventType, event) {
     onDragOut.call(this);
     var dt = new DragDrop(event);
     var meta = dt.getComponentMeta();
