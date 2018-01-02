@@ -3197,6 +3197,8 @@ function MLForm$$createForm(schema, hostObject, formData, template) {
     const inspector = hostObject && hostObject.inspector,
         id = form.el.id || ('ml-form-' + counter++),
         onFormShown = function () {
+            if (form.isDestroyed()) return; // It is possible the form was destroyed before this event handler was fired.
+
             // allow schema to define confined CSS per form
             form.style = restyle('#' + id, Object.assign({
                 '.centered-tooltip .form-tooltip-content-wrapper': {
