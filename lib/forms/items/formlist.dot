@@ -1,0 +1,9 @@
+{{# def.partials.formGroup }}
+    {{# def.partials.label }}
+    <ul ml-bind="MLFormList:{{= it.compName }}"
+            {{? it.disabled }}disabled {{?}}
+            class="form-list">
+        <li ml-bind="[item]:itemSample" class="list-item"></li>
+        <button ml-bind="[events]:addBtn">Add Item</button>
+    </ul>
+</div>

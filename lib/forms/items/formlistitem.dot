@@ -1,0 +1,11 @@
+<div ml-bind="[container, data, dom, item]:itemSample" class="form-list-item">
+  <label>{{= it.label}}</label>
+  <span class="form-list-controls">
+    {{? it.allowMove }}
+      <i ml-bind="[events]:downBtn" class="fa fa-arrow-down"></i>
+      <i ml-bind="[events]:upBtn" class="fa fa-arrow-up"></i>
+    {{?}}
+    {{? it.allowDelete }}<i ml-bind="[events]:deleteBtn" class="fa fa-times"></i>{{?}}
+  </span>
+  {{= it.itemContent}}
+</div>
