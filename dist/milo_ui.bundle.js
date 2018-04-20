@@ -432,7 +432,7 @@ function onItemsChange(msg, data) {
 
 function MLComboList_get() {
     var value = this.model.get();
-    return typeof value == 'object' ? _.clone(value) : value;
+    return (value && typeof value === 'object') ? _.clone(value) : value;
 }
 
 function MLComboList_set(value) {
@@ -480,38 +480,38 @@ module.exports = MLDate;
 
 
 function MLDate$getMin() {
-    return _.date(this.el.min);
+    return fromISO8601Format(this.el.min, this.utc);
 }
 
 
 function MLDate$setMin(value) {
     var date = _.toDate(value);
 
-    this.el.min = date ? toISO8601Format(date) : '';
+    this.el.min = date ? toISO8601Format(date, this.utc) : '';
 }
 
 
 function MLDate$getMax() {
-    return _.date(this.el.max);
+    return fromISO8601Format(this.el.max, this.utc);
 }
 
 
 function MLDate$setMax(value) {
     var date = _.toDate(value);
 
-    this.el.max = date ? toISO8601Format(date) : '';
+    this.el.max = date ? toISO8601Format(date, this.utc) : '';
 }
 
 
 function MLDate_get() {
-    return _.toDate(this.el.value);
+    return fromISO8601Format(this.el.value, this.utc);
 }
 
 
 function MLDate_set(value) {
     var date = _.toDate(value);
 
-    this.el.value = date ? toISO8601Format(date) : '';
+    this.el.value = date ? toISO8601Format(date, this.utc) : '';
 
     dispatchInputMessage.call(this);
 }
@@ -528,19 +528,35 @@ function dispatchInputMessage() {
 }
 
 
-function toISO8601Format(date) {
-    var dateArr = [
-        date.getFullYear(),
-        pad(date.getMonth() + 1),
-        pad(date.getDate())
-    ];
-
-    var dateStr = dateArr.join('-');
+function toISO8601Format(date, utc) {
+    var dateStr = [
+        get('FullYear'),
+        pad(get('Month') + 1), // JS Date API indexes month from 0
+        pad(get('Date'))
+    ].join('-');
 
     return dateStr;
 
     function pad(n) { return n < 10 ? '0' + n : n; }
+    function get(field) { return date['get' + (utc ? 'UTC' : '') + field ](); }
 }
+
+
+function fromISO8601Format(dateStr, utc) {
+    var date = null;
+
+    if (dateStr && utc) {
+        var values = dateStr.split('-').map(function (v) { return +v; }); // [ year, month, date ]
+        values[1]--; // Month is indexed from 0 in the js date API.
+
+        date = new Date(Date.UTC(values[0], values[1], values[2]));
+    } else {
+        date = _.toDate(dateStr);
+    }
+
+    return date;
+}
+
 },{}],6:[function(require,module,exports){
 'use strict';
 
@@ -689,6 +705,101 @@ function MLFoldTree$toggleItem(id, opened) {
 },{}],8:[function(require,module,exports){
 'use strict';
 
+var formlistitem_dot = "<div ml-bind=\"[container, data, dom, item]:itemSample\" class=\"form-list-item\">\n  <label>{{= it.label}}</label>\n  <span class=\"form-list-controls\">\n    {{? it.allowMove }}\n      <i ml-bind=\"[events]:downBtn\" class=\"fa fa-arrow-down\"></i>\n      <i ml-bind=\"[events]:upBtn\" class=\"fa fa-arrow-up\"></i>\n    {{?}}\n    {{? it.allowDelete }}<i ml-bind=\"[events]:deleteBtn\" class=\"fa fa-times\"></i>{{?}}\n  </span>\n  {{= it.itemContent}}\n</div>\n"
+    , doT = milo.util.doT;
+
+var MLFormList = module.exports = milo.createComponentClass({
+    className: 'MLFormList',
+    facets: {
+        container: undefined,
+        dom: {
+            cls: 'ml-ui-form-list'
+        },
+        model: undefined,
+        data: undefined,
+        events: {
+            messages: {
+                click: { subscriber: handleClick, context: 'owner' }
+            }
+        },
+        list: undefined
+    },
+    methods: {
+        init: MLFormList$init,
+        destroy: MLFormList$destroy,
+        setTemplate: MLFormList$setTemplate,
+        setOptions: MLFormList$setOptions,
+        moveItem: MLFormList$moveItem
+    }
+});
+
+function handleClick (type, event) {
+    const component = milo.Component.getContainingComponent(event.target);
+    if (component && component.name) {
+        if (component.name === 'downBtn') {
+            const item = component.getScopeParent().item;
+            item.list.owner.moveItem(item.index, item.index + 1);
+        } else if (component.name === 'upBtn') {
+            const item = component.getScopeParent().item;
+            item.list.owner.moveItem(item.index, item.index - 1);
+        } else if (component.name === 'deleteBtn') {
+            component.getScopeParent().item.removeItem();
+        }
+    }
+}
+
+function prepareTemplate (label, temp, options) {
+    const template = document.createElement('template');
+    const itemTemplate = doT.compile(formlistitem_dot);
+    const item = itemTemplate(Object.assign({}, options, {
+        label: label || 'ITEM',
+        itemContent: temp.trim(),
+    }));
+    template.innerHTML = item;
+    return template.content.firstChild;
+}
+
+function MLFormList$moveItem (from, to) {
+    var splicedData = this.model.splice(from, 1);
+    return this.model.splice(to, 0, splicedData[0]);
+}
+
+function MLFormList$setTemplate (itemLabel, tempComp) {
+    this.template = tempComp;
+    const elem = prepareTemplate(itemLabel, this.template, this.options);
+    const itemSample = milo.binder(elem).itemSample;
+    this.list.setSample(itemSample);
+}
+
+function MLFormList$setOptions (options) {
+    this.options = {
+        allowMove: options.allowMove,
+        allowDelete: options.allowDelete
+    };
+    return this;
+}
+
+function MLFormList$init () {
+    MLFormList.super.init.apply(this, arguments);
+    this.on('childrenbound', onChildrenBound);
+}
+
+function MLFormList$destroy () {
+    if (this._connector) milo.minder.destroyConnector(this._connector);
+    this._connector = null;
+    MLFormList.super.destroy.apply(this, arguments);
+}
+
+function onChildrenBound () {
+    this.model.set([]);
+    const addBtn = this.container.scope.addBtn;
+    addBtn && addBtn.events.on('click', { subscriber: function () { this.addItem(); }, context: this.list });
+    this._connector = milo.minder(this.model, '<<<-', this.data).deferChangeMode('<<<->>>');
+}
+
+},{}],9:[function(require,module,exports){
+'use strict';
+
 var Component = milo.Component
     , componentsRegistry = milo.registry.components;
 
@@ -706,7 +817,7 @@ componentsRegistry.add(MLGroup);
 
 module.exports = MLGroup;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -725,7 +836,7 @@ componentsRegistry.add(MLHyperlink);
 
 module.exports = MLHyperlink;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -818,7 +929,7 @@ function onModelChange(path, data) {
     dispatchChangeMessage.call(this);
 }
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -855,7 +966,7 @@ function MLInput$setMaxLength(length) {
     this.el.setAttribute('maxlength', length);
 }
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -977,7 +1088,7 @@ function MLInputList_del() {
 function MLInputList_splice() { // ... arguments
     this.model.splice.apply(this.model, arguments);
 }
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 var MLList = module.exports = milo.createComponentClass({
@@ -1029,7 +1140,7 @@ function onChildrenBound() {
     this._connector = milo.minder(this.model, '<<<-', this.data).deferChangeMode('<<<->>>');
 }
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var DragDrop = milo.util.dragDrop;
@@ -1178,7 +1289,7 @@ function MLListItem$getMetaData() {
     };
 }
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -1231,7 +1342,7 @@ function _sendChangeMessage() {
     this.data.dispatchSourceMessage(LISTITEM_CHANGE_MESSAGE);
 }
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -1396,7 +1507,7 @@ function MLRadioGroup$destroy() {
     Component.prototype.destroy.apply(this, arguments);
 }
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -1519,7 +1630,7 @@ function onOptionsChange(path, data) {
     //dispatchChangeMessage.call(this);
 }
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 /**
@@ -2190,7 +2301,7 @@ function setSelected(value) {
     }
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2209,7 +2320,7 @@ componentsRegistry.add(MLText);
 
 module.exports = MLText;
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2288,7 +2399,7 @@ function MLTextarea$disable(disable) {
     this.el.disabled = disable;
 }
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2353,7 +2464,7 @@ function MLTime_del() {
     this.el.value = '';
 }
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2373,7 +2484,7 @@ componentsRegistry.add(MLWrapper);
 
 module.exports = MLWrapper;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2540,7 +2651,7 @@ function _toggleAlert(doShow) {
     this.el[doShow ? 'focus' : 'blur']();
 }
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var componentName = milo.util.componentName
@@ -2889,7 +3000,7 @@ function MLDialog$destroy() {
     MLDialog.super.destroy.apply(this, arguments);
 }
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -3008,7 +3119,7 @@ function MLDropdown$toggleMenu(doShow) {
                             : 'none';
 }
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 var restyle = require('restyle')
@@ -3212,8 +3323,7 @@ function MLForm$$createForm(schema, hostObject, formData, template) {
                     display: 'inline-block'
                 },
                 '.form-tooltip-anchor': {
-                    position: 'relative',
-                    'z-index': '-1'
+                    position: 'relative'
                 },
                 '.form-tooltip-anchor-bottom': {
                     display: 'none',
@@ -3904,7 +4014,7 @@ function MLForm$$validatorResponse(valid, reason, reasonCode) {
             : { valid: false, reason: reason, reasonCode: reasonCode };
 }
 
-},{"./generator":27,"./registry":29,"async":32,"restyle":34}],27:[function(require,module,exports){
+},{"./generator":28,"./registry":30,"async":33,"restyle":35}],28:[function(require,module,exports){
 'use strict';
 
 var doT = milo.util.doT
@@ -3913,7 +4023,7 @@ var doT = milo.util.doT
     , componentName = milo.util.componentName
     , formRegistry = require('./registry');
 
-require('./item_types');
+require('./item_types')(formGenerator);
 
 var cachedItems = {};
 
@@ -3976,7 +4086,7 @@ function formGenerator(schema) {
     }
 }
 
-},{"./item_types":28,"./registry":29}],28:[function(require,module,exports){
+},{"./item_types":29,"./registry":30}],29:[function(require,module,exports){
 'use strict';
 
 
@@ -3989,7 +4099,7 @@ var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssC
     , input_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <input type=\"{{= it.item.inputType || 'text' }}\"\n            {{? it.item.inputName }}name=\"{{= it.item.inputName }}\"{{?}}\n            ml-bind=\"MLInput:{{= it.compName }}\"\n            {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-control\">\n</div>\n"
     , textarea_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <textarea ml-bind=\"MLTextarea:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"form-control\"\n        {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}></textarea>\n</div>\n"
     , button_dot = "<div {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}class=\"btn-toolbar{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\">\n    <button ml-bind=\"MLButton:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"btn btn-default {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}\">\n        {{= it.item.label || '' }}\n    </button>\n    {{# def.partials.tooltip }}\n</div>\n"
-    , hyperlink_dot = "{{# def.partials.formGroup }}\n    <a {{? it.item.href}}href=\"{{= it.item.href }}\"{{?}}\n        {{? it.item.target}}target=\"{{= it.item.target }}\"{{?}}   \n        ml-bind=\"MLHyperlink:{{= it.compName }}\" \n        class=\"hyperlink hyperlink-default\">\n        {{= it.item.label || '' }}\n    </a>\n</div>"
+    , hyperlink_dot = "{{# def.partials.formGroup }}\n    <a {{? it.item.href}}href=\"{{= it.item.href }}\"{{?}}\n        {{? it.item.target}}target=\"{{= it.item.target }}\"{{?}}\n        ml-bind=\"MLHyperlink:{{= it.compName }}\" \n        class=\"hyperlink hyperlink-default\">\n        {{= it.item.label || '' }}\n    </a>\n    {{# def.partials.tooltip }}\n</div>"
     , checkbox_dot = "{{# def.partials.formGroup }}\n  <label>\n    <input type=\"checkbox\"\n      id=\"{{= it.compName }}\"\n      ml-bind=\"MLInput:{{= it.compName }}\"\n      {{? it.disabled }}disabled {{?}}\n      class=\"{{= it.item.itemCssClass || ''}}\">\n    {{= it.item.label}}\n  </label>\n  {{# def.partials.tooltip }}\n</div>\n"
     , list_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <ul ml-bind=\"MLList:{{= it.compName }}\"\n            {{? it.disabled }}disabled {{?}}>\n        <li ml-bind=\"MLListItem:itemSample\" class=\"list-item\">\n            <span ml-bind=\"[data]:label\"></span>\n            {{? it.editBtn }}<button ml-bind=\"[events]:editBtn\">edit</button>{{?}}\n            <button ml-bind=\"[events]:deleteBtn\" class=\"btn btn-default glyphicon glyphicon-remove\"> </button>\n        </li>\n    </ul>\n</div>\n"
     , time_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"time\"\n            ml-bind=\"MLTime:{{= it.compName }}\"\n            class=\"form-control\">\n</div>"
@@ -3998,30 +4108,34 @@ var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssC
     , image_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n        ml-bind=\"MLImage:{{= it.compName }}\"\n        {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n        {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , droptarget_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n        <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n            ml-bind=\"MLDropTarget:{{= it.compName }}\"\n            {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n            {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , text_dot = "{{var tagName = it.item.tagName || 'span';}}\n<{{=tagName}} ml-bind=\"MLText:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{? it.item.label }}\n        {{= it.item.label}}\n    {{?}}\n</{{=tagName}}>\n"
+    , formlist_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <ul ml-bind=\"MLFormList:{{= it.compName }}\"\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-list\">\n        <li ml-bind=\"[item]:itemSample\" class=\"list-item\"></li>\n        <button ml-bind=\"[events]:addBtn\">Add Item</button>\n    </ul>\n</div>\n"
     , clear_dot = '<div class="cc-clear"></div>';
 
 
-formRegistry.add('group',                 { compClass: 'MLGroup',                 template: group_dot,                 modelPathRule: 'prohibited'                                           });
-formRegistry.add('wrapper',               { compClass: 'MLWrapper',               template: wrapper_dot,               modelPathRule: 'prohibited'                                           });
-formRegistry.add('select',                { compClass: 'MLSelect',                template: select_dot,                                             itemFunction: processSelectSchema        });
-formRegistry.add('input',                 { compClass: 'MLInput',                 template: input_dot,                                              itemFunction: processInputSchema         });
-formRegistry.add('inputlist',             { compClass: 'MLInputList',                                                                               itemFunction: processInputListSchema     });
-formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                           itemFunction: processTextareaSchema      });
-formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                modelPathRule: 'optional'                                             });
-formRegistry.add('radio',                 { compClass: 'MLRadioGroup',                                                                              itemFunction: processRadioSchema         });
-formRegistry.add('checkgroup',            { compClass: 'MLCheckGroup',                                                                              itemFunction: processCheckGroupSchema    });
-formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,             modelPathRule: 'optional'                                             });
-formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                     });
-formRegistry.add('list',                  { compClass: 'MLList',                  template: list_dot                                                                                         });
-formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot,                                               itemFunction: processTimeSchema          });
-formRegistry.add('date',                  { compClass: 'MLDate',                  template: date_dot                                                                                         });
-formRegistry.add('combo',                 { compClass: 'MLCombo',                 template: combo_dot,                                              itemFunction: processComboSchema         });
-formRegistry.add('supercombo',            { compClass: 'MLSuperCombo',                                                                              itemFunction: processSuperComboSchema    });
-formRegistry.add('combolist',             { compClass: 'MLComboList',                                                                               itemFunction: processComboListSchema     });
-formRegistry.add('image',                 { compClass: 'MLImage',                 template: image_dot                                                                                        });
-formRegistry.add('droptarget',            { compClass: 'MLDropTarget',            template: droptarget_dot,            modelPathRule: 'prohibited'                                           });
-formRegistry.add('text',                  { compClass: 'MLText',                  template: text_dot,                  modelPathRule: 'optional'                                             });
-formRegistry.add('clear',                 {                                       template: clear_dot                                                                                        });
+module.exports = function (generator) {
+    formRegistry.add('group',                 { compClass: 'MLGroup',                 template: group_dot,                 modelPathRule: 'prohibited'                                                  });
+    formRegistry.add('wrapper',               { compClass: 'MLWrapper',               template: wrapper_dot,               modelPathRule: 'prohibited'                                                  });
+    formRegistry.add('select',                { compClass: 'MLSelect',                template: select_dot,                                             itemFunction: processSelectSchema               });
+    formRegistry.add('input',                 { compClass: 'MLInput',                 template: input_dot,                                              itemFunction: processInputSchema                });
+    formRegistry.add('inputlist',             { compClass: 'MLInputList',                                                                               itemFunction: processInputListSchema            });
+    formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                           itemFunction: processTextareaSchema             });
+    formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                modelPathRule: 'optional'                                                    });
+    formRegistry.add('radio',                 { compClass: 'MLRadioGroup',                                                                              itemFunction: processRadioSchema                });
+    formRegistry.add('checkgroup',            { compClass: 'MLCheckGroup',                                                                              itemFunction: processCheckGroupSchema           });
+    formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,             modelPathRule: 'optional'                                                    });
+    formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                            });
+    formRegistry.add('list',                  { compClass: 'MLList',                  template: list_dot                                                                                                });
+    formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot,                                               itemFunction: processDateTimeSchema             });
+    formRegistry.add('date',                  { compClass: 'MLDate',                  template: date_dot,                                               itemFunction: processDateTimeSchema             });
+    formRegistry.add('combo',                 { compClass: 'MLCombo',                 template: combo_dot,                                              itemFunction: processComboSchema                });
+    formRegistry.add('supercombo',            { compClass: 'MLSuperCombo',                                                                              itemFunction: processSuperComboSchema           });
+    formRegistry.add('combolist',             { compClass: 'MLComboList',                                                                               itemFunction: processComboListSchema            });
+    formRegistry.add('image',                 { compClass: 'MLImage',                 template: image_dot                                                                                               });
+    formRegistry.add('droptarget',            { compClass: 'MLDropTarget',            template: droptarget_dot,            modelPathRule: 'prohibited'                                                  });
+    formRegistry.add('text',                  { compClass: 'MLText',                  template: text_dot,                  modelPathRule: 'optional'                                                    });
+    formRegistry.add('clear',                 {                                       template: clear_dot                                                                                               });
+    formRegistry.add('formlist',              { compClass: 'MLFormList',              template: formlist_dot,                                           itemFunction: prepareFormListSchema(generator)  });
+};
 
 
 function processSelectSchema(comp, schema) {
@@ -4043,7 +4157,7 @@ function processCheckGroupSchema(comp, schema) {
 }
 
 
-function processTimeSchema(comp, schema) {
+function processDateTimeSchema(comp, schema) {
     comp.utc = schema.utc;
 }
 
@@ -4093,12 +4207,23 @@ function processInputListSchema(comp, schema) {
 
 function processTextareaSchema(comp, schema) {
     if (schema.autoresize)
-        _.deferMethod(comp, 'startAutoresize', schema.autoresize);
+        _.defer(function() {
+            if (!comp.isDestroyed()) {
+                comp.startAutoresize(schema.autoresize);
+            }
+        });
 }
 
 
 function processInputSchema(comp, schema) {
     if (_.isNumeric(schema.maxLength)) comp.setMaxLength(schema.maxLength);
+}
+
+function prepareFormListSchema(generator) {
+    return function processFormListSchema (comp, schema) {
+        const templateComp = generator({ items: schema.subSchema });
+        comp.setOptions(schema).setTemplate(schema.itemLabel, templateComp);
+    };
 }
 
 function setComponentOptions(comp, options, setModelFunc) {
@@ -4132,7 +4257,7 @@ function setComboOptions(comp, data) {
     comp.setOptions(data);
 }
 
-},{"./registry":29}],29:[function(require,module,exports){
+},{"./registry":30}],30:[function(require,module,exports){
 'use strict';
 
 var logger = milo.util.logger
@@ -4197,7 +4322,7 @@ function registry_setDefaults(newDefaults) {
 }
 
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 if (!(window.milo && window.milo.milo_version))
@@ -4211,7 +4336,7 @@ if (!(window.milo && window.milo.milo_version))
 
 require('./use_components');
 
-},{"./use_components":31}],31:[function(require,module,exports){
+},{"./use_components":32}],32:[function(require,module,exports){
 'use strict';
 
 require('./components/Group');
@@ -4236,6 +4361,7 @@ require('./components/ComboList');
 require('./components/Image');
 require('./components/DropTarget');
 require('./components/FoldTree');
+require('./components/FormList');
 
 require('./components/bootstrap/Alert');
 require('./components/bootstrap/Dialog');
@@ -4243,7 +4369,7 @@ require('./components/bootstrap/Dropdown');
 
 require('./forms/Form');
 
-},{"./components/Button":1,"./components/CheckGroup":2,"./components/Combo":3,"./components/ComboList":4,"./components/Date":5,"./components/DropTarget":6,"./components/FoldTree":7,"./components/Group":8,"./components/Hyperlink":9,"./components/Image":10,"./components/Input":11,"./components/InputList":12,"./components/List":13,"./components/ListItem":14,"./components/ListItemSimple":15,"./components/RadioGroup":16,"./components/Select":17,"./components/SuperCombo":18,"./components/Text":19,"./components/Textarea":20,"./components/Time":21,"./components/Wrapper":22,"./components/bootstrap/Alert":23,"./components/bootstrap/Dialog":24,"./components/bootstrap/Dropdown":25,"./forms/Form":26}],32:[function(require,module,exports){
+},{"./components/Button":1,"./components/CheckGroup":2,"./components/Combo":3,"./components/ComboList":4,"./components/Date":5,"./components/DropTarget":6,"./components/FoldTree":7,"./components/FormList":8,"./components/Group":9,"./components/Hyperlink":10,"./components/Image":11,"./components/Input":12,"./components/InputList":13,"./components/List":14,"./components/ListItem":15,"./components/ListItemSimple":16,"./components/RadioGroup":17,"./components/Select":18,"./components/SuperCombo":19,"./components/Text":20,"./components/Textarea":21,"./components/Time":22,"./components/Wrapper":23,"./components/bootstrap/Alert":24,"./components/bootstrap/Dialog":25,"./components/bootstrap/Dropdown":26,"./forms/Form":27}],33:[function(require,module,exports){
 (function (process,global){
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -6482,9 +6608,10 @@ function queue(worker, concurrency, payload) {
 
             for (var i = 0, l = tasks.length; i < l; i++) {
                 var task = tasks[i];
+
                 var index = baseIndexOf(workersList, task, 0);
                 if (index >= 0) {
-                    workersList.splice(index);
+                    workersList.splice(index, 1);
                 }
 
                 task.callback.apply(task, arguments);
@@ -6545,11 +6672,11 @@ function queue(worker, concurrency, payload) {
                 for (var i = 0; i < l; i++) {
                     var node = q._tasks.shift();
                     tasks.push(node);
+                    workersList.push(node);
                     data.push(node.data);
                 }
 
                 numRunning += 1;
-                workersList.push(tasks[0]);
 
                 if (q._tasks.length === 0) {
                     q.empty();
@@ -6843,17 +6970,45 @@ var compose = function(/*...args*/) {
     return seq.apply(null, slice(arguments).reverse());
 };
 
-function concat$1(eachfn, arr, fn, callback) {
-    var result = [];
-    eachfn(arr, function (x, index, cb) {
-        fn(x, function (err, y) {
-            result = result.concat(y || []);
-            cb(err);
+var _concat = Array.prototype.concat;
+
+/**
+ * The same as [`concat`]{@link module:Collections.concat} but runs a maximum of `limit` async operations at a time.
+ *
+ * @name concatLimit
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.concat]{@link module:Collections.concat}
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {number} limit - The maximum number of async operations at a time.
+ * @param {AsyncFunction} iteratee - A function to apply to each item in `coll`,
+ * which should use an array as its result. Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished, or an error occurs. Results is an array
+ * containing the concatenated results of the `iteratee` function. Invoked with
+ * (err, results).
+ */
+var concatLimit = function(coll, limit, iteratee, callback) {
+    callback = callback || noop;
+    var _iteratee = wrapAsync(iteratee);
+    mapLimit(coll, limit, function(val, callback) {
+        _iteratee(val, function(err /*, ...args*/) {
+            if (err) return callback(err);
+            return callback(null, slice(arguments, 1));
         });
-    }, function (err) {
-        callback(err, result);
+    }, function(err, mapResults) {
+        var result = [];
+        for (var i = 0; i < mapResults.length; i++) {
+            if (mapResults[i]) {
+                result = _concat.apply(result, mapResults[i]);
+            }
+        }
+
+        return callback(err, result);
     });
-}
+};
 
 /**
  * Applies `iteratee` to each item in `coll`, concatenating the results. Returns
@@ -6880,13 +7035,7 @@ function concat$1(eachfn, arr, fn, callback) {
  *     // files is now a list of filenames that exist in the 3 directories
  * });
  */
-var concat = doParallel(concat$1);
-
-function doSeries(fn) {
-    return function (obj, iteratee, callback) {
-        return fn(eachOfSeries, obj, wrapAsync(iteratee), callback);
-    };
-}
+var concat = doLimit(concatLimit, Infinity);
 
 /**
  * The same as [`concat`]{@link module:Collections.concat} but runs only a single async operation at a time.
@@ -6906,7 +7055,7 @@ function doSeries(fn) {
  * containing the concatenated results of the `iteratee` function. Invoked with
  * (err, results).
  */
-var concatSeries = doSeries(concat$1);
+var concatSeries = doLimit(concatLimit, 1);
 
 /**
  * Returns a function that when called, calls-back with the values provided.
@@ -8232,7 +8381,8 @@ function parallelLimit$1(tasks, limit, callback) {
  * @property {Function} resume - a function that resumes the processing of
  * queued tasks when the queue is paused. Invoke with `queue.resume()`.
  * @property {Function} kill - a function that removes the `drain` callback and
- * empties remaining tasks from the queue forcing it to go idle. Invoke with `queue.kill()`.
+ * empties remaining tasks from the queue forcing it to go idle. No more tasks
+ * should be pushed to the queue after calling this function. Invoke with `queue.kill()`.
  */
 
 /**
@@ -9605,6 +9755,7 @@ var index = {
     cargo: cargo,
     compose: compose,
     concat: concat,
+    concatLimit: concatLimit,
     concatSeries: concatSeries,
     constant: constant,
     detect: detect,
@@ -9701,6 +9852,7 @@ exports.autoInject = autoInject;
 exports.cargo = cargo;
 exports.compose = compose;
 exports.concat = concat;
+exports.concatLimit = concatLimit;
 exports.concatSeries = concatSeries;
 exports.constant = constant;
 exports.detect = detect;
@@ -9796,7 +9948,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":33}],33:[function(require,module,exports){
+},{"_process":34}],34:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -9982,7 +10134,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /*jslint forin: true, plusplus: true, indent: 2, browser: true, unparam: true */
 /*!
 Copyright (C) 2014-2015 by Andrea Giammarchi - @WebReflection
@@ -10503,4 +10655,4 @@ module.exports = (function (O) {
  */
 
 }({}));
-},{}]},{},[30]);
+},{}]},{},[31]);
