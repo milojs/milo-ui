@@ -66,8 +66,8 @@ function getFormSchema() {
                 // Sets out validation rules, can be preset string rules
                 // or functions
                 validate: {
-                    fromModel: ['required'],
-                    toModel: ['required']
+                    fromModel: ['required', customValidationFunction],
+                    toModel: ['required', customValidationFunction]
                 },
 
                 // Sets out translation rules for the data
@@ -253,4 +253,17 @@ function getFormSchema() {
             }
         ]
     };
+}
+
+function customValidationFunction(data, done) {
+    const valid = !(data && data.length > 9);
+    const reason = 'String should be shorter than 10.';
+    const reasonCode = 'TOO_LONG';
+
+    // Should call the callback with a valid property and the reason which
+    // will be used when invalid
+    done(null, { valid, reason, reasonCode });
+
+    // You can then call form.getInvalidControls() or
+    // form.getInvalidReasons() to get info about validity.
 }
