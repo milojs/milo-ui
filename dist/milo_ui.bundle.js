@@ -722,7 +722,19 @@ var MLFormList = module.exports = milo.createComponentClass({
                 click: { subscriber: handleClick, context: 'owner' }
             }
         },
-        list: undefined
+        list: {
+            embellishItem: function (item, schema) {
+                const formRegistry = milo.registry.components.get('MLForm').registry;
+                schema.forEach(function (schemaItem) {
+                    const comp = item.container.scope[schemaItem.compName];
+                    if (comp) {
+                        const formItem = formRegistry.get(schemaItem.type);
+                        formItem.itemFunction(comp, schemaItem);
+                    }
+                });
+                return item;
+            }
+        }
     },
     methods: {
         init: MLFormList$init,
@@ -760,15 +772,16 @@ function prepareTemplate (label, temp, options) {
 }
 
 function MLFormList$moveItem (from, to) {
-    var splicedData = this.model.splice(from, 1);
-    return this.model.splice(to, 0, splicedData[0]);
+    this.model.splice(from, 1);
+    const toInsert = this.list.item(from).data.get();
+    return this.model.splice(to, 0, toInsert);
 }
 
-function MLFormList$setTemplate (itemLabel, tempComp) {
+function MLFormList$setTemplate (itemLabel, tempComp, tempSchema) {
     this.template = tempComp;
     const elem = prepareTemplate(itemLabel, this.template, this.options);
-    const itemSample = milo.binder(elem).itemSample;
-    this.list.setSample(itemSample);
+    const itemSample = milo.binder(elem, this.container.scope).itemSample;
+    this.list.setSample(itemSample, tempSchema);
 }
 
 function MLFormList$setOptions (options) {
@@ -781,7 +794,7 @@ function MLFormList$setOptions (options) {
 
 function MLFormList$init () {
     MLFormList.super.init.apply(this, arguments);
-    this.on('childrenbound', onChildrenBound);
+    this.once('childrenbound', onChildrenBound);
 }
 
 function MLFormList$destroy () {
@@ -1730,7 +1743,7 @@ function MLSuperCombo$init() {
  * Handler for init childrenbound listener. Renders template.
  */
 function onChildrenBound() {
-    this.template.render().binder();
+    if (!Object.keys(this.container.scope).length) this.template.render().binder();
     componentSetup.call(this);
 }
 
@@ -1847,8 +1860,8 @@ function MLSuperCombo$setPlaceholder(placeholder) {
 
 /**
  * Set the filter function used in the text field
- * @param {Function} func A function with the arguments `[text, option]` which will interate 
- * through all `options`, testing each against the entered `text`. WARNING: Setting a function 
+ * @param {Function} func A function with the arguments `[text, option]` which will interate
+ * through all `options`, testing each against the entered `text`. WARNING: Setting a function
  * could interfere with logic use to determing if an item is unique for the add item button.
  */
 function MLSuperCombo$setFilter(func) {
@@ -4134,6 +4147,7 @@ module.exports = function (generator) {
     formRegistry.add('droptarget',            { compClass: 'MLDropTarget',            template: droptarget_dot,            modelPathRule: 'prohibited'                                                  });
     formRegistry.add('text',                  { compClass: 'MLText',                  template: text_dot,                  modelPathRule: 'optional'                                                    });
     formRegistry.add('clear',                 {                                       template: clear_dot                                                                                               });
+    /* Must go last, as it needs to be aware of all other form components to dynamically load them */
     formRegistry.add('formlist',              { compClass: 'MLFormList',              template: formlist_dot,                                           itemFunction: prepareFormListSchema(generator)  });
 };
 
@@ -4222,7 +4236,7 @@ function processInputSchema(comp, schema) {
 function prepareFormListSchema(generator) {
     return function processFormListSchema (comp, schema) {
         const templateComp = generator({ items: schema.subSchema });
-        comp.setOptions(schema).setTemplate(schema.itemLabel, templateComp);
+        comp.setOptions(schema).setTemplate(schema.itemLabel, templateComp, schema.subSchema);
     };
 }
 
