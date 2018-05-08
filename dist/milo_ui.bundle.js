@@ -2580,7 +2580,8 @@ function MLAlert$$createAlert(options) {
         message: String,
         type: Match.Optional(String),
         close: Match.Optional(Boolean),
-        timeout: Match.Optional(Number)
+        timeout: Match.Optional(Number),
+        closeExisting: Match.Optional(Boolean)
     });
 
     var alert = MLAlert.createOnElement();
@@ -2608,6 +2609,12 @@ function MLAlert$$createAlert(options) {
             if(alert._alert.visible)
                 alert.closeAlert();
         }, options.timeout);
+
+    if (options.closeExisting) {
+        document.body.querySelectorAll('.ml-bs-alert').forEach(function (item) {
+            milo.Component.getComponent(item).closeAlert();
+        });
+    }
 
     return alert;
 }
