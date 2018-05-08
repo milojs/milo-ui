@@ -705,6 +705,114 @@ function MLFoldTree$toggleItem(id, opened) {
 },{}],8:[function(require,module,exports){
 'use strict';
 
+var formlistitem_dot = "<div ml-bind=\"[container, data, dom, item]:itemSample\" class=\"form-list-item\">\n  <label>{{= it.label}}</label>\n  <span class=\"form-list-controls\">\n    {{? it.allowMove }}\n      <i ml-bind=\"[events]:downBtn\" class=\"fa fa-arrow-down\"></i>\n      <i ml-bind=\"[events]:upBtn\" class=\"fa fa-arrow-up\"></i>\n    {{?}}\n    {{? it.allowDelete }}<i ml-bind=\"[events]:deleteBtn\" class=\"fa fa-times\"></i>{{?}}\n  </span>\n  {{= it.itemContent}}\n</div>\n"
+    , doT = milo.util.doT;
+
+const MLFormList = module.exports = milo.createComponentClass({
+    className: 'MLFormList',
+    facets: {
+        container: undefined,
+        dom: {
+            cls: 'ml-ui-form-list'
+        },
+        model: undefined,
+        data: undefined,
+        events: {
+            messages: {
+                click: { subscriber: handleClick, context: 'owner' }
+            }
+        },
+        list: {
+            embellishItem: function (item, schema) {
+                const formRegistry = milo.registry.components.get('MLForm').registry;
+                schema.forEach(function (schemaItem) {
+                    const comp = item.container.scope[schemaItem.compName];
+                    if (comp) {
+                        const formItem = formRegistry.get(schemaItem.type);
+                        formItem.itemFunction(comp, schemaItem);
+                    }
+                });
+                return item;
+            }
+        }
+    },
+    methods: {
+        init: MLFormList$init,
+        destroy: MLFormList$destroy,
+        setTemplate: MLFormList$setTemplate,
+        setOptions: MLFormList$setOptions,
+        moveItem: MLFormList$moveItem
+    }
+});
+
+function handleClick (type, event) {
+    const component = milo.Component.getContainingComponent(event.target);
+    if (component && component.name) {
+        if (component.name === 'downBtn') {
+            const item = component.getScopeParent().item;
+            item.list.owner.moveItem(item.index, item.index + 1);
+        } else if (component.name === 'upBtn') {
+            const item = component.getScopeParent().item;
+            item.list.owner.moveItem(item.index, item.index - 1);
+        } else if (component.name === 'deleteBtn') {
+            component.getScopeParent().item.removeItem();
+        }
+    }
+}
+
+function prepareTemplate (label, itemContent, options) {
+    const template = document.createElement('template');
+    const itemTemplate = doT.compile(formlistitem_dot);
+    const item = itemTemplate(Object.assign({}, options, {
+        label: label || 'ITEM',
+        itemContent: itemContent.trim(),
+    }));
+    template.innerHTML = item;
+    return template.content.firstChild;
+}
+
+function MLFormList$moveItem (from, to) {
+    this.model.splice(from, 1);
+    const toInsert = this.list.item(from).data.get();
+    return this.model.splice(to, 0, toInsert);
+}
+
+function MLFormList$setTemplate (itemLabel, tempComp, tempSchema) {
+    this.template = tempComp;
+    const elem = prepareTemplate(itemLabel, this.template, this.options);
+    const itemSample = milo.binder(elem, this.container.scope).itemSample;
+    this.list.setSample(itemSample, tempSchema);
+}
+
+function MLFormList$setOptions (options) {
+    this.options = {
+        allowMove: options.allowMove,
+        allowDelete: options.allowDelete
+    };
+    return this;
+}
+
+function MLFormList$init () {
+    MLFormList.super.init.apply(this, arguments);
+    this.once('childrenbound', onChildrenBound);
+}
+
+function MLFormList$destroy () {
+    if (this._connector) milo.minder.destroyConnector(this._connector);
+    this._connector = null;
+    MLFormList.super.destroy.apply(this, arguments);
+}
+
+function onChildrenBound () {
+    this.model.set([]);
+    const addBtn = this.container.scope.addBtn;
+    addBtn && addBtn.events.on('click', { subscriber: function () { this.addItem(); }, context: this.list });
+    this._connector = milo.minder(this.model, '<<<-', this.data).deferChangeMode('<<<->>>');
+}
+
+},{}],9:[function(require,module,exports){
+'use strict';
+
 var Component = milo.Component
     , componentsRegistry = milo.registry.components;
 
@@ -722,7 +830,7 @@ componentsRegistry.add(MLGroup);
 
 module.exports = MLGroup;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -741,7 +849,7 @@ componentsRegistry.add(MLHyperlink);
 
 module.exports = MLHyperlink;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -834,7 +942,7 @@ function onModelChange(path, data) {
     dispatchChangeMessage.call(this);
 }
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -871,7 +979,7 @@ function MLInput$setMaxLength(length) {
     this.el.setAttribute('maxlength', length);
 }
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -993,7 +1101,7 @@ function MLInputList_del() {
 function MLInputList_splice() { // ... arguments
     this.model.splice.apply(this.model, arguments);
 }
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 var MLList = module.exports = milo.createComponentClass({
@@ -1045,7 +1153,7 @@ function onChildrenBound() {
     this._connector = milo.minder(this.model, '<<<-', this.data).deferChangeMode('<<<->>>');
 }
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var DragDrop = milo.util.dragDrop;
@@ -1194,7 +1302,7 @@ function MLListItem$getMetaData() {
     };
 }
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -1247,7 +1355,7 @@ function _sendChangeMessage() {
     this.data.dispatchSourceMessage(LISTITEM_CHANGE_MESSAGE);
 }
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -1412,7 +1520,7 @@ function MLRadioGroup$destroy() {
     Component.prototype.destroy.apply(this, arguments);
 }
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -1535,7 +1643,7 @@ function onOptionsChange(path, data) {
     //dispatchChangeMessage.call(this);
 }
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 /**
@@ -1611,7 +1719,8 @@ _.extendProto(MLSuperCombo, {
     setAddItemPrompt: MLSuperCombo$setAddItemPrompt,
     setPlaceholder: MLSuperCombo$setPlaceholder,
     setFilter: MLSuperCombo$setFilter,
-    clearComboInput: MLSuperCombo_del
+    clearComboInput: MLSuperCombo_del,
+    setValue: MLSuperCombo$setValue
 });
 
 
@@ -1635,7 +1744,7 @@ function MLSuperCombo$init() {
  * Handler for init childrenbound listener. Renders template.
  */
 function onChildrenBound() {
-    this.template.render().binder();
+    if (!Object.keys(this.container.scope).length) this.template.render().binder();
     componentSetup.call(this);
 }
 
@@ -1752,8 +1861,8 @@ function MLSuperCombo$setPlaceholder(placeholder) {
 
 /**
  * Set the filter function used in the text field
- * @param {Function} func A function with the arguments `[text, option]` which will interate 
- * through all `options`, testing each against the entered `text`. WARNING: Setting a function 
+ * @param {Function} func A function with the arguments `[text, option]` which will interate
+ * through all `options`, testing each against the entered `text`. WARNING: Setting a function
  * could interfere with logic use to determing if an item is unique for the add item button.
  */
 function MLSuperCombo$setFilter(func) {
@@ -1853,6 +1962,16 @@ function MLSuperCombo$update() {
 }
 
 /**
+ * Component instance method
+ * Sets the selected value and data to provided value
+ * @param {Variable} obj
+ */
+function MLSuperCombo$setValue (value) {
+    setSelected.call(this, value);
+    _setData.call(this);
+}
+
+/**
  * Setup the combo list
  *
  * @param  {Component} list
@@ -1913,7 +2032,7 @@ function MLSuperCombo_get() {
 
 /**
  * Custom data facet set method
- * @param {Variable} obj
+ * @param {Object} obj
  */
 function MLSuperCombo_set(obj) {
     this._currentValue = obj;
@@ -2206,7 +2325,7 @@ function setSelected(value) {
     }
 }
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2225,7 +2344,7 @@ componentsRegistry.add(MLText);
 
 module.exports = MLText;
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2304,7 +2423,7 @@ function MLTextarea$disable(disable) {
     this.el.disabled = disable;
 }
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2369,7 +2488,7 @@ function MLTime_del() {
     this.el.value = '';
 }
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2389,7 +2508,7 @@ componentsRegistry.add(MLWrapper);
 
 module.exports = MLWrapper;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2563,7 +2682,7 @@ function _toggleAlert(doShow) {
     this.el[doShow ? 'focus' : 'blur']();
 }
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var componentName = milo.util.componentName
@@ -2912,7 +3031,7 @@ function MLDialog$destroy() {
     MLDialog.super.destroy.apply(this, arguments);
 }
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -3031,7 +3150,7 @@ function MLDropdown$toggleMenu(doShow) {
                             : 'none';
 }
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 'use strict';
 
 var restyle = require('restyle')
@@ -3926,7 +4045,7 @@ function MLForm$$validatorResponse(valid, reason, reasonCode) {
             : { valid: false, reason: reason, reasonCode: reasonCode };
 }
 
-},{"./generator":27,"./registry":29,"async":32,"restyle":34}],27:[function(require,module,exports){
+},{"./generator":28,"./registry":30,"async":33,"restyle":35}],28:[function(require,module,exports){
 'use strict';
 
 var doT = milo.util.doT
@@ -3935,7 +4054,7 @@ var doT = milo.util.doT
     , componentName = milo.util.componentName
     , formRegistry = require('./registry');
 
-require('./item_types');
+require('./item_types')(formGenerator);
 
 var cachedItems = {};
 
@@ -3998,7 +4117,7 @@ function formGenerator(schema) {
     }
 }
 
-},{"./item_types":28,"./registry":29}],28:[function(require,module,exports){
+},{"./item_types":29,"./registry":30}],29:[function(require,module,exports){
 'use strict';
 
 
@@ -4020,30 +4139,35 @@ var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssC
     , image_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n        ml-bind=\"MLImage:{{= it.compName }}\"\n        {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n        {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , droptarget_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n        <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n            ml-bind=\"MLDropTarget:{{= it.compName }}\"\n            {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n            {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , text_dot = "{{var tagName = it.item.tagName || 'span';}}\n<{{=tagName}} ml-bind=\"MLText:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{? it.item.label }}\n        {{= it.item.label}}\n    {{?}}\n</{{=tagName}}>\n"
+    , formlist_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <ul ml-bind=\"MLFormList:{{= it.compName }}\"\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-list\">\n        <li ml-bind=\"[item]:itemSample\" class=\"list-item\"></li>\n        <button ml-bind=\"[events]:addBtn\">Add Item</button>\n    </ul>\n</div>\n"
     , clear_dot = '<div class="cc-clear"></div>';
 
 
-formRegistry.add('group',                 { compClass: 'MLGroup',                 template: group_dot,                 modelPathRule: 'prohibited'                                           });
-formRegistry.add('wrapper',               { compClass: 'MLWrapper',               template: wrapper_dot,               modelPathRule: 'prohibited'                                           });
-formRegistry.add('select',                { compClass: 'MLSelect',                template: select_dot,                                             itemFunction: processSelectSchema        });
-formRegistry.add('input',                 { compClass: 'MLInput',                 template: input_dot,                                              itemFunction: processInputSchema         });
-formRegistry.add('inputlist',             { compClass: 'MLInputList',                                                                               itemFunction: processInputListSchema     });
-formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                           itemFunction: processTextareaSchema      });
-formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                modelPathRule: 'optional'                                             });
-formRegistry.add('radio',                 { compClass: 'MLRadioGroup',                                                                              itemFunction: processRadioSchema         });
-formRegistry.add('checkgroup',            { compClass: 'MLCheckGroup',                                                                              itemFunction: processCheckGroupSchema    });
-formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,             modelPathRule: 'optional'                                             });
-formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                     });
-formRegistry.add('list',                  { compClass: 'MLList',                  template: list_dot                                                                                         });
-formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot,                                               itemFunction: processDateTimeSchema      });
-formRegistry.add('date',                  { compClass: 'MLDate',                  template: date_dot,                                               itemFunction: processDateTimeSchema      });
-formRegistry.add('combo',                 { compClass: 'MLCombo',                 template: combo_dot,                                              itemFunction: processComboSchema         });
-formRegistry.add('supercombo',            { compClass: 'MLSuperCombo',                                                                              itemFunction: processSuperComboSchema    });
-formRegistry.add('combolist',             { compClass: 'MLComboList',                                                                               itemFunction: processComboListSchema     });
-formRegistry.add('image',                 { compClass: 'MLImage',                 template: image_dot                                                                                        });
-formRegistry.add('droptarget',            { compClass: 'MLDropTarget',            template: droptarget_dot,            modelPathRule: 'prohibited'                                           });
-formRegistry.add('text',                  { compClass: 'MLText',                  template: text_dot,                  modelPathRule: 'optional'                                             });
-formRegistry.add('clear',                 {                                       template: clear_dot                                                                                        });
+module.exports = function (generator) {
+    formRegistry.add('group',                 { compClass: 'MLGroup',                 template: group_dot,                 modelPathRule: 'prohibited'                                                  });
+    formRegistry.add('wrapper',               { compClass: 'MLWrapper',               template: wrapper_dot,               modelPathRule: 'prohibited'                                                  });
+    formRegistry.add('select',                { compClass: 'MLSelect',                template: select_dot,                                             itemFunction: processSelectSchema               });
+    formRegistry.add('input',                 { compClass: 'MLInput',                 template: input_dot,                                              itemFunction: processInputSchema                });
+    formRegistry.add('inputlist',             { compClass: 'MLInputList',                                                                               itemFunction: processInputListSchema            });
+    formRegistry.add('textarea',              { compClass: 'MLTextarea',              template: textarea_dot,                                           itemFunction: processTextareaSchema             });
+    formRegistry.add('button',                { compClass: 'MLButton',                template: button_dot,                modelPathRule: 'optional'                                                    });
+    formRegistry.add('radio',                 { compClass: 'MLRadioGroup',                                                                              itemFunction: processRadioSchema                });
+    formRegistry.add('checkgroup',            { compClass: 'MLCheckGroup',                                                                              itemFunction: processCheckGroupSchema           });
+    formRegistry.add('hyperlink',             { compClass: 'MLHyperlink',             template: hyperlink_dot,             modelPathRule: 'optional'                                                    });
+    formRegistry.add('checkbox',              { compClass: 'MLInput',                 template: checkbox_dot                                                                                            });
+    formRegistry.add('list',                  { compClass: 'MLList',                  template: list_dot                                                                                                });
+    formRegistry.add('time',                  { compClass: 'MLTime',                  template: time_dot,                                               itemFunction: processDateTimeSchema             });
+    formRegistry.add('date',                  { compClass: 'MLDate',                  template: date_dot,                                               itemFunction: processDateTimeSchema             });
+    formRegistry.add('combo',                 { compClass: 'MLCombo',                 template: combo_dot,                                              itemFunction: processComboSchema                });
+    formRegistry.add('supercombo',            { compClass: 'MLSuperCombo',                                                                              itemFunction: processSuperComboSchema           });
+    formRegistry.add('combolist',             { compClass: 'MLComboList',                                                                               itemFunction: processComboListSchema            });
+    formRegistry.add('image',                 { compClass: 'MLImage',                 template: image_dot                                                                                               });
+    formRegistry.add('droptarget',            { compClass: 'MLDropTarget',            template: droptarget_dot,            modelPathRule: 'prohibited'                                                  });
+    formRegistry.add('text',                  { compClass: 'MLText',                  template: text_dot,                  modelPathRule: 'optional'                                                    });
+    formRegistry.add('clear',                 {                                       template: clear_dot                                                                                               });
+    /* Must go last, as it needs to be aware of all other form components to dynamically load them */
+    formRegistry.add('formlist',              { compClass: 'MLFormList',              template: formlist_dot,                                           itemFunction: prepareFormListSchema(generator)  });
+};
 
 
 function processSelectSchema(comp, schema) {
@@ -4127,6 +4251,13 @@ function processInputSchema(comp, schema) {
     if (_.isNumeric(schema.maxLength)) comp.setMaxLength(schema.maxLength);
 }
 
+function prepareFormListSchema(generator) {
+    return function processFormListSchema (comp, schema) {
+        const templateComp = generator({ items: schema.subSchema });
+        comp.setOptions(schema).setTemplate(schema.itemLabel, templateComp, schema.subSchema);
+    };
+}
+
 function setComponentOptions(comp, options, setModelFunc) {
     function trySetModelFunc(comp, data) {
         if (! comp.isDestroyed()) setModelFunc(comp, data);
@@ -4158,7 +4289,7 @@ function setComboOptions(comp, data) {
     comp.setOptions(data);
 }
 
-},{"./registry":29}],29:[function(require,module,exports){
+},{"./registry":30}],30:[function(require,module,exports){
 'use strict';
 
 var logger = milo.util.logger
@@ -4223,7 +4354,7 @@ function registry_setDefaults(newDefaults) {
 }
 
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 'use strict';
 
 if (!(window.milo && window.milo.milo_version))
@@ -4237,7 +4368,7 @@ if (!(window.milo && window.milo.milo_version))
 
 require('./use_components');
 
-},{"./use_components":31}],31:[function(require,module,exports){
+},{"./use_components":32}],32:[function(require,module,exports){
 'use strict';
 
 require('./components/Group');
@@ -4262,6 +4393,7 @@ require('./components/ComboList');
 require('./components/Image');
 require('./components/DropTarget');
 require('./components/FoldTree');
+require('./components/FormList');
 
 require('./components/bootstrap/Alert');
 require('./components/bootstrap/Dialog');
@@ -4269,7 +4401,7 @@ require('./components/bootstrap/Dropdown');
 
 require('./forms/Form');
 
-},{"./components/Button":1,"./components/CheckGroup":2,"./components/Combo":3,"./components/ComboList":4,"./components/Date":5,"./components/DropTarget":6,"./components/FoldTree":7,"./components/Group":8,"./components/Hyperlink":9,"./components/Image":10,"./components/Input":11,"./components/InputList":12,"./components/List":13,"./components/ListItem":14,"./components/ListItemSimple":15,"./components/RadioGroup":16,"./components/Select":17,"./components/SuperCombo":18,"./components/Text":19,"./components/Textarea":20,"./components/Time":21,"./components/Wrapper":22,"./components/bootstrap/Alert":23,"./components/bootstrap/Dialog":24,"./components/bootstrap/Dropdown":25,"./forms/Form":26}],32:[function(require,module,exports){
+},{"./components/Button":1,"./components/CheckGroup":2,"./components/Combo":3,"./components/ComboList":4,"./components/Date":5,"./components/DropTarget":6,"./components/FoldTree":7,"./components/FormList":8,"./components/Group":9,"./components/Hyperlink":10,"./components/Image":11,"./components/Input":12,"./components/InputList":13,"./components/List":14,"./components/ListItem":15,"./components/ListItemSimple":16,"./components/RadioGroup":17,"./components/Select":18,"./components/SuperCombo":19,"./components/Text":20,"./components/Textarea":21,"./components/Time":22,"./components/Wrapper":23,"./components/bootstrap/Alert":24,"./components/bootstrap/Dialog":25,"./components/bootstrap/Dropdown":26,"./forms/Form":27}],33:[function(require,module,exports){
 (function (process,global){
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -9848,7 +9980,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":33}],33:[function(require,module,exports){
+},{"_process":34}],34:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -10034,7 +10166,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],34:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /*jslint forin: true, plusplus: true, indent: 2, browser: true, unparam: true */
 /*!
 Copyright (C) 2014-2015 by Andrea Giammarchi - @WebReflection
@@ -10555,4 +10687,4 @@ module.exports = (function (O) {
  */
 
 }({}));
-},{}]},{},[30]);
+},{}]},{},[31]);
