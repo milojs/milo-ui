@@ -708,7 +708,7 @@ function MLFoldTree$toggleItem(id, opened) {
 var formlistitem_dot = "<div ml-bind=\"[container, data, dom, item]:itemSample\" class=\"form-list-item\">\n  <label>{{= it.label}}</label>\n  <span class=\"form-list-controls\">\n    {{? it.allowMove }}\n      <i ml-bind=\"[events]:downBtn\" class=\"fa fa-arrow-down\"></i>\n      <i ml-bind=\"[events]:upBtn\" class=\"fa fa-arrow-up\"></i>\n    {{?}}\n    {{? it.allowDelete }}<i ml-bind=\"[events]:deleteBtn\" class=\"fa fa-times\"></i>{{?}}\n  </span>\n  {{= it.itemContent}}\n</div>\n"
     , doT = milo.util.doT;
 
-var MLFormList = module.exports = milo.createComponentClass({
+const MLFormList = module.exports = milo.createComponentClass({
     className: 'MLFormList',
     facets: {
         container: undefined,
@@ -760,12 +760,12 @@ function handleClick (type, event) {
     }
 }
 
-function prepareTemplate (label, temp, options) {
+function prepareTemplate (label, itemContent, options) {
     const template = document.createElement('template');
     const itemTemplate = doT.compile(formlistitem_dot);
     const item = itemTemplate(Object.assign({}, options, {
         label: label || 'ITEM',
-        itemContent: temp.trim(),
+        itemContent: itemContent.trim(),
     }));
     template.innerHTML = item;
     return template.content.firstChild;
@@ -2032,7 +2032,7 @@ function MLSuperCombo_get() {
 
 /**
  * Custom data facet set method
- * @param {Variable} obj
+ * @param {Object} obj
  */
 function MLSuperCombo_set(obj) {
     this._currentValue = obj;
