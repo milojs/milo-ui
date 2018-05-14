@@ -716,7 +716,28 @@ const MLFormList = module.exports = milo.createComponentClass({
             cls: 'ml-ui-form-list'
         },
         model: undefined,
-        data: undefined,
+        data: {
+            get: function () {
+                return this.data._get();
+            },
+            set: function (value) {
+                const toSet = [...Object.assign([], value)];
+                this.model.m.set(toSet);
+                this.data._set(toSet);
+            },
+            splice: function () {
+                this.data._splice.apply(this.data, arguments);
+                return this.model.m.splice.apply(this.model.m, arguments);
+            },
+            messages: {
+                '****': {
+                    subscriber: function () {
+                        this.model.m.set(this.data.get());
+                    },
+                    context: 'owner'
+                }
+            }
+        },
         events: {
             messages: {
                 click: { subscriber: handleClick, context: 'owner' }
@@ -798,8 +819,6 @@ function MLFormList$init () {
 }
 
 function MLFormList$destroy () {
-    if (this._connector) milo.minder.destroyConnector(this._connector);
-    this._connector = null;
     MLFormList.super.destroy.apply(this, arguments);
 }
 
@@ -807,7 +826,6 @@ function onChildrenBound () {
     this.model.set([]);
     const addBtn = this.container.scope.addBtn;
     addBtn && addBtn.events.on('click', { subscriber: function () { this.addItem(); }, context: this.list });
-    this._connector = milo.minder(this.model, '<<<-', this.data).deferChangeMode('<<<->>>');
 }
 
 },{}],9:[function(require,module,exports){
