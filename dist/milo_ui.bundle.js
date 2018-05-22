@@ -730,7 +730,9 @@ const MLFormList = module.exports = milo.createComponentClass({
     },
     methods: {
         init: MLFormList$init,
-        moveItem: MLFormList$moveItem
+        moveItem: MLFormList$moveItem,
+        setItemSchema: MLFormList$setItemSchema,
+        destroy: MLFormList$destroy
     }
 });
 
@@ -757,18 +759,29 @@ function MLFormList$init () {
     this.once('childrenbound', onChildrenBound);
 }
 
+function MLFormList$setItemSchema (schema) {
+    this._subFormSchema = schema.subSchema;
+    this._movable = !!schema.allowMove;
+    this._deletable = !!schema.allowDelete;
+    this._itemLabel = schema.itemLabel;
+}
+
 function MLFormList$moveItem (fromIndex, toIndex) {
     const toInsert = this.model.m.splice(fromIndex, 1);
     if (toInsert) return this.model.m.splice(toIndex, 0, toInsert[0]);
+}
+
+function MLFormList$destroy () {
+    if (this._connector) milo.minder.destroyConnector(this._connector);
+    this._connector = null;
+    MLFormList.super.destroy.apply(this, arguments);
 }
 
 function onChildrenBound () {
     const scope = this.container.scope;
     this.__connector = milo.minder(this.model, '->>>', scope.list.data).deferChangeMode('<<<->>>');
     scope.addBtn && scope.addBtn.events.on('click', { subscriber: addItem, context: this });
-    this.model.m.on('*', { subscriber: function () {
-        _triggerExternalPropagation.call(this);
-    }, context: this });
+    this.model.m.on('*', { subscriber: _triggerExternalPropagation, context: this });
 }
 
 function addItem () {
@@ -871,12 +884,9 @@ function MLFormListItem$setupSubformOnce() {
 function MLFormListItem$renderSubform(schema) {
     const MLForm = componentsRegistry.get('MLForm');
     const formHost = getFormHost(this);
-    const oldDomCls = MLForm.getFacetConfig('dom').cls;
     const formlist = getFormList(this);
-
-    MLForm.getFacetConfig('dom').cls = '';
     const newForm = MLForm.createForm(schema, formHost);
-    MLForm.getFacetConfig('dom').cls = oldDomCls;
+    newForm.el.classList.remove('cc-module-inspector');
 
     if (formlist._itemLabel) this.el.querySelector('.form-item-label').innerHTML = formlist._itemLabel;
     toggleDisplay(this.el.querySelector('.control-movable'), formlist._movable);
@@ -888,7 +898,7 @@ function MLFormListItem$renderSubform(schema) {
 }
 
 function toggleDisplay (el, visible) {
-    const value = visible ? 'block' : 'none';
+    const value = visible ? 'inline-block' : 'none';
     el.style.display = value;
 }
 
@@ -4230,7 +4240,7 @@ var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssC
     , image_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n        ml-bind=\"MLImage:{{= it.compName }}\"\n        {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n        {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , droptarget_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n        <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n            ml-bind=\"MLDropTarget:{{= it.compName }}\"\n            {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n            {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , text_dot = "{{var tagName = it.item.tagName || 'span';}}\n<{{=tagName}} ml-bind=\"MLText:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{? it.item.label }}\n        {{= it.item.label}}\n    {{?}}\n</{{=tagName}}>\n"
-    , formlist_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <div ml-bind=\"MLFormList:{{= it.compName }}\"\n              {{? it.disabled }}disabled {{?}}>\n      <ul ml-bind=\"[list,data]:list\">\n          <li ml-bind=\"MLFormListItem:itemSample\"></li>\n      </ul>\n      <button ml-bind=\"[events]:addBtn\">Add Item</button>\n    </div>\n</div>\n"
+    , formlist_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <div ml-bind=\"MLFormList:{{= it.compName }}\" {{? it.disabled }}disabled {{?}}>\n      <ul ml-bind=\"[list,data]:list\">\n          <li ml-bind=\"MLFormListItem:itemSample\"></li>\n      </ul>\n      <button ml-bind=\"[events]:addBtn\">Add Item</button>\n    </div>\n</div>\n"
     , clear_dot = '<div class="cc-clear"></div>';
 
 
@@ -4342,10 +4352,7 @@ function processInputSchema(comp, schema) {
 }
 
 function prepareFormListSchema(comp, schema) {
-    comp._subFormSchema = schema.subSchema;
-    comp._movable = !!schema.allowMove;
-    comp._deletable = !!schema.allowDelete;
-    comp._itemLabel = schema.itemLabel;
+    comp.setItemSchema(schema);
 }
 
 function setComponentOptions(comp, options, setModelFunc) {
