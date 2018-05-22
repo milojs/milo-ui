@@ -779,7 +779,7 @@ function MLFormList$destroy () {
 
 function onChildrenBound () {
     const scope = this.container.scope;
-    this.__connector = milo.minder(this.model, '->>>', scope.list.data).deferChangeMode('<<<->>>');
+    this._connector = milo.minder(this.model, '->>>', scope.list.data).deferChangeMode('<<<->>>');
     scope.addBtn && scope.addBtn.events.on('click', { subscriber: addItem, context: this });
     this.model.m.on('*', { subscriber: _triggerExternalPropagation, context: this });
 }
@@ -4240,7 +4240,7 @@ var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssC
     , image_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n        ml-bind=\"MLImage:{{= it.compName }}\"\n        {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n        {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , droptarget_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n        <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n            ml-bind=\"MLDropTarget:{{= it.compName }}\"\n            {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n            {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , text_dot = "{{var tagName = it.item.tagName || 'span';}}\n<{{=tagName}} ml-bind=\"MLText:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{? it.item.label }}\n        {{= it.item.label}}\n    {{?}}\n</{{=tagName}}>\n"
-    , formlist_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <div ml-bind=\"MLFormList:{{= it.compName }}\" {{? it.disabled }}disabled {{?}}>\n      <ul ml-bind=\"[list,data]:list\">\n          <li ml-bind=\"MLFormListItem:itemSample\"></li>\n      </ul>\n      <button ml-bind=\"[events]:addBtn\">Add Item</button>\n    </div>\n</div>\n"
+    , formlist_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <div ml-bind=\"MLFormList:{{= it.compName }}\" {{? it.disabled }}disabled{{?}}>\n      <ul ml-bind=\"[list,data]:list\">\n          <li ml-bind=\"MLFormListItem:itemSample\"></li>\n      </ul>\n      <button ml-bind=\"[events]:addBtn\">Add Item</button>\n    </div>\n</div>\n"
     , clear_dot = '<div class="cc-clear"></div>';
 
 
