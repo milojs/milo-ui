@@ -51,7 +51,7 @@ function getFormSchema() {
                 placeholder: 'Some placeholder text',
 
                 // Standard html input max length
-                maxLength: 20,
+                maxLength: 25,
 
                 // The corresponding data property, can be complex like
                 // .title[0].some.other.thing
@@ -64,8 +64,10 @@ function getFormSchema() {
                 altText: 'Some cool alt text',
 
                 // Sets out validation rules, can be preset string rules
-                // or functions
+                // or functions.
+                // Optionally select context, or "this" will be undefined.
                 validate: {
+                    context: 'form', // context can be used for conditional validation
                     fromModel: ['required', customValidationFunction],
                     toModel: ['required', customValidationFunction]
                 },
@@ -256,8 +258,14 @@ function getFormSchema() {
 }
 
 function customValidationFunction(data, done) {
-    const valid = !(data && data.length > 9);
-    const reason = 'String should be shorter than 10.';
+    // Using context we can create validation functions that are dependant
+    // on other fields in the model. However, this field won't revalidate
+    // when the dependant field changes, so other logic would be needed.
+    const textAreaValue = this.model.m('.textArea').get();
+
+    const maxLength = textAreaValue ? 20 : 10;
+    const valid = !(data && data.length > maxLength);
+    const reason = `String should be ${maxLength} chars or shorter.`;
     const reasonCode = 'TOO_LONG';
 
     // Should call the callback with a valid property and the reason which
