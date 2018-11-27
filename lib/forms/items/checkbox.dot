@@ -4,6 +4,7 @@
       id="{{= it.compName }}"
       ml-bind="MLInput:{{= it.compName }}"
       {{? it.disabled }}disabled {{?}}
+      {{? it.checked }}checked {{?}}
       class="{{= it.item.itemCssClass || ''}}">
     {{= it.item.label}}
   </label>
