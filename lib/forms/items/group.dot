@@ -1,4 +1,10 @@
 <div ml-bind="MLGroup:{{= it.compName }}"{{? it.item.wrapCssClass}} class="{{= it.item.wrapCssClass }}"{{?}}>
-    {{# def.partials.label }}
+    {{? it.item.tooltip }}
+        <div class="group-label-with-tooltip">
+          {{# def.partials.label }} {{# def.partials.tooltip }}
+        </div>
+    {{??}}
+        {{# def.partials.label }}
+    {{?}}
     {{= it.formGenerator(it.item) }}
 </div>
