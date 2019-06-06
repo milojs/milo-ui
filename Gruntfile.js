@@ -1,9 +1,6 @@
 'use strict';
 module.exports = function(grunt) {
     var babelify = require('babelify').configure({
-        presets: [
-            "es2015"
-        ],
         plugins: [
             require('babel-plugin-transform-es2015-destructuring'),
             require('babel-plugin-transform-es2015-parameters')
@@ -17,7 +14,7 @@ module.exports = function(grunt) {
                     'dist/milo_ui.bundle.js': 'lib/milo_ui.js'
                 },
                 options: {
-                    transform: [babelify, 'brfs'],
+                    transform: [ babelify, 'brfs' ],
                     debug: true
                 }
             },
@@ -28,7 +25,7 @@ module.exports = function(grunt) {
                     dest: '.tmp-test-browser'
                 }],
                 options: {
-                    transform: [babelify, 'brfs']
+                    transform: [ babelify, 'brfs' ]
                 }
             }
         },
@@ -79,7 +76,7 @@ module.exports = function(grunt) {
     }
 
     grunt.loadNpmTasks('grunt-browserify');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-uglify-es');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-karma');
 
