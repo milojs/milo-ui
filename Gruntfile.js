@@ -1,12 +1,5 @@
 'use strict';
 module.exports = function(grunt) {
-    var babelify = require('babelify').configure({
-        plugins: [
-            require('babel-plugin-transform-es2015-destructuring'),
-            require('babel-plugin-transform-es2015-parameters')
-        ]
-    });
-
     grunt.initConfig({
         browserify: {
             milo_ui: {
@@ -14,7 +7,7 @@ module.exports = function(grunt) {
                     'dist/milo_ui.bundle.js': 'lib/milo_ui.js'
                 },
                 options: {
-                    transform: [ babelify, 'brfs' ],
+                    transform: [ 'brfs' ],
                     debug: true
                 }
             },
@@ -25,7 +18,7 @@ module.exports = function(grunt) {
                     dest: '.tmp-test-browser'
                 }],
                 options: {
-                    transform: [ babelify, 'brfs' ]
+                    transform: [ 'brfs' ]
                 }
             }
         },

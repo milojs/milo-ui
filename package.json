@@ -41,9 +41,6 @@
     "restyle": "^0.7.0"
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-preset-es2015": "^6.24.1",
-    "babelify": "^7.3.0",
     "brfs": "^1.4.3",
     "browserify": "^14.0.0",
     "eslint": "^3.14.1",
