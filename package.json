@@ -18,6 +18,7 @@
   ],
   "main": "lib/milo_ui.js",
   "scripts": {
+    "start": "grunt",
     "lint": "eslint lib test_browser",
     "test": "echo 'No tests'",
     "test-browser": "node_modules/.bin/grunt karma && node_modules/.bin/karma start",
@@ -45,7 +46,7 @@
     "eslint": "^3.14.1",
     "grunt": "^1.0.1",
     "grunt-browserify": "^5.0.0",
-    "grunt-contrib-uglify": "^2.0.0",
+    "grunt-contrib-uglify-es": "^3.3.0",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-karma": "^2.0.0",
     "karma": "^1.4.1",
