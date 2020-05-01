@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -301,15 +301,14 @@ function onOptionsChange(msg, data) {
 },{}],4:[function(require,module,exports){
 'use strict';
 
-var Component = milo.Component
-    , componentsRegistry = milo.registry.components
-    , check = milo.util.check
-    , Match = check.Match;
+const { Component, registry, util } = milo;
+const { check } = util;
+const componentsRegistry = registry.components;
+const Match = check.Match;
 
-var COMBO_LIST_CHANGE_MESSAGE = 'mlcombolistchange';
+const COMBO_LIST_CHANGE_MESSAGE = 'mlcombolistchange';
 
-
-var MLComboList = Component.createComponentClass('MLComboList', {
+const MLComboList = Component.createComponentClass('MLComboList', {
     dom: {
         cls: 'ml-ui-combo-list'
     },
@@ -323,17 +322,30 @@ var MLComboList = Component.createComponentClass('MLComboList', {
     container: undefined,
     model: {
         messages: {
-            '***': { subscriber: onItemsChange, context: 'owner'}
+            '***': { subscriber: onItemsChange, context: 'owner' }
         }
     },
     template: {
-        template: '<div ml-bind="MLSuperCombo:combo"></div>\
-                   <div ml-bind="MLList:list">\
-                       <div ml-bind="MLListItem:item" class="list-item">\
-                           <span ml-bind="[data]:label"></span>\
-                           <span ml-bind="[events]:deleteBtn" class="glyphicon glyphicon-remove"></span>\
-                       </div>\
-                   </div>'
+        template: `
+            <div ml-bind="MLSuperCombo:combo"></div>
+            <div ml-bind="MLList:list">
+                <div ml-bind="MLListItem:item" class="item-wrapper">
+                    <div class="list-item">
+                        <span ml-bind="[data]:label"></span>
+                        <span ml-bind="[events]:deleteBtn" class="glyphicon glyphicon-remove"></span>
+                    </div>
+                    <div ml-bind="[container, data]:item" class="form-tooltip">
+                        <div class="form-tooltip-anchor">
+                            <span ml-bind="[data]:tooltipAnchor" > </span>
+                            <span class="form-tooltip-anchor-bottom">◢◣</span>
+                        </div>
+                        <div class="form-tooltip-content-wrapper">
+                            <div class="form-tooltip-content" ml-bind="[data]:tooltip"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `
     }
 });
 
@@ -350,7 +362,7 @@ _.extendProto(MLComboList, {
     toggleAddButton: MLComboList$toggleAddButton,
     destroy: MLComboList$destroy,
     setAddItemPrompt: MLComboList$setAddItemPrompt,
-    clearComboInput : MLComboList$clearComboInput
+    clearComboInput: MLComboList$clearComboInput
 });
 
 
@@ -365,12 +377,14 @@ function MLComboList$setDataValidation(dataValidation) {
     this._dataValidation = dataValidation;
 }
 
-function MLComboList$setOptions(arr) {
-    this._combo.setOptions(arr);
+function MLComboList$setOptions(options) {
+    const hasTooltips = Array.isArray(options) && !!options.find(v => v.item);
+    this.dom.toggleCssClasses('has-details', hasTooltips);
+    this._combo.setOptions(options);
 }
 
 
-function MLComboList$clearComboInput () {
+function MLComboList$clearComboInput() {
     this._combo.clearComboInput();
 }
 
@@ -388,13 +402,11 @@ function MLComboList$setAddItemPrompt(prompt) {
     this._combo.setAddItemPrompt(prompt);
 }
 
-
 function MLComboList$destroy() {
     Component.prototype.destroy.apply(this, arguments);
     if (this._connector) milo.minder.destroyConnector(this._connector);
     this._connector = null;
 }
-
 
 function onChildrenBound() {
     this.template.render().binder();
@@ -406,15 +418,15 @@ function componentSetup() {
         '_combo': this.container.scope.combo,
         '_list': this.container.scope.list
     });
-
     this._connector = milo.minder(this._list.model, '<<<->>>', this.model);
     this._combo.data.on('', { subscriber: onComboChange, context: this });
     this._combo.on('additem', { subscriber: onAddItem, context: this });
 }
 
 function onComboChange(msg, data) {
-    if (data.newValue && runDataValidation.call(this, msg, data))
+    if (data.newValue && runDataValidation.call(this, msg, data)) {
         this._list.model.push(data.newValue);
+    }
     this._combo.data.del();
     // because of supercombo listeners off you have to set _value explicitly
     this._combo.data._value = '';
@@ -431,7 +443,7 @@ function onItemsChange(msg, data) {
 }
 
 function MLComboList_get() {
-    var value = this.model.get();
+    const value = this.model.get();
     return (value && typeof value === 'object') ? _.clone(value) : value;
 }
 
@@ -551,7 +563,7 @@ function fromISO8601Format(dateStr, utc) {
 
         date = new Date(Date.UTC(values[0], values[1], values[2]));
     } else {
-        date = _.toDate(dateStr);
+        date = _.toDate((/^\d{4}-\d{2}-\d{2}$/).test(dateStr) ? (dateStr + ' 00:00:00') : dateStr);
     }
 
     return date;
@@ -1629,6 +1641,8 @@ var Component = milo.Component
 
 var SELECT_CHANGE_MESSAGE = 'mlselectchange';
 
+const optionTemplate = (key) => `<option value="{{= ${key}.value }}" {{? ${key}.selected }}selected{{?}}>{{= ${key}.label }}</option>`;
+
 var MLSelect = Component.createComponentClass('MLSelect', {
     dom: {
         cls: 'ml-ui-select'
@@ -1651,9 +1665,15 @@ var MLSelect = Component.createComponentClass('MLSelect', {
         }
     },
     template: {
-        template: '{{~ it.selectOptions :option }} \
-                        <option value="{{= option.value }}" {{? option.selected }}selected{{?}}>{{= option.label }}</option> \
-                   {{~}}'
+        template: `{{~ it.selectOptions :option }}
+            {{? option.groupDisplayText }}
+                <optgroup label="{{= option.groupDisplayText }}">
+                    {{~ option.options :groupOption}}${optionTemplate('groupOption')}{{~}}
+                </optgroup>
+            {{??}}
+                ${optionTemplate('option')}
+            {{?}}
+        {{~}}`
     }
 });
 
@@ -1757,12 +1777,21 @@ var Component = milo.Component
     , doT = milo.util.doT
     , logger = milo.util.logger;
 
+
+
 var COMBO_OPEN = 'ml-ui-supercombo-open';
 var COMBO_CHANGE_MESSAGE = 'mlsupercombochange';
 
-var OPTIONS_TEMPLATE = '{{~ it.comboOptions :option:index }}\
-                            <div {{? option.selected}}class="selected" {{?}}data-value="{{= index }}">{{= option.label }}</div>\
-                        {{~}}';
+const TOOLTIP_TEMPLATE = "{{? it.item }}\n    {{? it.item.tooltip }}\n    <div class=\"form-tooltip\">\n        <div class=\"form-tooltip-anchor\">\n            {{=it.item.tooltipAnchor || '?'}}\n            <span class=\"form-tooltip-anchor-bottom\">◢◣</span>\n        </div>\n        <div class=\"form-tooltip-content-wrapper\">\n            <div class=\"form-tooltip-content\">\n                {{= it.item.tooltip }}\n            </div>\n        </div>\n    </div>\n    {{?}}\n{{?}}\n";
+
+var OPTIONS_TEMPLATE = `
+    {{~ it.comboOptions :option:index }}
+        <div class="{{? option.selected }}selected{{?}} item-wrapper" data-value="{{= index }}">
+            <div class='ml-super-combo-option-label'>{{= option.label }}</div>
+            ${TOOLTIP_TEMPLATE.replace(/it\./g, 'option.')}
+        </div>
+    {{~}}
+`;
 
 var MAX_RENDERED = 100;
 var BUFFER = 25;
@@ -2047,14 +2076,27 @@ function MLSuperCombo$update() {
 
     var arrToShow = this._filteredOptionsData.slice(this._startIndex, this._endIndex);
 
+    const hasTooltips = Array.isArray(arrToShow) && !!arrToShow.find(v => v.item);
+    this.dom.toggleCssClasses('has-details', hasTooltips);
+
     this._comboOptions.template.render({
         comboOptions: arrToShow
     });
 
     this._elementHeight = this._elementHeight || DEFAULT_ELEMENT_HEIGHT;
 
-    if (wasHidden)
-        this.hideOptions();
+    if (wasHidden) {
+        try {
+            this.hideOptions();
+        } catch(exception) {
+            logger.metric({
+                ns: 'milo.supercombo.error',
+                msg: 'Hide option failed in when called in update',
+                exception: exception
+            });
+            return; // should stop as before
+        }
+    }
 
     var beforeHeight = this._startIndex * this._elementHeight;
     var afterHeight = (this._total - this._endIndex) * this._elementHeight;
@@ -2093,7 +2135,16 @@ function setupComboList(list, options, self) {
         // left: xPos + 'px',
     });
 
-    self.hideOptions();
+    try {
+        self.hideOptions();
+    } catch(exception) {
+        logger.metric({
+            ns: 'milo.supercombo.error',
+            msg: 'Hide option failed in when called in setup combo list',
+            exception: exception
+        });
+        return; // should stop as before
+    }
     list.events.onMessages({
         'click': {subscriber: onListClick, context: self},
         'scroll': {subscriber: onListScroll, context: self}
@@ -2143,7 +2194,16 @@ function MLSuperCombo_set(obj) {
     var self = this;
 
     _.defer(function() {
-        self.hideOptions();
+        try {
+            self.hideOptions();
+        } catch(exception) {
+            logger.metric({
+                ns: 'milo.supercombo.error',
+                msg: 'Hide option failed in when called in set defer',
+                exception: exception
+            });
+            return; // should stop as before
+        }
         self.setFilteredOptions(self._optionsData);
         self.update();
     });
@@ -2214,7 +2274,18 @@ function _updateOptionsAndAddButton(text, filteredArr) {
             this.showOptions();
             setSelected.call(this, filteredArr[0]);
         } else {
-            this.hideOptions();
+            try {
+                this.hideOptions();
+            } catch(exception) {
+                logger.metric({
+                    ns: 'milo.supercombo.error',
+                    msg: 'Hide option failed in when called in update option add add button',
+                    text: text,
+                    filteredArr: filteredArr,
+                    exception: exception
+                });
+                return; // should stop as before
+            }
         }
     }
 
@@ -2299,7 +2370,16 @@ function onMouseLeave(type, event) {
 }
 
 function _onMouseLeave() {
-    this.hideOptions();
+    try {
+        this.hideOptions();
+    } catch(exception) {
+        logger.metric({
+            ns: 'milo.supercombo.error',
+            msg: 'Hide option failed in when called in onMouseLeave',
+            exception: exception
+        });
+        return; // should stop as before
+    }
     this.toggleAddButton(false, { preserveState: true });
 }
 
@@ -2399,7 +2479,7 @@ function onListScroll (type, event) {
  * @return {Number}
  */
 function _getDataValueFromElement(el) {
-    return Number(el.getAttribute('data-value')) + this._startIndex;
+    return Number(el.closest('.item-wrapper').getAttribute('data-value')) + this._startIndex;
 }
 
 /**
@@ -2408,7 +2488,16 @@ function _getDataValueFromElement(el) {
  * unsubscribe data listeners.
  */
 function _setData() {
-    this.hideOptions();
+    try {
+        this.hideOptions();
+    } catch(exception) {
+        logger.metric({
+            ns: 'milo.supercombo.error',
+            msg: 'Hide option failed in when called in set data',
+            exception: exception
+        });
+        return; // should stop as before
+    }
     this.toggleAddButton(false);
     this._comboInput.data.off('', { subscriber: onDataChange, context: this });
     //supercombo listeners off
@@ -2579,6 +2668,7 @@ function MLTime_set(value) {
             .replace('mm', pad(minutes));
 
     this.el.value = timeStr;
+    dispatchInputMessage.call(this);
     return timeStr;
 
     function pad(n) {return n < 10 ? '0' + n : n; }
@@ -2587,6 +2677,11 @@ function MLTime_set(value) {
 
 function MLTime_del() {
     this.el.value = '';
+    dispatchInputMessage.call(this);
+}
+
+function dispatchInputMessage() {
+    this.data.dispatchSourceMessage('input'); // Dispatch the 'input' (usually dispatched by the underlying <input> element) event so that the data change can be listened to
 }
 
 },{}],24:[function(require,module,exports){
@@ -3351,6 +3446,8 @@ var FORM_VALIDATION_FAILED_CSS_CLASS = 'has-error';
  *         } // , ... more items
  *     ]
  * }
+ *
+ * On validation errors if component has a renderValidationFailure function then it will be called with error response and component schema
  */
 var MLForm = Component.createComponentClass('MLForm', {
     dom: {
@@ -3441,7 +3538,7 @@ function MLForm$$createForm(schema, hostObject, formData, template) {
             // allow schema to define confined CSS per form
             form.style = restyle('#' + id, Object.assign({
                 '.centered-tooltip .form-tooltip-content-wrapper': {
-                    left: '50% !important',
+                    left: '50%',
                     transform: 'translateX(-50%)'
                 },
                 '.form-tooltip:hover .form-tooltip-anchor-bottom': {
@@ -3573,8 +3670,16 @@ function MLForm$$createForm(schema, hostObject, formData, template) {
                     , modelPath = schema.modelPath;
 
                 if (component) {
-                    var parentEl = component.el.parentNode;
-                    parentEl.classList.toggle(FORM_VALIDATION_FAILED_CSS_CLASS, ! response.valid);
+                    // check component can render validation failure
+                    if (component.renderValidationFailure) {
+                        component.renderValidationFailure(response, schema);
+                    } else {
+                        const parentEl = component.el.parentNode;
+                        parentEl.classList.toggle(
+                            FORM_VALIDATION_FAILED_CSS_CLASS,
+                            !response.valid
+                        );
+                    }
 
                     var reason;
                     if (response.valid)
@@ -4166,7 +4271,7 @@ module.exports = formGenerator;
 var partials = {
     label: "{{? it.item.label }}\n    <label>{{= it.item.label}}</label>\n{{?}}\n",
     formGroup: "<div\n    {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}\n    class=\"form-group{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\"\n>\n",
-    tooltip: "{{? it.item.tooltip }}\n  <div class=\"form-tooltip\">\n      <div class=\"form-tooltip-anchor\">\n          {{=it.item.tooltipAnchor || '?'}}\n          <span class=\"form-tooltip-anchor-bottom\">◢◣</span>\n      </div>\n      <div class=\"form-tooltip-content-wrapper\">\n          <div class=\"form-tooltip-content\">\n              {{= it.item.tooltip }}\n          </div>\n      </div>\n  </div>\n{{?}}\n"
+    tooltip: "{{? it.item }}\n    {{? it.item.tooltip }}\n    <div class=\"form-tooltip\">\n        <div class=\"form-tooltip-anchor\">\n            {{=it.item.tooltipAnchor || '?'}}\n            <span class=\"form-tooltip-anchor-bottom\">◢◣</span>\n        </div>\n        <div class=\"form-tooltip-content-wrapper\">\n            <div class=\"form-tooltip-content\">\n                {{= it.item.tooltip }}\n            </div>\n        </div>\n    </div>\n    {{?}}\n{{?}}\n"
 };
 
 var dotDef = {
@@ -4213,7 +4318,8 @@ function formGenerator(schema) {
             formGenerator: formGenerator,
             miloCount: miloCount,
             disabled: item.disabled,
-            multiple: item.multiple
+            multiple: item.multiple,
+            checked: item.checked
         });
     }
 }
@@ -4225,14 +4331,14 @@ function formGenerator(schema) {
 var formRegistry = require('./registry');
 
 
-var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{# def.partials.label }}\n    {{= it.formGenerator(it.item) }}\n</div>\n"
+var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{? it.item.tooltip }}\n        <div class=\"group-label-with-tooltip\">\n          {{# def.partials.label }} {{# def.partials.tooltip }}\n        </div>\n    {{??}}\n        {{# def.partials.label }}\n    {{?}}\n    {{= it.formGenerator(it.item) }}\n</div>\n"
     , wrapper_dot = "<span ml-bind=\"MLWrapper:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{= it.formGenerator(it.item) }}\n</span>\n"
     , select_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <span class=\"custom-select\">\n        <select ml-bind=\"MLSelect:{{= it.compName }}\"\n                {{? it.disabled }}disabled {{?}}\n                {{? it.multiple }}multiple {{?}}\n                class=\"form-control\">\n        </select>\n    </span>\n</div>\n"
     , input_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <input type=\"{{= it.item.inputType || 'text' }}\"\n            {{? it.item.inputName }}name=\"{{= it.item.inputName }}\"{{?}}\n            ml-bind=\"MLInput:{{= it.compName }}\"\n            {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}\n            {{? it.disabled }}disabled {{?}}\n            class=\"form-control\">\n</div>\n"
     , textarea_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    {{# def.partials.tooltip }}\n    <textarea ml-bind=\"MLTextarea:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"form-control\"\n        {{? it.item.placeholder }}placeholder=\"{{= it.item.placeholder}}\"{{?}}></textarea>\n</div>\n"
     , button_dot = "<div {{? it.item.altText }}title=\"{{= it.item.altText}}\" {{?}}class=\"btn-toolbar{{? it.item.wrapCssClass}} {{= it.item.wrapCssClass }}{{?}}\">\n    <button ml-bind=\"MLButton:{{= it.compName }}\"\n        {{? it.disabled }}disabled {{?}}\n        class=\"btn btn-default {{? it.item.itemCssClass}} {{= it.item.itemCssClass }}{{?}}\">\n        {{= it.item.label || '' }}\n    </button>\n    {{# def.partials.tooltip }}\n</div>\n"
     , hyperlink_dot = "{{# def.partials.formGroup }}\n    <a {{? it.item.href}}href=\"{{= it.item.href }}\"{{?}}\n        {{? it.item.target}}target=\"{{= it.item.target }}\"{{?}}\n        ml-bind=\"MLHyperlink:{{= it.compName }}\" \n        class=\"hyperlink hyperlink-default\">\n        {{= it.item.label || '' }}\n    </a>\n    {{# def.partials.tooltip }}\n</div>"
-    , checkbox_dot = "{{# def.partials.formGroup }}\n  <label>\n    <input type=\"checkbox\"\n      id=\"{{= it.compName }}\"\n      ml-bind=\"MLInput:{{= it.compName }}\"\n      {{? it.disabled }}disabled {{?}}\n      class=\"{{= it.item.itemCssClass || ''}}\">\n    {{= it.item.label}}\n  </label>\n  {{# def.partials.tooltip }}\n</div>\n"
+    , checkbox_dot = "{{# def.partials.formGroup }}\n  <label>\n    <input type=\"checkbox\"\n      id=\"{{= it.compName }}\"\n      ml-bind=\"MLInput:{{= it.compName }}\"\n      {{? it.disabled }}disabled {{?}}\n      {{? it.checked }}checked {{?}}\n      class=\"{{= it.item.itemCssClass || ''}}\">\n    {{= it.item.label}}\n  </label>\n  {{# def.partials.tooltip }}\n</div>\n"
     , list_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <ul ml-bind=\"MLList:{{= it.compName }}\"\n            {{? it.disabled }}disabled {{?}}>\n        <li ml-bind=\"MLListItem:itemSample\" class=\"list-item\">\n            <span ml-bind=\"[data]:label\"></span>\n            {{? it.editBtn }}<button ml-bind=\"[events]:editBtn\">edit</button>{{?}}\n            <button ml-bind=\"[events]:deleteBtn\" class=\"btn btn-default glyphicon glyphicon-remove\"> </button>\n        </li>\n    </ul>\n</div>\n"
     , time_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"time\"\n            ml-bind=\"MLTime:{{= it.compName }}\"\n            class=\"form-control\">\n</div>"
     , date_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <input type=\"date\"\n            ml-bind=\"MLDate:{{= it.compName }}\"\n            class=\"form-control\">\n</div>"
@@ -4316,17 +4422,13 @@ function processSuperComboSchema(comp, schema) {
 
 
 function processComboListSchema(comp, schema) {
-    var options = schema.comboOptions
-        , optionsURL = schema.comboOptionsURL
-        , addItemPrompt = schema.addItemPrompt
-        , placeHolder = schema.placeHolder;
-
+    const { comboOptions, comboOptionsURL, addItemPrompt, placeHolder } =  schema;
     _.deferTicks(function() {
         if (addItemPrompt) comp.setAddItemPrompt(addItemPrompt);
         if (placeHolder) comp.setPlaceholder(placeHolder);
-        if (!optionsURL) comp.setDataValidation(schema.dataValidation);
-        setComponentOptions(comp, options, setComboOptions);
-        if (optionsURL) comp.container.scope.combo.initOptionsURL(optionsURL);
+        if (!comboOptionsURL) comp.setDataValidation(schema.dataValidation);
+        setComponentOptions(comp, comboOptions, setComboOptions);
+        if (comboOptionsURL) comp.container.scope.combo.initOptionsURL(comboOptionsURL);
     }, 2);
 }
 
@@ -4500,7 +4602,7 @@ require('./components/bootstrap/Dropdown');
 require('./forms/Form');
 
 },{"./components/Button":1,"./components/CheckGroup":2,"./components/Combo":3,"./components/ComboList":4,"./components/Date":5,"./components/DropTarget":6,"./components/FoldTree":7,"./components/FormList":8,"./components/FormListItem":9,"./components/Group":10,"./components/Hyperlink":11,"./components/Image":12,"./components/Input":13,"./components/InputList":14,"./components/List":15,"./components/ListItem":16,"./components/ListItemSimple":17,"./components/RadioGroup":18,"./components/Select":19,"./components/SuperCombo":20,"./components/Text":21,"./components/Textarea":22,"./components/Time":23,"./components/Wrapper":24,"./components/bootstrap/Alert":25,"./components/bootstrap/Dialog":26,"./components/bootstrap/Dropdown":27,"./forms/Form":28}],34:[function(require,module,exports){
-(function (process,global){
+(function (process,global,setImmediate){
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -4516,6 +4618,59 @@ function slice(arrayLike, start) {
     }
     return newArr;
 }
+
+/**
+ * Creates a continuation function with some arguments already applied.
+ *
+ * Useful as a shorthand when combined with other control flow functions. Any
+ * arguments passed to the returned function are added to the arguments
+ * originally passed to apply.
+ *
+ * @name apply
+ * @static
+ * @memberOf module:Utils
+ * @method
+ * @category Util
+ * @param {Function} fn - The function you want to eventually apply all
+ * arguments to. Invokes with (arguments...).
+ * @param {...*} arguments... - Any number of arguments to automatically apply
+ * when the continuation is called.
+ * @returns {Function} the partially-applied function
+ * @example
+ *
+ * // using apply
+ * async.parallel([
+ *     async.apply(fs.writeFile, 'testfile1', 'test1'),
+ *     async.apply(fs.writeFile, 'testfile2', 'test2')
+ * ]);
+ *
+ *
+ * // the same process without using apply
+ * async.parallel([
+ *     function(callback) {
+ *         fs.writeFile('testfile1', 'test1', callback);
+ *     },
+ *     function(callback) {
+ *         fs.writeFile('testfile2', 'test2', callback);
+ *     }
+ * ]);
+ *
+ * // It's possible to pass any number of additional arguments when calling the
+ * // continuation:
+ *
+ * node> var fn = async.apply(sys.puts, 'one');
+ * node> fn('two', 'three');
+ * one
+ * two
+ * three
+ */
+var apply = function(fn/*, ...args*/) {
+    var args = slice(arguments, 1);
+    return function(/*callArgs*/) {
+        var callArgs = slice(arguments);
+        return fn.apply(null, args.concat(callArgs));
+    };
+};
 
 var initialParams = function (fn) {
     return function (/*...args, callback*/) {
@@ -4794,8 +4949,7 @@ function baseGetTag(value) {
   if (value == null) {
     return value === undefined ? undefinedTag : nullTag;
   }
-  value = Object(value);
-  return (symToStringTag && symToStringTag in value)
+  return (symToStringTag && symToStringTag in Object(value))
     ? getRawTag(value)
     : objectToString(value);
 }
@@ -5115,10 +5269,13 @@ var reIsUint = /^(?:0|[1-9]\d*)$/;
  * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
  */
 function isIndex(value, length) {
+  var type = typeof value;
   length = length == null ? MAX_SAFE_INTEGER$1 : length;
+
   return !!length &&
-    (typeof value == 'number' || reIsUint.test(value)) &&
-    (value > -1 && value % 1 == 0 && value < length);
+    (type == 'number' ||
+      (type != 'symbol' && reIsUint.test(value))) &&
+        (value > -1 && value % 1 == 0 && value < length);
 }
 
 /** `Object#toString` result references. */
@@ -5204,7 +5361,15 @@ var freeProcess = moduleExports$1 && freeGlobal.process;
 /** Used to access faster Node.js helpers. */
 var nodeUtil = (function() {
   try {
-    return freeProcess && freeProcess.binding('util');
+    // Use `util.types` for Node.js 10+.
+    var types = freeModule$1 && freeModule$1.require && freeModule$1.require('util').types;
+
+    if (types) {
+      return types;
+    }
+
+    // Legacy `process.binding('util')` for Node.js < 10.
+    return freeProcess && freeProcess.binding && freeProcess.binding('util');
   } catch (e) {}
 }());
 
@@ -5419,6 +5584,7 @@ function _eachOfLimit(limit) {
         var nextElem = iterator(obj);
         var done = false;
         var running = 0;
+        var looping = false;
 
         function iterateeCallback(err, value) {
             running -= 1;
@@ -5430,12 +5596,13 @@ function _eachOfLimit(limit) {
                 done = true;
                 return callback(null);
             }
-            else {
+            else if (!looping) {
                 replenish();
             }
         }
 
         function replenish () {
+            looping = true;
             while (running < limit && !done) {
                 var elem = nextElem();
                 if (elem === null) {
@@ -5448,6 +5615,7 @@ function _eachOfLimit(limit) {
                 running += 1;
                 iteratee(elem.value, elem.key, onlyOnce(iterateeCallback));
             }
+            looping = false;
         }
 
         replenish();
@@ -5718,59 +5886,6 @@ var mapSeries = doLimit(mapLimit, 1);
  * function call.
  */
 var applyEachSeries = applyEach$1(mapSeries);
-
-/**
- * Creates a continuation function with some arguments already applied.
- *
- * Useful as a shorthand when combined with other control flow functions. Any
- * arguments passed to the returned function are added to the arguments
- * originally passed to apply.
- *
- * @name apply
- * @static
- * @memberOf module:Utils
- * @method
- * @category Util
- * @param {Function} fn - The function you want to eventually apply all
- * arguments to. Invokes with (arguments...).
- * @param {...*} arguments... - Any number of arguments to automatically apply
- * when the continuation is called.
- * @returns {Function} the partially-applied function
- * @example
- *
- * // using apply
- * async.parallel([
- *     async.apply(fs.writeFile, 'testfile1', 'test1'),
- *     async.apply(fs.writeFile, 'testfile2', 'test2')
- * ]);
- *
- *
- * // the same process without using apply
- * async.parallel([
- *     function(callback) {
- *         fs.writeFile('testfile1', 'test1', callback);
- *     },
- *     function(callback) {
- *         fs.writeFile('testfile2', 'test2', callback);
- *     }
- * ]);
- *
- * // It's possible to pass any number of additional arguments when calling the
- * // continuation:
- *
- * node> var fn = async.apply(sys.puts, 'one');
- * node> fn('two', 'three');
- * one
- * two
- * three
- */
-var apply = function(fn/*, ...args*/) {
-    var args = slice(arguments, 1);
-    return function(/*callArgs*/) {
-        var callArgs = slice(arguments);
-        return fn.apply(null, args.concat(callArgs));
-    };
-};
 
 /**
  * A specialized version of `_.forEach` for arrays without support for
@@ -6326,15 +6441,17 @@ function asciiToArray(string) {
 
 /** Used to compose unicode character classes. */
 var rsAstralRange = '\\ud800-\\udfff';
-var rsComboMarksRange = '\\u0300-\\u036f\\ufe20-\\ufe23';
-var rsComboSymbolsRange = '\\u20d0-\\u20f0';
+var rsComboMarksRange = '\\u0300-\\u036f';
+var reComboHalfMarksRange = '\\ufe20-\\ufe2f';
+var rsComboSymbolsRange = '\\u20d0-\\u20ff';
+var rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange;
 var rsVarRange = '\\ufe0e\\ufe0f';
 
 /** Used to compose unicode capture groups. */
 var rsZWJ = '\\u200d';
 
 /** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
-var reHasUnicode = RegExp('[' + rsZWJ + rsAstralRange  + rsComboMarksRange + rsComboSymbolsRange + rsVarRange + ']');
+var reHasUnicode = RegExp('[' + rsZWJ + rsAstralRange  + rsComboRange + rsVarRange + ']');
 
 /**
  * Checks if `string` contains Unicode symbols.
@@ -6349,13 +6466,15 @@ function hasUnicode(string) {
 
 /** Used to compose unicode character classes. */
 var rsAstralRange$1 = '\\ud800-\\udfff';
-var rsComboMarksRange$1 = '\\u0300-\\u036f\\ufe20-\\ufe23';
-var rsComboSymbolsRange$1 = '\\u20d0-\\u20f0';
+var rsComboMarksRange$1 = '\\u0300-\\u036f';
+var reComboHalfMarksRange$1 = '\\ufe20-\\ufe2f';
+var rsComboSymbolsRange$1 = '\\u20d0-\\u20ff';
+var rsComboRange$1 = rsComboMarksRange$1 + reComboHalfMarksRange$1 + rsComboSymbolsRange$1;
 var rsVarRange$1 = '\\ufe0e\\ufe0f';
 
 /** Used to compose unicode capture groups. */
 var rsAstral = '[' + rsAstralRange$1 + ']';
-var rsCombo = '[' + rsComboMarksRange$1 + rsComboSymbolsRange$1 + ']';
+var rsCombo = '[' + rsComboRange$1 + ']';
 var rsFitz = '\\ud83c[\\udffb-\\udfff]';
 var rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')';
 var rsNonAstral = '[^' + rsAstralRange$1 + ']';
@@ -6702,6 +6821,7 @@ function queue(worker, concurrency, payload) {
     var numRunning = 0;
     var workersList = [];
 
+    var processingScheduled = false;
     function _insert(data, insertAtFront, callback) {
         if (callback != null && typeof callback !== 'function') {
             throw new Error('task callback must be a function');
@@ -6729,7 +6849,14 @@ function queue(worker, concurrency, payload) {
                 q._tasks.push(item);
             }
         }
-        setImmediate$1(q.process);
+
+        if (!processingScheduled) {
+            processingScheduled = true;
+            setImmediate$1(function() {
+                processingScheduled = false;
+                q.process();
+            });
+        }
     }
 
     function _next(tasks) {
@@ -6740,7 +6867,9 @@ function queue(worker, concurrency, payload) {
                 var task = tasks[i];
 
                 var index = baseIndexOf(workersList, task, 0);
-                if (index >= 0) {
+                if (index === 0) {
+                    workersList.shift();
+                } else if (index > 0) {
                     workersList.splice(index, 1);
                 }
 
@@ -8307,7 +8436,7 @@ function memoize(fn, hasher) {
 
 /**
  * Calls `callback` on a later loop around the event loop. In Node.js this just
- * calls `setImmediate`.  In the browser it will use `setImmediate` if
+ * calls `process.nextTick`.  In the browser it will use `setImmediate` if
  * available, otherwise `setTimeout(callback, 0)`, which means other higher
  * priority events may precede the execution of `callback`.
  *
@@ -8317,7 +8446,7 @@ function memoize(fn, hasher) {
  * @static
  * @memberOf module:Utils
  * @method
- * @alias setImmediate
+ * @see [async.setImmediate]{@link module:Utils.setImmediate}
  * @category Util
  * @param {Function} callback - The function to call on a later loop around
  * the event loop. Invoked with (args...).
@@ -8777,43 +8906,6 @@ function reflect(fn) {
     });
 }
 
-function reject$1(eachfn, arr, iteratee, callback) {
-    _filter(eachfn, arr, function(value, cb) {
-        iteratee(value, function(err, v) {
-            cb(err, !v);
-        });
-    }, callback);
-}
-
-/**
- * The opposite of [`filter`]{@link module:Collections.filter}. Removes values that pass an `async` truth test.
- *
- * @name reject
- * @static
- * @memberOf module:Collections
- * @method
- * @see [async.filter]{@link module:Collections.filter}
- * @category Collection
- * @param {Array|Iterable|Object} coll - A collection to iterate over.
- * @param {Function} iteratee - An async truth test to apply to each item in
- * `coll`.
- * The should complete with a boolean value as its `result`.
- * Invoked with (item, callback).
- * @param {Function} [callback] - A callback which is called after all the
- * `iteratee` functions have finished. Invoked with (err, results).
- * @example
- *
- * async.reject(['file1','file2','file3'], function(filePath, callback) {
- *     fs.access(filePath, function(err) {
- *         callback(null, !err)
- *     });
- * }, function(err, results) {
- *     // results now equals an array of missing files
- *     createFiles(results);
- * });
- */
-var reject = doParallel(reject$1);
-
 /**
  * A helper function that wraps an array or an object of functions with `reflect`.
  *
@@ -8893,6 +8985,43 @@ function reflectAll(tasks) {
     }
     return results;
 }
+
+function reject$1(eachfn, arr, iteratee, callback) {
+    _filter(eachfn, arr, function(value, cb) {
+        iteratee(value, function(err, v) {
+            cb(err, !v);
+        });
+    }, callback);
+}
+
+/**
+ * The opposite of [`filter`]{@link module:Collections.filter}. Removes values that pass an `async` truth test.
+ *
+ * @name reject
+ * @static
+ * @memberOf module:Collections
+ * @method
+ * @see [async.filter]{@link module:Collections.filter}
+ * @category Collection
+ * @param {Array|Iterable|Object} coll - A collection to iterate over.
+ * @param {Function} iteratee - An async truth test to apply to each item in
+ * `coll`.
+ * The should complete with a boolean value as its `result`.
+ * Invoked with (item, callback).
+ * @param {Function} [callback] - A callback which is called after all the
+ * `iteratee` functions have finished. Invoked with (err, results).
+ * @example
+ *
+ * async.reject(['file1','file2','file3'], function(filePath, callback) {
+ *     fs.access(filePath, function(err) {
+ *         callback(null, !err)
+ *     });
+ * }, function(err, results) {
+ *     // results now equals an array of missing files
+ *     createFiles(results);
+ * });
+ */
+var reject = doParallel(reject$1);
 
 /**
  * The same as [`reject`]{@link module:Collections.reject} but runs a maximum of `limit` async operations at a
@@ -9033,8 +9162,8 @@ function constant$1(value) {
  *     // do something with the result
  * });
  *
- * // It can also be embedded within other control flow functions to retry
- * // individual methods that are not as reliable, like this:
+ * // to retry individual methods that are not as reliable within other
+ * // control flow functions, use the `retryable` wrapper:
  * async.auto({
  *     users: api.getUsers.bind(api),
  *     payments: async.retryable(3, api.getPayments.bind(api))
@@ -9601,7 +9730,7 @@ function transform (coll, accumulator, iteratee, callback) {
  * `result` arguments of the last attempt at completing the `task`. Invoked with
  * (err, results).
  * @example
- * async.try([
+ * async.tryEach([
  *     function getDataFromFirstWebsite(callback) {
  *         // Try getting the data from the first website
  *         callback(err, data);
@@ -9876,9 +10005,9 @@ var waterfall = function(tasks, callback) {
  */
 
 var index = {
+    apply: apply,
     applyEach: applyEach,
     applyEachSeries: applyEachSeries,
-    apply: apply,
     asyncify: asyncify,
     auto: auto,
     autoInject: autoInject,
@@ -9956,7 +10085,14 @@ var index = {
 
     // aliases
     all: every,
+    allLimit: everyLimit,
+    allSeries: everySeries,
     any: some,
+    anyLimit: someLimit,
+    anySeries: someSeries,
+    find: detect,
+    findLimit: detectLimit,
+    findSeries: detectSeries,
     forEach: eachLimit,
     forEachSeries: eachSeries,
     forEachLimit: eachLimit$1,
@@ -9973,9 +10109,9 @@ var index = {
 };
 
 exports['default'] = index;
+exports.apply = apply;
 exports.applyEach = applyEach;
 exports.applyEachSeries = applyEachSeries;
-exports.apply = apply;
 exports.asyncify = asyncify;
 exports.auto = auto;
 exports.autoInject = autoInject;
@@ -10077,8 +10213,8 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":35}],35:[function(require,module,exports){
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
+},{"_process":35,"timers":37}],35:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -10785,4 +10921,83 @@ module.exports = (function (O) {
  */
 
 }({}));
-},{}]},{},[32]);
+},{}],37:[function(require,module,exports){
+(function (setImmediate,clearImmediate){
+var nextTick = require('process/browser.js').nextTick;
+var apply = Function.prototype.apply;
+var slice = Array.prototype.slice;
+var immediateIds = {};
+var nextImmediateId = 0;
+
+// DOM APIs, for completeness
+
+exports.setTimeout = function() {
+  return new Timeout(apply.call(setTimeout, window, arguments), clearTimeout);
+};
+exports.setInterval = function() {
+  return new Timeout(apply.call(setInterval, window, arguments), clearInterval);
+};
+exports.clearTimeout =
+exports.clearInterval = function(timeout) { timeout.close(); };
+
+function Timeout(id, clearFn) {
+  this._id = id;
+  this._clearFn = clearFn;
+}
+Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+Timeout.prototype.close = function() {
+  this._clearFn.call(window, this._id);
+};
+
+// Does not start the time, just sets up the members needed.
+exports.enroll = function(item, msecs) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = msecs;
+};
+
+exports.unenroll = function(item) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = -1;
+};
+
+exports._unrefActive = exports.active = function(item) {
+  clearTimeout(item._idleTimeoutId);
+
+  var msecs = item._idleTimeout;
+  if (msecs >= 0) {
+    item._idleTimeoutId = setTimeout(function onTimeout() {
+      if (item._onTimeout)
+        item._onTimeout();
+    }, msecs);
+  }
+};
+
+// That's not how node.js implements it but the exposed api is the same.
+exports.setImmediate = typeof setImmediate === "function" ? setImmediate : function(fn) {
+  var id = nextImmediateId++;
+  var args = arguments.length < 2 ? false : slice.call(arguments, 1);
+
+  immediateIds[id] = true;
+
+  nextTick(function onNextTick() {
+    if (immediateIds[id]) {
+      // fn.call() is faster so we optimize for the common use-case
+      // @see http://jsperf.com/call-apply-segu
+      if (args) {
+        fn.apply(null, args);
+      } else {
+        fn.call(null);
+      }
+      // Prevent ids from leaking
+      exports.clearImmediate(id);
+    }
+  });
+
+  return id;
+};
+
+exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
+  delete immediateIds[id];
+};
+}).call(this,require("timers").setImmediate,require("timers").clearImmediate)
+},{"process/browser.js":35,"timers":37}]},{},[32]);
