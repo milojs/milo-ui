@@ -776,6 +776,7 @@ function MLFormList$setItemSchema (schema) {
     this._movable = !!schema.allowMove;
     this._deletable = !!schema.allowDelete;
     this._itemLabel = schema.itemLabel;
+    this._prepend = schema.allowPrepend;
 }
 
 function MLFormList$moveItem (fromIndex, toIndex) {
@@ -793,11 +794,27 @@ function onChildrenBound () {
     const scope = this.container.scope;
     this._connector = milo.minder(this.model, '->>>', scope.list.data).deferChangeMode('<<<->>>');
     scope.addBtn && scope.addBtn.events.on('click', { subscriber: addItem, context: this });
+    if (scope.addBtnBefore) {
+        scope.addBtnBefore.events.on('click', { subscriber: addItemBefore, context: this });
+        showHidePrepend.call(this);
+    }
     this.model.m.on('*', { subscriber: _triggerExternalPropagation, context: this });
+}
+
+function showHidePrepend() {
+    const scope = this.container.scope;
+    if (!scope.addBtnBefore) return;
+    scope.addBtnBefore.el.classList.toggle('hidden', !this._prepend || this.model.get().length === 0);
 }
 
 function addItem () {
     this.model.m.push({});
+    showHidePrepend.call(this);
+}
+
+function addItemBefore () {
+    this.model.m.unshift({});
+    showHidePrepend.call(this);
 }
 
 function MLFormList_get () {
@@ -813,6 +830,7 @@ function MLFormList_set (value) {
 function MLFormList_del () {
     const res = this.model.set([]);
     _triggerExternalPropagation.call(this);
+    showHidePrepend.call(this);
     return res;
 }
 
@@ -820,6 +838,7 @@ function MLFormList_splice (index, howmany) {
     const args = [ index, howmany ].concat(Array.prototype.slice.call(arguments, 2));
     this.model.splice.apply(this.model, args);
     _triggerExternalPropagation.call(this);
+    showHidePrepend.call(this);
 }
 
 function _triggerExternalPropagation () {
@@ -2919,6 +2938,7 @@ var MLDialog = module.exports = milo.createComponentClass({
                 'aria-hidden': 'true'
             }
         },
+        data: undefined,
         template: {
             template: '\
             <div class="modal-dialog {{= it.cssClass }}">\
@@ -2932,7 +2952,7 @@ var MLDialog = module.exports = milo.createComponentClass({
                         </div>\
                     {{?}}\
                     {{? it.html || it.text }}\
-                        <div class="modal-body" ml-bind="[container]:dialogBody">\
+                        <div class="modal-body" ml-bind="[container, data]:dialogBody">\
                             {{? it.html }}\
                                 {{= it.html }}\
                             {{??}}\
@@ -3164,6 +3184,7 @@ function _toggleDialog(doShow) {
     document.body.classList[addRemove]('modal-open');
     this.el.classList[addRemove]('in');
     this.el[doShow ? 'focus' : 'blur']();
+
 }
 
 
@@ -3570,7 +3591,6 @@ function MLForm$$createForm(schema, hostObject, formData, template) {
                     'z-index': '999'
                 },
                 '.form-tooltip-content': {
-                    'font-weight': 'bold',
                     color: '#ffffff',
                     'min-width': '100px',
                     width: '100%',
@@ -4346,7 +4366,7 @@ var group_dot = "<div ml-bind=\"MLGroup:{{= it.compName }}\"{{? it.item.wrapCssC
     , image_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n        ml-bind=\"MLImage:{{= it.compName }}\"\n        {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n        {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , droptarget_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n        <img {{? it.item.src }}src=\"{{= it.item.src }}\"{{?}}\n            ml-bind=\"MLDropTarget:{{= it.compName }}\"\n            {{? it.item.width }}width=\"{{= it.item.width }}\"{{?}}\n            {{? it.item.height }}height=\"{{= it.item.height }}\"{{?}}>\n</div>\n"
     , text_dot = "{{var tagName = it.item.tagName || 'span';}}\n<{{=tagName}} ml-bind=\"MLText:{{= it.compName }}\"{{? it.item.wrapCssClass}} class=\"{{= it.item.wrapCssClass }}\"{{?}}>\n    {{? it.item.label }}\n        {{= it.item.label}}\n    {{?}}\n</{{=tagName}}>\n"
-    , formlist_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <div ml-bind=\"MLFormList:{{= it.compName }}\" {{? it.disabled }}disabled{{?}}>\n      <ul ml-bind=\"[list,data]:list\">\n          <li ml-bind=\"MLFormListItem:itemSample\"></li>\n      </ul>\n      <button ml-bind=\"[events]:addBtn\">Add Item</button>\n    </div>\n</div>\n"
+    , formlist_dot = "{{# def.partials.formGroup }}\n    {{# def.partials.label }}\n    <div ml-bind=\"MLFormList:{{= it.compName }}\" {{? it.disabled }}disabled{{?}}>\n      <button ml-bind=\"[events]:addBtnBefore\">Add Item</button>\n      <ul ml-bind=\"[list,data]:list\">\n          <li ml-bind=\"MLFormListItem:itemSample\"></li>\n      </ul>\n      <button ml-bind=\"[events]:addBtn\">Add Item</button>\n    </div>\n</div>\n"
     , clear_dot = '<div class="cc-clear"></div>';
 
 
@@ -4602,7 +4622,7 @@ require('./components/bootstrap/Dropdown');
 require('./forms/Form');
 
 },{"./components/Button":1,"./components/CheckGroup":2,"./components/Combo":3,"./components/ComboList":4,"./components/Date":5,"./components/DropTarget":6,"./components/FoldTree":7,"./components/FormList":8,"./components/FormListItem":9,"./components/Group":10,"./components/Hyperlink":11,"./components/Image":12,"./components/Input":13,"./components/InputList":14,"./components/List":15,"./components/ListItem":16,"./components/ListItemSimple":17,"./components/RadioGroup":18,"./components/Select":19,"./components/SuperCombo":20,"./components/Text":21,"./components/Textarea":22,"./components/Time":23,"./components/Wrapper":24,"./components/bootstrap/Alert":25,"./components/bootstrap/Dialog":26,"./components/bootstrap/Dropdown":27,"./forms/Form":28}],34:[function(require,module,exports){
-(function (process,global,setImmediate){
+(function (process,global,setImmediate){(function (){
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -5553,6 +5573,9 @@ function createObjectIterator(obj) {
     var len = okeys.length;
     return function next() {
         var key = okeys[++i];
+        if (key === '__proto__') {
+            return next();
+        }
         return i < len ? {value: obj[key], key: key} : null;
     };
 }
@@ -10213,7 +10236,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
+}).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
 },{"_process":35,"timers":37}],35:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
@@ -10922,7 +10945,7 @@ module.exports = (function (O) {
 
 }({}));
 },{}],37:[function(require,module,exports){
-(function (setImmediate,clearImmediate){
+(function (setImmediate,clearImmediate){(function (){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
 var slice = Array.prototype.slice;
@@ -10999,5 +11022,5 @@ exports.setImmediate = typeof setImmediate === "function" ? setImmediate : funct
 exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
   delete immediateIds[id];
 };
-}).call(this,require("timers").setImmediate,require("timers").clearImmediate)
+}).call(this)}).call(this,require("timers").setImmediate,require("timers").clearImmediate)
 },{"process/browser.js":35,"timers":37}]},{},[32]);
