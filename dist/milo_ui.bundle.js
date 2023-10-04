@@ -777,6 +777,7 @@ function MLFormList$setItemSchema (schema) {
     this._deletable = !!schema.allowDelete;
     this._itemLabel = schema.itemLabel;
     this._prepend = schema.allowPrepend;
+    showHidePrepend.call(this);
 }
 
 function MLFormList$moveItem (fromIndex, toIndex) {
@@ -804,17 +805,16 @@ function onChildrenBound () {
 function showHidePrepend() {
     const scope = this.container.scope;
     if (!scope.addBtnBefore) return;
-    scope.addBtnBefore.el.classList.toggle('hidden', !this._prepend || this.model.get().length === 0);
+    const model = this.model.get();
+    scope.addBtnBefore.el.classList.toggle('hidden', !this._prepend || !model || model.length === 0);
 }
 
 function addItem () {
     this.model.m.push({});
-    showHidePrepend.call(this);
 }
 
 function addItemBefore () {
     this.model.m.unshift({});
-    showHidePrepend.call(this);
 }
 
 function MLFormList_get () {
@@ -830,7 +830,6 @@ function MLFormList_set (value) {
 function MLFormList_del () {
     const res = this.model.set([]);
     _triggerExternalPropagation.call(this);
-    showHidePrepend.call(this);
     return res;
 }
 
@@ -838,11 +837,11 @@ function MLFormList_splice (index, howmany) {
     const args = [ index, howmany ].concat(Array.prototype.slice.call(arguments, 2));
     this.model.splice.apply(this.model, args);
     _triggerExternalPropagation.call(this);
-    showHidePrepend.call(this);
 }
 
 function _triggerExternalPropagation () {
     this.data.dispatchSourceMessage(FORMLIST_CHANGE_MESSAGE);
+    showHidePrepend.call(this);
 }
 
 },{}],9:[function(require,module,exports){
