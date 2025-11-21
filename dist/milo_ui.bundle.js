@@ -716,7 +716,7 @@ function MLFoldTree$toggleItem(id, opened) {
 
 },{}],8:[function(require,module,exports){
 'use strict';
-
+const async = require('async');
 const FORMLIST_CHANGE_MESSAGE = 'mlformlistchange';
 
 const MLFormList = module.exports = milo.createComponentClass({
@@ -744,7 +744,9 @@ const MLFormList = module.exports = milo.createComponentClass({
         init: MLFormList$init,
         moveItem: MLFormList$moveItem,
         setItemSchema: MLFormList$setItemSchema,
-        destroy: MLFormList$destroy
+        destroy: MLFormList$destroy,
+        validateModel: MLFormList$validateModel,
+        clearSubSchemaValidation: MLFormList$clearSubSchemaValidation
     }
 });
 
@@ -769,6 +771,7 @@ function handleClick (type, event) {
 function MLFormList$init () {
     MLFormList.super.init.apply(this, arguments);
     this.once('childrenbound', onChildrenBound);
+    this._invalidFormControls = {};
 }
 
 function MLFormList$setItemSchema (schema) {
@@ -844,7 +847,95 @@ function _triggerExternalPropagation () {
     showHidePrepend.call(this);
 }
 
-},{}],9:[function(require,module,exports){
+function MLFormList$clearSubSchemaValidation () {
+    this._invalidFormControls = {};
+}
+
+function MLFormList$validateModel (callback, invalidControls) {
+    const validations = [];
+    const self = this;
+    this._dataValidations = { fromModel: {} };
+    (this.model.m().get() || []).forEach((data, index) => {
+        this._subFormSchema.items.forEach((item) => {
+            if (item.validate && item.validate.fromModel && item.validate.fromModel[0] === 'required') {
+                this._dataValidations.fromModel[`${index}${item.modelPath}`] = [validateRequired];
+            }
+        });
+    });
+
+    _.eachKey(this._dataValidations.fromModel, function (validators, modelPath) {
+        const [index, path] = modelPath.split('.');
+        const data = (this.model.m().get() || [])[index][path];
+        validators = Array.isArray(validators) ? validators : [validators];
+
+        if (validators && validators.length) {
+            validations.push({
+                modelPath: modelPath,
+                data: data,
+                validators: validators
+            });
+        }
+    }, this);
+
+
+    let allValid = true;
+    async.each(validations,
+        function (validation, nextValidation) {
+            let lastResponse;
+            async.every(validation.validators,
+                function (validator, next) {
+                    validator(validation.data, function (err, response) {
+                        lastResponse = response || {};
+                        next(err, lastResponse.valid);
+                    });
+                },
+                function (err, valid) {
+                    lastResponse.path = validation.modelPath;
+                    lastResponse.valid = valid;
+                    handleValidatedComponents.call(self, lastResponse, invalidControls);
+                    if (!valid) allValid = false;
+                    nextValidation(null);
+                }
+            );
+        },
+        function (err) {
+            invalidControls = Object.assign({}, invalidControls, self._invalidFormControls);
+            callback && callback({allValid, invalidControls});
+        }
+    );
+}
+
+function validateRequired(data, callback) {
+    const valid = typeof data != 'undefined'
+        && (typeof data != 'string' || data.trim() != '');
+    const response = MLForm$$validatorResponse(valid, 'please enter a value', 'REQUIRED');
+    callback(null, response);
+}
+
+function MLForm$$validatorResponse(valid, reason, reasonCode) {
+    return valid
+        ? { valid: true }
+        : { valid: false, reason: reason, reasonCode: reasonCode };
+}
+
+function handleValidatedComponents(response) {
+    if (response.valid) {
+        delete this._invalidFormControls[response.path];
+    } else {
+        const [index, modelPath] = response.path.split('.');
+        let reason = {
+            label: `List Item ${Number(index)+1}. ${modelPath}`,
+            reason: response.reason,
+            reasonCode: response.reasonCode
+        };
+        this._invalidFormControls[response.path] = {
+            reason: reason
+        };
+    }
+}
+
+
+},{"async":35}],9:[function(require,module,exports){
 'use strict';
 
 const componentsRegistry = milo.registry.components;
@@ -1077,7 +1168,8 @@ function onModelChange(path, data) {
 'use strict';
 
 var Component = milo.Component
-    , componentsRegistry = milo.registry.components;
+    , componentsRegistry = milo.registry.components
+    , { handlePaste, removePasteHandler } = require('./paste');
 
 
 var MLInput = Component.createComponentClass('MLInput', {
@@ -1093,10 +1185,22 @@ componentsRegistry.add(MLInput);
 module.exports = MLInput;
 
 _.extendProto(MLInput, {
+    init: MLInput$init,
+    destroy: MLInput$destroy,
     disable: MLInput$disable,
     isDisabled: MLInput$isDisabled,
     setMaxLength: MLInput$setMaxLength
 });
+
+function MLInput$init() {
+    Component.prototype.init.apply(this, arguments);
+    handlePaste.call(this);
+}
+
+function MLInput$destroy() {
+    removePasteHandler.call(this);
+    Component.prototype.destroy.apply(this, arguments);
+}
 
 function MLInput$disable(disable) {
     this.el.disabled = disable;
@@ -1110,7 +1214,7 @@ function MLInput$setMaxLength(length) {
     this.el.setAttribute('maxlength', length);
 }
 
-},{}],14:[function(require,module,exports){
+},{"./paste":28}],14:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -2557,7 +2661,8 @@ module.exports = MLText;
 
 var Component = milo.Component
     , componentsRegistry = milo.registry.components
-    , logger = milo.util.logger;
+    , logger = milo.util.logger
+    , { handlePaste, removePasteHandler } = require('./paste');
 
 
 var MLTextarea = Component.createComponentClass('MLTextarea', {
@@ -2573,12 +2678,23 @@ componentsRegistry.add(MLTextarea);
 module.exports = MLTextarea;
 
 _.extendProto(MLTextarea, {
+    init: MLTextarea$init,
+    destroy: MLTextarea$destroy,
     startAutoresize: MLTextarea$startAutoresize,
     stopAutoresize: MLTextarea$stopAutoresize,
     isAutoresized: MLTextarea$isAutoresized,
     disable: MLTextarea$disable
 });
 
+function MLTextarea$init() {
+    Component.prototype.init.apply(this, arguments);
+    handlePaste.call(this);
+}
+
+function MLTextarea$destroy() {
+    removePasteHandler.call(this);
+    Component.prototype.destroy.apply(this, arguments);
+}
 
 function MLTextarea$startAutoresize(options) {
     if (this._autoresize)
@@ -2631,7 +2747,7 @@ function MLTextarea$disable(disable) {
     this.el.disabled = disable;
 }
 
-},{}],23:[function(require,module,exports){
+},{"./paste":28}],23:[function(require,module,exports){
 'use strict';
 
 var Component = milo.Component
@@ -3204,6 +3320,7 @@ function _initializeDialogs() {
  * @param {Function|Object} subscriber subscriber object
  */
 function MLDialog$openDialog(subscriber) {
+    console.log('MLDialog$openDialog called with subscriber', subscriber);
     check(subscriber, Match.OneOf(Function, { subscriber: Function, context: Match.Any }));
 
     openedDialogs.forEach(function(dialog) {
@@ -3213,6 +3330,7 @@ function MLDialog$openDialog(subscriber) {
     openedDialogs.push(this);
 
     this._dialog.subscriber = subscriber;
+    console.log('Opening dialog', this);
     _toggleDialog.call(this, true);
 }
 
@@ -3369,6 +3487,53 @@ function MLDropdown$toggleMenu(doShow) {
 },{}],28:[function(require,module,exports){
 'use strict';
 
+function onPaste(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    const html = e.clipboardData.getData('text/html');
+    if (html) {
+        // html
+        let escaped = html.replace(/<\/?[^>]+(>|$)/g, "");
+        // entities
+        escaped = escaped.replace(/&nbsp;/g, ' ');
+        escaped = escaped.replace(/&amp;/g, '&');
+        escaped = escaped.replace(/&lt;/g, '<');
+        escaped = escaped.replace(/&gt;/g, '>');
+        escaped = escaped.replace(/&quot;/g, '"');
+        // utf entities
+        escaped = escaped.replace(/&#(\d+);/g, (_, dec) => {
+            return String.fromCharCode(dec);
+        });
+        this.data.set(escaped); // strip HTML tags
+        return;
+    }
+    const text = e.clipboardData.getData('text');
+    if (text) {
+        this.data.set(text);
+        return;
+    }
+}
+
+function handlePaste() {    
+    this.__onPaste = onPaste.bind(this);
+    this.el.addEventListener('paste', this.__onPaste);
+}
+
+function removePasteHandler() {
+    if (this.__onPaste) {
+        this.el.removeEventListener('paste', this.__onPaste);
+        this.__onPaste = null;
+    }
+}
+
+module.exports = {
+    handlePaste,
+    removePasteHandler
+};
+
+},{}],29:[function(require,module,exports){
+'use strict';
+
 var restyle = require('restyle')
     , formGenerator = require('./generator')
     , Component = milo.Component
@@ -3507,6 +3672,7 @@ _.extendProto(MLForm, {
     viewPathSchema: MLForm$viewPathSchema,
     getModelPath: MLForm$getModelPath,
     getViewPath: MLForm$getViewPath,
+    getSubSchemas: MLForm$getSubSchemas,
     destroy: MLForm$destroy,
 });
 
@@ -3911,6 +4077,21 @@ function MLForm$viewPathComponent(viewPath) {
     return viewPathObj && viewPathObj.component;
 }
 
+/**
+ * Returns subSchemas of type formList
+ *
+ * @return {Schemas}
+ */
+function MLForm$getSubSchemas() {
+    let subSchemas = [];
+    for(const value in this._formViewPaths) {
+        if(Object.hasOwn(this._formViewPaths, value) && this._formViewPaths[value].schema && this._formViewPaths[value].schema.type === "formlist") {
+            subSchemas.push(this._formViewPaths[value]);
+        }
+    }
+    return subSchemas;
+}
+
 
 /**
  * Returns form schema for a given view path item (path as defined in Data facet)
@@ -4270,7 +4451,7 @@ function MLForm$$validatorResponse(valid, reason, reasonCode) {
             : { valid: false, reason: reason, reasonCode: reasonCode };
 }
 
-},{"./generator":29,"./registry":31,"async":34,"restyle":36}],29:[function(require,module,exports){
+},{"./generator":30,"./registry":32,"async":35,"restyle":37}],30:[function(require,module,exports){
 'use strict';
 
 var doT = milo.util.doT
@@ -4343,7 +4524,7 @@ function formGenerator(schema) {
     }
 }
 
-},{"./item_types":30,"./registry":31}],30:[function(require,module,exports){
+},{"./item_types":31,"./registry":32}],31:[function(require,module,exports){
 'use strict';
 
 
@@ -4507,7 +4688,7 @@ function setComboOptions(comp, data) {
     comp.setOptions(data);
 }
 
-},{"./registry":31}],31:[function(require,module,exports){
+},{"./registry":32}],32:[function(require,module,exports){
 'use strict';
 
 var logger = milo.util.logger
@@ -4572,7 +4753,7 @@ function registry_setDefaults(newDefaults) {
 }
 
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 if (!(window.milo && window.milo.milo_version))
@@ -4586,7 +4767,7 @@ if (!(window.milo && window.milo.milo_version))
 
 require('./use_components');
 
-},{"./use_components":33}],33:[function(require,module,exports){
+},{"./use_components":34}],34:[function(require,module,exports){
 'use strict';
 
 require('./components/Group');
@@ -4620,7 +4801,7 @@ require('./components/bootstrap/Dropdown');
 
 require('./forms/Form');
 
-},{"./components/Button":1,"./components/CheckGroup":2,"./components/Combo":3,"./components/ComboList":4,"./components/Date":5,"./components/DropTarget":6,"./components/FoldTree":7,"./components/FormList":8,"./components/FormListItem":9,"./components/Group":10,"./components/Hyperlink":11,"./components/Image":12,"./components/Input":13,"./components/InputList":14,"./components/List":15,"./components/ListItem":16,"./components/ListItemSimple":17,"./components/RadioGroup":18,"./components/Select":19,"./components/SuperCombo":20,"./components/Text":21,"./components/Textarea":22,"./components/Time":23,"./components/Wrapper":24,"./components/bootstrap/Alert":25,"./components/bootstrap/Dialog":26,"./components/bootstrap/Dropdown":27,"./forms/Form":28}],34:[function(require,module,exports){
+},{"./components/Button":1,"./components/CheckGroup":2,"./components/Combo":3,"./components/ComboList":4,"./components/Date":5,"./components/DropTarget":6,"./components/FoldTree":7,"./components/FormList":8,"./components/FormListItem":9,"./components/Group":10,"./components/Hyperlink":11,"./components/Image":12,"./components/Input":13,"./components/InputList":14,"./components/List":15,"./components/ListItem":16,"./components/ListItemSimple":17,"./components/RadioGroup":18,"./components/Select":19,"./components/SuperCombo":20,"./components/Text":21,"./components/Textarea":22,"./components/Time":23,"./components/Wrapper":24,"./components/bootstrap/Alert":25,"./components/bootstrap/Dialog":26,"./components/bootstrap/Dropdown":27,"./forms/Form":29}],35:[function(require,module,exports){
 (function (process,global,setImmediate){(function (){
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -10236,7 +10417,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 })));
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
-},{"_process":35,"timers":37}],35:[function(require,module,exports){
+},{"_process":36,"timers":38}],36:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -10422,7 +10603,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /*jslint forin: true, plusplus: true, indent: 2, browser: true, unparam: true */
 /*!
 Copyright (C) 2014-2015 by Andrea Giammarchi - @WebReflection
@@ -10943,7 +11124,7 @@ module.exports = (function (O) {
  */
 
 }({}));
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 (function (setImmediate,clearImmediate){(function (){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
@@ -11022,4 +11203,4 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
   delete immediateIds[id];
 };
 }).call(this)}).call(this,require("timers").setImmediate,require("timers").clearImmediate)
-},{"process/browser.js":35,"timers":37}]},{},[32]);
+},{"process/browser.js":36,"timers":38}]},{},[33]);
