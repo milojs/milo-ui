@@ -3320,7 +3320,6 @@ function _initializeDialogs() {
  * @param {Function|Object} subscriber subscriber object
  */
 function MLDialog$openDialog(subscriber) {
-    console.log('MLDialog$openDialog called with subscriber', subscriber);
     check(subscriber, Match.OneOf(Function, { subscriber: Function, context: Match.Any }));
 
     openedDialogs.forEach(function(dialog) {
@@ -3330,7 +3329,6 @@ function MLDialog$openDialog(subscriber) {
     openedDialogs.push(this);
 
     this._dialog.subscriber = subscriber;
-    console.log('Opening dialog', this);
     _toggleDialog.call(this, true);
 }
 
