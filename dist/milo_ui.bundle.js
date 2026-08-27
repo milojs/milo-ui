@@ -716,7 +716,7 @@ function MLFoldTree$toggleItem(id, opened) {
 
 },{}],8:[function(require,module,exports){
 'use strict';
-
+const async = require('async');
 const FORMLIST_CHANGE_MESSAGE = 'mlformlistchange';
 
 const MLFormList = module.exports = milo.createComponentClass({
@@ -744,7 +744,9 @@ const MLFormList = module.exports = milo.createComponentClass({
         init: MLFormList$init,
         moveItem: MLFormList$moveItem,
         setItemSchema: MLFormList$setItemSchema,
-        destroy: MLFormList$destroy
+        destroy: MLFormList$destroy,
+        validateModel: MLFormList$validateModel,
+        clearSubSchemaValidation: MLFormList$clearSubSchemaValidation
     }
 });
 
@@ -769,6 +771,7 @@ function handleClick (type, event) {
 function MLFormList$init () {
     MLFormList.super.init.apply(this, arguments);
     this.once('childrenbound', onChildrenBound);
+    this._invalidFormControls = {};
 }
 
 function MLFormList$setItemSchema (schema) {
@@ -844,7 +847,95 @@ function _triggerExternalPropagation () {
     showHidePrepend.call(this);
 }
 
-},{}],9:[function(require,module,exports){
+function MLFormList$clearSubSchemaValidation () {
+    this._invalidFormControls = {};
+}
+
+function MLFormList$validateModel (callback, invalidControls) {
+    const validations = [];
+    const self = this;
+    this._dataValidations = { fromModel: {} };
+    (this.model.m().get() || []).forEach((data, index) => {
+        this._subFormSchema.items.forEach((item) => {
+            if (item.validate && item.validate.fromModel && item.validate.fromModel[0] === 'required') {
+                this._dataValidations.fromModel[`${index}${item.modelPath}`] = [validateRequired];
+            }
+        });
+    });
+
+    _.eachKey(this._dataValidations.fromModel, function (validators, modelPath) {
+        const [index, path] = modelPath.split('.');
+        const data = (this.model.m().get() || [])[index][path];
+        validators = Array.isArray(validators) ? validators : [validators];
+
+        if (validators && validators.length) {
+            validations.push({
+                modelPath: modelPath,
+                data: data,
+                validators: validators
+            });
+        }
+    }, this);
+
+
+    let allValid = true;
+    async.each(validations,
+        function (validation, nextValidation) {
+            let lastResponse;
+            async.every(validation.validators,
+                function (validator, next) {
+                    validator(validation.data, function (err, response) {
+                        lastResponse = response || {};
+                        next(err, lastResponse.valid);
+                    });
+                },
+                function (err, valid) {
+                    lastResponse.path = validation.modelPath;
+                    lastResponse.valid = valid;
+                    handleValidatedComponents.call(self, lastResponse, invalidControls);
+                    if (!valid) allValid = false;
+                    nextValidation(null);
+                }
+            );
+        },
+        function (err) {
+            invalidControls = Object.assign({}, invalidControls, self._invalidFormControls);
+            callback && callback({allValid, invalidControls});
+        }
+    );
+}
+
+function validateRequired(data, callback) {
+    const valid = typeof data != 'undefined'
+        && (typeof data != 'string' || data.trim() != '');
+    const response = MLForm$$validatorResponse(valid, 'please enter a value', 'REQUIRED');
+    callback(null, response);
+}
+
+function MLForm$$validatorResponse(valid, reason, reasonCode) {
+    return valid
+        ? { valid: true }
+        : { valid: false, reason: reason, reasonCode: reasonCode };
+}
+
+function handleValidatedComponents(response) {
+    if (response.valid) {
+        delete this._invalidFormControls[response.path];
+    } else {
+        const [index, modelPath] = response.path.split('.');
+        let reason = {
+            label: `List Item ${Number(index)+1}. ${modelPath}`,
+            reason: response.reason,
+            reasonCode: response.reasonCode
+        };
+        this._invalidFormControls[response.path] = {
+            reason: reason
+        };
+    }
+}
+
+
+},{"async":34}],9:[function(require,module,exports){
 'use strict';
 
 const componentsRegistry = milo.registry.components;
@@ -2079,6 +2170,11 @@ function _getOptionsURL(cb) {
  */
 function MLSuperCombo$setFilteredOptions(arr) {
     if (! arr) return logger.error('setFilteredOptions: parameter is undefined');
+    // The options changed, so the virtual scroll window from the previous list is stale.
+    // Reset it, otherwise update() slices past the end of a shorter list and renders nothing.
+    this._startIndex = 0;
+    this._endIndex = MAX_RENDERED;
+    this._lastScrollPos = 0;
     this._filteredOptionsData = arr;
     this._total = arr.length;
     this.update();
@@ -2145,6 +2241,9 @@ function setupComboList(list, options, self) {
 
     list.dom.setStyles({
         overflow: 'scroll',
+        // Disable browser scroll anchoring: update() grows the "before" spacer above the
+        // viewport, and the anchoring would then move scrollTop past the rendered window.
+        overflowAnchor: 'none',
         height: self._optionsHeight + 'px',
         width: '100%',
         position: 'absolute',
@@ -2280,6 +2379,8 @@ function defaultFilter(text, option) {
 function _updateOptionsAndAddButton(text, filteredArr) {
     if (!text) {
         this.toggleAddButton(false, { preserveState: true });
+        // If the input is empty, then there's nothing to add; don't show the "Add" button
+        this.__showAddOnClick = false;
         setSelected.call(this, filteredArr[0]);
     } else {
         if (filteredArr.length && _.find(filteredArr, isExactMatch)) {
@@ -2435,7 +2536,13 @@ function onEnterKey(type, event) {
  * @param  {Event} event
  */
 function onAddBtn (type, event) {
-    var data = { label: this._comboInput.el.value };
+    var trimmedLabel = this._comboInput.el.value.trim();
+    if (!trimmedLabel) {
+        this.toggleAddButton(false, { preserveState: true });
+        this.__showAddOnClick = false;
+        return;
+    }
+    var data = { label: trimmedLabel };
     this.postMessage('additem', data);
     this.events.postMessage('milo_supercomboadditem', data);
     this.toggleAddButton(false, { preserveState: true });
@@ -3507,6 +3614,7 @@ _.extendProto(MLForm, {
     viewPathSchema: MLForm$viewPathSchema,
     getModelPath: MLForm$getModelPath,
     getViewPath: MLForm$getViewPath,
+    getSubSchemas: MLForm$getSubSchemas,
     destroy: MLForm$destroy,
 });
 
@@ -3909,6 +4017,21 @@ function MLForm$modelPathSchema(modelPath) {
 function MLForm$viewPathComponent(viewPath) {
     var viewPathObj = this._formViewPaths[viewPath];
     return viewPathObj && viewPathObj.component;
+}
+
+/**
+ * Returns subSchemas of type formList
+ *
+ * @return {Schemas}
+ */
+function MLForm$getSubSchemas() {
+    let subSchemas = [];
+    for(const value in this._formViewPaths) {
+        if(Object.hasOwn(this._formViewPaths, value) && this._formViewPaths[value].schema && this._formViewPaths[value].schema.type === "formlist") {
+            subSchemas.push(this._formViewPaths[value]);
+        }
+    }
+    return subSchemas;
 }
 
 
