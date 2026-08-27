@@ -2170,6 +2170,11 @@ function _getOptionsURL(cb) {
  */
 function MLSuperCombo$setFilteredOptions(arr) {
     if (! arr) return logger.error('setFilteredOptions: parameter is undefined');
+    // The options changed, so the virtual scroll window from the previous list is stale.
+    // Reset it, otherwise update() slices past the end of a shorter list and renders nothing.
+    this._startIndex = 0;
+    this._endIndex = MAX_RENDERED;
+    this._lastScrollPos = 0;
     this._filteredOptionsData = arr;
     this._total = arr.length;
     this.update();
@@ -2236,6 +2241,9 @@ function setupComboList(list, options, self) {
 
     list.dom.setStyles({
         overflow: 'scroll',
+        // Disable browser scroll anchoring: update() grows the "before" spacer above the
+        // viewport, and the anchoring would then move scrollTop past the rendered window.
+        overflowAnchor: 'none',
         height: self._optionsHeight + 'px',
         width: '100%',
         position: 'absolute',
