@@ -716,7 +716,7 @@ function MLFoldTree$toggleItem(id, opened) {
 
 },{}],8:[function(require,module,exports){
 'use strict';
-
+const async = require('async');
 const FORMLIST_CHANGE_MESSAGE = 'mlformlistchange';
 
 const MLFormList = module.exports = milo.createComponentClass({
@@ -744,7 +744,9 @@ const MLFormList = module.exports = milo.createComponentClass({
         init: MLFormList$init,
         moveItem: MLFormList$moveItem,
         setItemSchema: MLFormList$setItemSchema,
-        destroy: MLFormList$destroy
+        destroy: MLFormList$destroy,
+        validateModel: MLFormList$validateModel,
+        clearSubSchemaValidation: MLFormList$clearSubSchemaValidation
     }
 });
 
@@ -769,6 +771,7 @@ function handleClick (type, event) {
 function MLFormList$init () {
     MLFormList.super.init.apply(this, arguments);
     this.once('childrenbound', onChildrenBound);
+    this._invalidFormControls = {};
 }
 
 function MLFormList$setItemSchema (schema) {
@@ -844,7 +847,95 @@ function _triggerExternalPropagation () {
     showHidePrepend.call(this);
 }
 
-},{}],9:[function(require,module,exports){
+function MLFormList$clearSubSchemaValidation () {
+    this._invalidFormControls = {};
+}
+
+function MLFormList$validateModel (callback, invalidControls) {
+    const validations = [];
+    const self = this;
+    this._dataValidations = { fromModel: {} };
+    (this.model.m().get() || []).forEach((data, index) => {
+        this._subFormSchema.items.forEach((item) => {
+            if (item.validate && item.validate.fromModel && item.validate.fromModel[0] === 'required') {
+                this._dataValidations.fromModel[`${index}${item.modelPath}`] = [validateRequired];
+            }
+        });
+    });
+
+    _.eachKey(this._dataValidations.fromModel, function (validators, modelPath) {
+        const [index, path] = modelPath.split('.');
+        const data = (this.model.m().get() || [])[index][path];
+        validators = Array.isArray(validators) ? validators : [validators];
+
+        if (validators && validators.length) {
+            validations.push({
+                modelPath: modelPath,
+                data: data,
+                validators: validators
+            });
+        }
+    }, this);
+
+
+    let allValid = true;
+    async.each(validations,
+        function (validation, nextValidation) {
+            let lastResponse;
+            async.every(validation.validators,
+                function (validator, next) {
+                    validator(validation.data, function (err, response) {
+                        lastResponse = response || {};
+                        next(err, lastResponse.valid);
+                    });
+                },
+                function (err, valid) {
+                    lastResponse.path = validation.modelPath;
+                    lastResponse.valid = valid;
+                    handleValidatedComponents.call(self, lastResponse, invalidControls);
+                    if (!valid) allValid = false;
+                    nextValidation(null);
+                }
+            );
+        },
+        function (err) {
+            invalidControls = Object.assign({}, invalidControls, self._invalidFormControls);
+            callback && callback({allValid, invalidControls});
+        }
+    );
+}
+
+function validateRequired(data, callback) {
+    const valid = typeof data != 'undefined'
+        && (typeof data != 'string' || data.trim() != '');
+    const response = MLForm$$validatorResponse(valid, 'please enter a value', 'REQUIRED');
+    callback(null, response);
+}
+
+function MLForm$$validatorResponse(valid, reason, reasonCode) {
+    return valid
+        ? { valid: true }
+        : { valid: false, reason: reason, reasonCode: reasonCode };
+}
+
+function handleValidatedComponents(response) {
+    if (response.valid) {
+        delete this._invalidFormControls[response.path];
+    } else {
+        const [index, modelPath] = response.path.split('.');
+        let reason = {
+            label: `List Item ${Number(index)+1}. ${modelPath}`,
+            reason: response.reason,
+            reasonCode: response.reasonCode
+        };
+        this._invalidFormControls[response.path] = {
+            reason: reason
+        };
+    }
+}
+
+
+},{"async":34}],9:[function(require,module,exports){
 'use strict';
 
 const componentsRegistry = milo.registry.components;
@@ -1715,10 +1806,12 @@ function MLSelect$init() {
 }
 
 
-function MLSelect$setOptions(options) {
+// isPlaceholder: options shown while async options load ('loading...', 'loading error')
+function MLSelect$setOptions(options, isPlaceholder) {
     // Set options temporarily disables model subscriptions (As a workaround for performance issues relating to model updates / template re-rendering)
     var modelChangeListener = { context: this, subscriber: onOptionsChange };
 
+    this._isLoadingOptions = !!isPlaceholder;
     this.model.off('**', modelChangeListener);
     this.model.set(options);
     this.model.on('**', modelChangeListener);
@@ -1733,6 +1826,14 @@ function MLSelect$disable(disable) {
 
 
 function MLSelect_set(strOrObj) {
+    // keep the value until the actual options arrive
+    if (this._isLoadingOptions) this._pendingValue = strOrObj;
+    else applyValue.call(this, strOrObj);
+    dispatchChangeMessage.call(this);
+}
+
+
+function applyValue(strOrObj) {
     if (!this._isMultiple) this.el.value = strOrObj;
     else {
         var valueObj = {};
@@ -1742,11 +1843,11 @@ function MLSelect_set(strOrObj) {
             el.selected = !!valueObj[key];
         });
     }
-    dispatchChangeMessage.call(this);
 }
 
 
 function MLSelect_get() {
+    if (this._pendingValue !== undefined) return this._pendingValue;
     if (!this._isMultiple) return this.el.value;
     else {
         return _.mapKeys(this._optionEls, function (el) {
@@ -1757,6 +1858,7 @@ function MLSelect_get() {
 
 
 function MLSelect_del() {
+    this._pendingValue = undefined;
     if (!this._isMultiple) this.el.value = undefined;
     else {
         _.eachKey(this._optionEls, function (el) {
@@ -1779,6 +1881,10 @@ function onOptionsChange(path, data) {
     _.forEach(this.el.querySelectorAll('option'), function (el) {
         self._optionEls[el.value] = el;
     });
+    if (this._pendingValue !== undefined && !this._isLoadingOptions) {
+        applyValue.call(this, this._pendingValue);
+        this._pendingValue = undefined;
+    }
     //dispatchChangeMessage.call(this);
 }
 
@@ -3507,6 +3613,7 @@ _.extendProto(MLForm, {
     viewPathSchema: MLForm$viewPathSchema,
     getModelPath: MLForm$getModelPath,
     getViewPath: MLForm$getViewPath,
+    getSubSchemas: MLForm$getSubSchemas,
     destroy: MLForm$destroy,
 });
 
@@ -3909,6 +4016,21 @@ function MLForm$modelPathSchema(modelPath) {
 function MLForm$viewPathComponent(viewPath) {
     var viewPathObj = this._formViewPaths[viewPath];
     return viewPathObj && viewPathObj.component;
+}
+
+/**
+ * Returns subSchemas of type formList
+ *
+ * @return {Schemas}
+ */
+function MLForm$getSubSchemas() {
+    let subSchemas = [];
+    for(const value in this._formViewPaths) {
+        if(Object.hasOwn(this._formViewPaths, value) && this._formViewPaths[value].schema && this._formViewPaths[value].schema.type === "formlist") {
+            subSchemas.push(this._formViewPaths[value]);
+        }
+    }
+    return subSchemas;
 }
 
 
@@ -4397,7 +4519,7 @@ formRegistry.add('formlist',              { compClass: 'MLFormList',            
 
 function processSelectSchema(comp, schema) {
     var options = schema.selectOptions;
-    setComponentOptions(comp, options, setComboOptions);
+    setComponentOptions(comp, options, setSelectOptions);
 }
 
 
@@ -4477,17 +4599,17 @@ function prepareFormListSchema(comp, schema) {
 }
 
 function setComponentOptions(comp, options, setModelFunc) {
-    function trySetModelFunc(comp, data) {
-        if (! comp.isDestroyed()) setModelFunc(comp, data);
+    function trySetModelFunc(comp, data, isPlaceholder) {
+        if (! comp.isDestroyed()) setModelFunc(comp, data, isPlaceholder);
     }
 
     if (options) {
         if (typeof options.then == 'function') {
-            trySetModelFunc(comp, [{ value: 0, label: 'loading...' }]);
+            trySetModelFunc(comp, [{ value: 0, label: 'loading...' }], true);
             options
                 .then(
                     function(data) { trySetModelFunc(comp, data); },
-                    function() { trySetModelFunc(comp, [{ value: 0, label: 'loading error' }]); }
+                    function() { trySetModelFunc(comp, [{ value: 0, label: 'loading error' }], true); }
                 );
         } else {
             trySetModelFunc(comp, options);
@@ -4505,6 +4627,11 @@ function setComponentModel(comp, data) {
 
 function setComboOptions(comp, data) {
     comp.setOptions(data);
+}
+
+
+function setSelectOptions(comp, data, isPlaceholder) {
+    comp.setOptions(data, isPlaceholder);
 }
 
 },{"./registry":31}],31:[function(require,module,exports){
